@@ -1,0 +1,20 @@
+---
+import { SITE_NAME } from '../lib/site';
+
+const path = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="wrapper site-header__inner">
+    <a href="/" class="site-header__brand">{SITE_NAME}</a>
+    <nav class="site-header__nav" aria-label="Primary">
+      <a href="/" aria-current={path === '/' ? 'page' : undefined}>Home</a>
+      <a
+        href="/blog"
+        aria-current={path.startsWith('/blog') ? 'page' : undefined}
+      >
+        Blog
+      </a>
+    </nav>
+  </div>
+</header>

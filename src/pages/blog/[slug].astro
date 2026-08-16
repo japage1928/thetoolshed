@@ -1,0 +1,163 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RelatedArticles from '../../components/RelatedArticles.astro';
+import { formatDate, slugifyCategory, SITE_NAME } from '../../lib/site';
+import { getRelatedArticles } from '../../lib/related';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.data.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const {
+  title,
+  description,
+  publishedDate,
+  updatedDate,
+  category,
+  tags,
+  author,
+  featuredImage,
+  featuredImageAlt,
+  seoTitle,
+  metaDescription,
+  sourceArticle,
+  sourceUrl,
+  sources,
+  internalLinks,
+} = post.data;
+
+const { Content } = await render(post);
+
+const allPublished = await getCollection('blog', ({ data }) => !data.draft);
+const relatedPosts = getRelatedArticles(post, allPublished, 3);
+
+// Only ever link to slugs that actually exist and are published — never
+// trust an AI-supplied internalLinks entry that doesn't resolve.
+const resolvedInternalLinks = internalLinks
+  .map((slug) => allPublished.find((p) => p.data.slug === slug))
+  .filter((p): p is NonNullable<typeof p> => Boolean(p));
+
+const canonicalPath = `/blog/${post.data.slug}`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description: metaDescription || description,
+  datePublished: publishedDate.toISOString(),
+  dateModified: (updatedDate || publishedDate).toISOString(),
+  author: {
+    '@type': 'Organization',
+    name: author,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: SITE_NAME,
+  },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': new URL(canonicalPath, Astro.site).toString(),
+  },
+  ...(featuredImage ? { image: [featuredImage] } : {}),
+  articleSection: category,
+  keywords: [...tags, ...post.data.keywords].join(', '),
+};
+---
+
+<BaseLayout
+  title={seoTitle || title}
+  description={metaDescription || description}
+  path={canonicalPath}
+  image={featuredImage}
+  type="article"
+  publishedDate={publishedDate}
+  updatedDate={updatedDate}
+  jsonLd={jsonLd}
+>
+  <article class="wrapper" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <div class="article-content">
+      <a class="eyebrow" href={`/blog/category/${slugifyCategory(category)}`}>
+        {category}
+      </a>
+      <h1 class="page-title">{title}</h1>
+      <div class="meta-line">
+        <span>By {author}</span>
+        <span aria-hidden="true">&middot;</span>
+        <time datetime={publishedDate.toISOString()}>
+          Published {formatDate(publishedDate)}
+        </time>
+        {
+          updatedDate && (
+            <>
+              <span aria-hidden="true">&middot;</span>
+              <time datetime={updatedDate.toISOString()}>
+                Updated {formatDate(updatedDate)}
+              </time>
+            </>
+          )
+        }
+      </div>
+
+      {
+        featuredImage && (
+          <img
+            class="article-featured-image"
+            src={featuredImage}
+            alt={featuredImageAlt || ''}
+            width="1200"
+            height="675"
+          />
+        )
+      }
+
+      <Content />
+    </div>
+
+    {
+      resolvedInternalLinks.length > 0 && (
+        <nav class="internal-links-section" aria-labelledby="internal-links-heading">
+          <h2 id="internal-links-heading">Read Next</h2>
+          <ul>
+            {resolvedInternalLinks.map((linked) => (
+              <li>
+                <a href={`/blog/${linked.data.slug}`}>{linked.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    {
+      (sourceUrl || sources.length > 0) && (
+        <section class="sources-section" aria-labelledby="sources-heading">
+          <h2 id="sources-heading">Sources</h2>
+          <ol>
+            {sourceUrl && (
+              <li>
+                <a href={sourceUrl} rel="nofollow noopener" target="_blank">
+                  {sourceArticle || sourceUrl}
+                </a>
+              </li>
+            )}
+            {sources.map((source) => (
+              <li>
+                <a href={source.url} rel="nofollow noopener" target="_blank">
+                  {source.title || source.url}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+
+    <RelatedArticles posts={relatedPosts} />
+  </article>
+</BaseLayout>

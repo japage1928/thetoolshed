@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ArticleCard from '../../../components/ArticleCard.astro';
+import { slugifyCategory, SITE_NAME } from '../../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const categories = new Map<string, string>();
+  for (const post of posts) {
+    categories.set(slugifyCategory(post.data.category), post.data.category);
+  }
+  return Array.from(categories.entries()).map(([slug, category]) => ({
+    params: { category: slug },
+    props: { category },
+  }));
+}
+
+const { category } = Astro.props;
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .filter((p) => p.data.category === category)
+  .sort(
+    (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime(),
+  );
+---
+
+<BaseLayout
+  title={`${category} Articles`}
+  description={`Articles in the ${category} category on ${SITE_NAME}.`}
+  path={`/blog/category/${slugifyCategory(category)}`}
+>
+  <div class="wrapper" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <span class="eyebrow">{category}</span>
+    <h1 class="page-title">{category}</h1>
+    <div class="blog-index__grid">
+      {posts.map((post) => <ArticleCard post={post} />)}
+    </div>
+  </div>
+</BaseLayout>

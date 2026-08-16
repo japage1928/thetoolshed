@@ -1,0 +1,23 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ArticleCard from './ArticleCard.astro';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length > 0 && (
+    <section class="related-section" aria-labelledby="related-heading">
+      <h2 id="related-heading">Related Articles</h2>
+      <div class="related-section__grid">
+        {posts.map((post) => (
+          <ArticleCard post={post} />
+        ))}
+      </div>
+    </section>
+  )
+}

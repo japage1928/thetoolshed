@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The @astrojs/netlify adapter generates the required Netlify Functions
+# configuration automatically at build time (for the dynamic /api/blog/publish
+# route). No manual [functions] block is needed.

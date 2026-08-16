@@ -1,0 +1,35 @@
+---
+import { formatDate } from '../lib/site';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, publishedDate, category, featuredImage, featuredImageAlt } =
+  post.data;
+---
+
+<a class="article-card" href={`/blog/${post.data.slug}`}>
+  {
+    featuredImage && (
+      <img
+        class="article-card__image"
+        src={featuredImage}
+        alt={featuredImageAlt || ''}
+        loading="lazy"
+        width="640"
+        height="360"
+      />
+    )
+  }
+  <div class="article-card__body">
+    <span class="category-badge">{category}</span>
+    <h3 class="article-card__title">{title}</h3>
+    <p class="article-card__desc">{description}</p>
+    <time class="meta-line" datetime={publishedDate.toISOString()}>
+      {formatDate(publishedDate)}
+    </time>
+  </div>
+</a>
