@@ -10,74 +10,49 @@ const latestPosts = (await getCollection('blog', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title={SITE_NAME} description={SITE_DESCRIPTION} path="/">
-  <div class="wrapper home-page">
-    <section class="home-hero">
-      <span class="eyebrow">AI tools, workflows & practical resources</span>
-      <h1>The Tool Shed</h1>
-      <p>{SITE_DESCRIPTION}</p>
-    </section>
-
-    <section class="home-section" aria-labelledby="tools-heading">
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">Build</span>
-          <h2 id="tools-heading">Tools</h2>
+  <div class="home-page">
+    <section class="shed-hero" aria-labelledby="hero-title">
+      <div class="shed-hero__wall" aria-hidden="true"></div>
+      <div class="shed-hero__workbench" aria-hidden="true"></div>
+      <div class="shed-hero__tools" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="shed-hero__circuits" aria-hidden="true"></div>
+      <div class="shed-hero__laptop" aria-hidden="true">
+        <div class="shed-hero__screen"><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="shed-hero__lamp" aria-hidden="true"></div>
+      <div class="shed-hero__copy">
+        <span class="shed-hero__eyebrow">AI tools · automation · practical resources</span>
+        <h1 id="hero-title">
+          <span class="shed-hero__the">THE</span>
+          <span class="shed-hero__tool">TOOL</span>
+          <span class="shed-hero__shed">SHED</span>
+        </h1>
+        <p>Useful things for people who want to build, automate, and actually get something done.</p>
+        <div class="shed-hero__actions">
+          <a class="hero-button hero-button--primary" href="/tools">Explore Tools <span>→</span></a>
+          <a class="hero-button" href="/blog">Read the Blog <span>→</span></a>
         </div>
-        <a href="/tools">View all →</a>
       </div>
-      <div class="site-grid">
-        <a class="site-card site-card--empty" href="/tools">
-          <span>Tools are coming together here.</span>
-          <strong>Browse the tools →</strong>
-        </a>
-      </div>
-    </section>
-
-    <section class="home-section" aria-labelledby="guides-heading">
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">Learn</span>
-          <h2 id="guides-heading">Guides</h2>
-        </div>
-        <a href="/guides">View all →</a>
-      </div>
-      <div class="site-grid">
-        <a class="site-card site-card--empty" href="/guides">
-          <span>Practical guides will live here.</span>
-          <strong>Explore guides →</strong>
-        </a>
-      </div>
-    </section>
-
-    <section class="home-section" aria-labelledby="templates-heading">
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">Use</span>
-          <h2 id="templates-heading">Templates</h2>
-        </div>
-        <a href="/templates">View all →</a>
-      </div>
-      <div class="site-grid">
-        <a class="site-card site-card--empty" href="/templates">
-          <span>Workflows, prompts, and automation templates.</span>
-          <strong>Browse templates →</strong>
-        </a>
-      </div>
+      <div class="shed-hero__tagline">BUILD <b>•</b> AUTOMATE <b>•</b> GROW</div>
     </section>
 
     {latestPosts.length > 0 && (
-      <section class="home-section" aria-labelledby="blog-heading">
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">Read</span>
-            <h2 id="blog-heading">Latest from the blog</h2>
+      <section class="home-section home-section--latest" aria-labelledby="latest-heading">
+        <div class="wrapper">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">From the bench</span>
+              <h2 id="latest-heading">Latest</h2>
+            </div>
+            <a href="/blog">View all →</a>
           </div>
-          <a href="/blog">View all →</a>
-        </div>
-        <div class="blog-index__grid">
-          {latestPosts.map((post) => (
-            <ArticleCard post={post} />
-          ))}
+          <div class="blog-index__grid">
+            {latestPosts.map((post) => (
+              <ArticleCard post={post} />
+            ))}
+          </div>
         </div>
       </section>
     )}
