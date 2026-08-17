@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../lib/site';
+---
+
+<BaseLayout title="Tools" description={`Practical tools from ${SITE_NAME}.`} path="/tools">
+  <div class="wrapper section-page">
+    <span class="eyebrow">Build</span>
+    <h1 class="page-title">Tools</h1>
+    <p class="section-intro">Practical tools built to solve real problems.</p>
+
+    <div class="empty-state-panel">
+      <h2>Tools are being added.</h2>
+      <p>This space will become the Tool Shed's collection of free and useful tools.</p>
+    </div>
+  </div>
+</BaseLayout>
