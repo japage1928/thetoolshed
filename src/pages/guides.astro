@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../lib/site';
+---
+
+<BaseLayout title="Guides" description={`Practical guides from ${SITE_NAME}.`} path="/guides">
+  <div class="wrapper section-page">
+    <span class="eyebrow">Learn</span>
+    <h1 class="page-title">Guides</h1>
+    <p class="section-intro">Straightforward guides for using AI, automation, and practical digital tools.</p>
+
+    <div class="empty-state-panel">
+      <h2>Guides are coming here.</h2>
+      <p>This section will grow as useful guides are published.</p>
+    </div>
+  </div>
+</BaseLayout>
