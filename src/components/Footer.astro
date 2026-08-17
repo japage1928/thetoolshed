@@ -5,17 +5,21 @@ const year = new Date().getFullYear();
 
 <footer class="site-footer">
   <div class="wrapper">
-    <div class="site-footer__links" aria-label="Footer navigation">
-      <a href="/">Home</a>
-      <a href="/tools">Tools</a>
-      <a href="/guides">Guides</a>
-      <a href="/templates">Templates</a>
-      <a href="/blog">Blog</a>
-      <a href="/about">About</a>
-      <a href="/privacy-policy">Privacy Policy</a>
-      <a href="/sitemap-index.xml">Sitemap</a>
-      <a href="/robots.txt">Robots.txt</a>
-    </div>
+    <nav class="site-footer__nav" aria-label="Footer navigation">
+      <div class="site-footer__link-group">
+        <a href="/">Home</a>
+        <a href="/tools">Tools</a>
+        <a href="/guides">Guides</a>
+        <a href="/templates">Templates</a>
+        <a href="/blog">Blog</a>
+        <a href="/about">About</a>
+      </div>
+      <div class="site-footer__link-group site-footer__link-group--secondary">
+        <a href="/privacy-policy">Privacy Policy</a>
+        <a href="/sitemap-index.xml">Sitemap</a>
+        <a href="/robots.txt">Robots.txt</a>
+      </div>
+    </nav>
     <p>&copy; {year} {SITE_NAME}. All rights reserved.</p>
   </div>
 </footer>
