@@ -10,26 +10,76 @@ const latestPosts = (await getCollection('blog', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title={SITE_NAME} description={SITE_DESCRIPTION} path="/">
-  <div class="wrapper" style="padding-top: 3rem; padding-bottom: 3rem;">
-    <h1 class="page-title">{SITE_NAME}</h1>
-    <p style="max-width: 40rem; color: var(--color-text-muted); font-size: 1.05rem;">
-      {SITE_DESCRIPTION}
-    </p>
+  <div class="wrapper home-page">
+    <section class="home-hero">
+      <span class="eyebrow">AI tools, workflows & practical resources</span>
+      <h1>The Tool Shed</h1>
+      <p>{SITE_DESCRIPTION}</p>
+    </section>
 
-    {
-      latestPosts.length > 0 && (
-        <>
-          <h2 style="margin-top: 3rem;">Latest from the blog</h2>
-          <div class="blog-index__grid">
-            {latestPosts.map((post) => (
-              <ArticleCard post={post} />
-            ))}
+    <section class="home-section" aria-labelledby="tools-heading">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Build</span>
+          <h2 id="tools-heading">Tools</h2>
+        </div>
+        <a href="/tools">View all →</a>
+      </div>
+      <div class="site-grid">
+        <a class="site-card site-card--empty" href="/tools">
+          <span>Tools are coming together here.</span>
+          <strong>Browse the tools →</strong>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="guides-heading">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Learn</span>
+          <h2 id="guides-heading">Guides</h2>
+        </div>
+        <a href="/guides">View all →</a>
+      </div>
+      <div class="site-grid">
+        <a class="site-card site-card--empty" href="/guides">
+          <span>Practical guides will live here.</span>
+          <strong>Explore guides →</strong>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="templates-heading">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Use</span>
+          <h2 id="templates-heading">Templates</h2>
+        </div>
+        <a href="/templates">View all →</a>
+      </div>
+      <div class="site-grid">
+        <a class="site-card site-card--empty" href="/templates">
+          <span>Workflows, prompts, and automation templates.</span>
+          <strong>Browse templates →</strong>
+        </a>
+      </div>
+    </section>
+
+    {latestPosts.length > 0 && (
+      <section class="home-section" aria-labelledby="blog-heading">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Read</span>
+            <h2 id="blog-heading">Latest from the blog</h2>
           </div>
-          <p>
-            <a href="/blog">View all articles &rarr;</a>
-          </p>
-        </>
-      )
-    }
+          <a href="/blog">View all →</a>
+        </div>
+        <div class="blog-index__grid">
+          {latestPosts.map((post) => (
+            <ArticleCard post={post} />
+          ))}
+        </div>
+      </section>
+    )}
   </div>
 </BaseLayout>
