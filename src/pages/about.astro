@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../lib/site';
+---
+
+<BaseLayout title="About" description={`About ${SITE_NAME}.`} path="/about">
+  <div class="wrapper section-page">
+    <span class="eyebrow">About</span>
+    <h1 class="page-title">The Tool Shed</h1>
+    <p class="section-intro">A practical home for useful AI tools, workflows, guides, and digital resources.</p>
+
+    <div class="about-grid">
+      <section>
+        <h2>What this is</h2>
+        <p>
+          The Tool Shed is being built as a place to discover useful things without having to
+          dig through a pile of hype first.
+        </p>
+      </section>
+      <section>
+        <h2>What belongs here</h2>
+        <p>
+          Tools, practical education, tested workflows, templates, and resources that are useful
+          enough to keep around.
+        </p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
