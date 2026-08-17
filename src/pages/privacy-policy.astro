@@ -1,0 +1,96 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../lib/site';
+---
+
+<BaseLayout
+  title="Privacy Policy"
+  description={`Privacy Policy for ${SITE_NAME}.`}
+  path="/privacy-policy"
+>
+  <div class="wrapper" style="padding-top: 3rem; padding-bottom: 4rem; max-width: 50rem;">
+    <h1 class="page-title">Privacy Policy</h1>
+    <p><strong>Last updated: August 17, 2026</strong></p>
+
+    <p>
+      {SITE_NAME} respects your privacy. This Privacy Policy explains what information may be
+      collected when you visit this website and how that information is used.
+    </p>
+
+    <h2>Information We Collect</h2>
+    <p>
+      {SITE_NAME} is primarily an informational website. We do not require you to create an
+      account or provide personal information simply to browse the site.
+    </p>
+    <p>
+      Like most websites, basic technical information may be processed by our hosting and
+      infrastructure providers when you access the site. This can include information such as
+      your IP address, browser type, device information, referring page, and the date and time
+      of a request. This information is generally used to operate, secure, and improve the site.
+    </p>
+
+    <h2>Cookies and Similar Technologies</h2>
+    <p>
+      {SITE_NAME} does not intentionally use cookies to identify individual visitors. Third-party
+      services used to host, secure, measure, or deliver parts of the website may use cookies or
+      similar technologies according to their own policies.
+    </p>
+
+    <h2>How We Use Information</h2>
+    <p>Information that is available to us may be used to:</p>
+    <ul>
+      <li>Operate and maintain the website.</li>
+      <li>Protect the website from abuse, fraud, and security threats.</li>
+      <li>Understand general website usage and improve the site's content and performance.</li>
+      <li>Comply with applicable legal obligations.</li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <p>
+      The website may rely on third-party providers for hosting, content delivery, analytics,
+      embedded content, or other site functionality. Those providers may process information as
+      described in their own privacy policies. We do not control the privacy practices of third
+      parties.
+    </p>
+
+    <h2>Links to Other Websites</h2>
+    <p>
+      Our content may contain links to third-party websites. Once you leave {SITE_NAME}, the
+      privacy practices of the destination website apply. We are not responsible for the privacy
+      practices or content of third-party sites.
+    </p>
+
+    <h2>Data Retention and Security</h2>
+    <p>
+      We retain information only for as long as reasonably necessary for the purposes described
+      in this policy, including security, operational, and legal purposes. No method of internet
+      transmission or electronic storage is completely secure, so we cannot guarantee absolute
+      security.
+    </p>
+
+    <h2>Children's Privacy</h2>
+    <p>
+      {SITE_NAME} is not directed toward children under 13, and we do not knowingly collect
+      personal information from children under 13 through this website.
+    </p>
+
+    <h2>Your Privacy Rights</h2>
+    <p>
+      Depending on where you live, you may have rights regarding personal information, including
+      rights to access, correct, delete, or restrict certain uses of your information. Requests
+      are handled subject to applicable law and reasonable verification requirements.
+    </p>
+
+    <h2>Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. Any changes will be posted on this
+      page with an updated effective date.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      If you have questions about this Privacy Policy or how information is handled on {SITE_NAME},
+      please use the contact information provided on the website.
+    </p>
+  </div>
+</BaseLayout>
