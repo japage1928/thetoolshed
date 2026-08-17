@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../lib/site';
+---
+
+<BaseLayout title="Templates" description={`Workflows, prompts, and automation templates from ${SITE_NAME}.`} path="/templates">
+  <div class="wrapper section-page">
+    <span class="eyebrow">Use</span>
+    <h1 class="page-title">Templates</h1>
+    <p class="section-intro">Workflows, prompts, automations, and other ready-to-use resources.</p>
+
+    <div class="empty-state-panel">
+      <h2>Templates will live here.</h2>
+      <p>The catalog is intentionally empty until there is something worth putting on the shelf.</p>
+    </div>
+  </div>
+</BaseLayout>
