@@ -4,7 +4,7 @@ import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 
-const site = process.env.PUBLIC_SITE_URL || 'https://example.netlify.app';
+const site = process.env.PUBLIC_SITE_URL || 'https://thetoolshed.netlify.app';
 
 export default defineConfig({
   site,
@@ -18,9 +18,6 @@ export default defineConfig({
   ],
   env: {
     schema: {
-      // Secret server-only vars, read via `astro:env/server`. Never
-      // bundled into client/static output, resolved at request time
-      // from the Netlify Function's process env — see .env.example.
       BLOG_PUBLISH_API_KEY: envField.string({ context: 'server', access: 'secret' }),
       GITHUB_TOKEN: envField.string({ context: 'server', access: 'secret' }),
       GITHUB_OWNER: envField.string({
