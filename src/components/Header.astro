@@ -13,7 +13,10 @@ const links = [
 
 <header class="site-header">
   <div class="wrapper site-header__inner">
-    <a href="/" class="site-header__brand">{SITE_NAME}</a>
+    <a href="/" class="site-header__brand">
+      <span class="site-header__mark" aria-hidden="true">⌂</span>
+      <span>{SITE_NAME}</span>
+    </a>
     <nav class="site-header__nav" aria-label="Primary">
       {links.map((link) => (
         <a
