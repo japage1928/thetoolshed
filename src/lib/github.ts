@@ -9,10 +9,13 @@ export interface GitHubConfig {
 
 export class GitHubContentError extends Error {
   status?: number;
-  constructor(message: string, status?: number) {
+  code?: string;
+
+  constructor(message: string, status?: number, code = 'github_error') {
     super(message);
     this.name = 'GitHubContentError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -21,11 +24,52 @@ function authHeaders(token: string): Record<string, string> {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'thetoolshed-blog-publisher',
   };
 }
 
 function encodePath(path: string): string {
   return path.split('/').map(encodeURIComponent).join('/');
+}
+
+async function githubError(res: Response, operation: string): Promise<GitHubContentError> {
+  let message = '';
+  try {
+    const body = (await res.text()).slice(0, 500);
+    if (body) {
+      try {
+        const parsed = JSON.parse(body) as { message?: string; documentation_url?: string };
+        message = parsed.message || body;
+      } catch {
+        message = body;
+      }
+    }
+  } catch {
+    // Ignore response-body read failures and return the HTTP status below.
+  }
+
+  return new GitHubContentError(
+    `${operation} failed (GitHub HTTP ${res.status}${message ? `: ${message}` : ''})`,
+    res.status,
+    'github_api_error',
+  );
+}
+
+/** Verify that the configured repository and target branch are accessible. */
+export async function verifyRepository(config: GitHubConfig): Promise<void> {
+  const repoUrl = `${GITHUB_API}/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}`;
+  const repoRes = await fetch(repoUrl, { headers: authHeaders(config.token) });
+
+  if (!repoRes.ok) {
+    throw await githubError(repoRes, 'GitHub repository check');
+  }
+
+  const branchUrl = `${repoUrl}/branches/${encodeURIComponent(config.branch)}`;
+  const branchRes = await fetch(branchUrl, { headers: authHeaders(config.token) });
+
+  if (!branchRes.ok) {
+    throw await githubError(branchRes, 'GitHub branch check');
+  }
 }
 
 /** True if `path` already exists on `config.branch`. */
@@ -39,10 +83,7 @@ export async function fileExists(
   if (res.status === 404) return false;
   if (res.ok) return true;
 
-  throw new GitHubContentError(
-    `GitHub API error checking file existence (status ${res.status})`,
-    res.status,
-  );
+  throw await githubError(res, 'GitHub duplicate check');
 }
 
 /**
@@ -71,11 +112,7 @@ export async function createFile(
   });
 
   if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new GitHubContentError(
-      `GitHub API error creating file (status ${res.status}): ${errText.slice(0, 300)}`,
-      res.status,
-    );
+    throw await githubError(res, 'GitHub Contents commit');
   }
 
   const data = (await res.json()) as {
