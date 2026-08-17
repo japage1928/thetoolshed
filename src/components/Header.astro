@@ -2,19 +2,27 @@
 import { SITE_NAME } from '../lib/site';
 
 const path = Astro.url.pathname;
+const links = [
+  { href: '/tools', label: 'Tools' },
+  { href: '/guides', label: 'Guides' },
+  { href: '/templates', label: 'Templates' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/about', label: 'About' },
+];
 ---
 
 <header class="site-header">
   <div class="wrapper site-header__inner">
     <a href="/" class="site-header__brand">{SITE_NAME}</a>
     <nav class="site-header__nav" aria-label="Primary">
-      <a href="/" aria-current={path === '/' ? 'page' : undefined}>Home</a>
-      <a
-        href="/blog"
-        aria-current={path.startsWith('/blog') ? 'page' : undefined}
-      >
-        Blog
-      </a>
+      {links.map((link) => (
+        <a
+          href={link.href}
+          aria-current={path === link.href || path.startsWith(`${link.href}/`) ? 'page' : undefined}
+        >
+          {link.label}
+        </a>
+      ))}
     </nav>
   </div>
 </header>
