@@ -10,7 +10,7 @@ const jsonLd = {
   name: 'The Tool Shed AI Tools Directory',
   description,
   numberOfItems: AI_TOOLS.length,
-  itemListElement: AI_TOOLS.map((tool, index) => ({ '@type': 'ListItem', position: index + 1, name: tool.name, url: new URL(`/tools/${tool.slug}`, Astro.site).toString() })),
+  itemListElement: AI_TOOLS.map((tool, index) => ({ '@type': 'ListItem', position: index + 1, name: tool.name })),
 };
 ---
 
