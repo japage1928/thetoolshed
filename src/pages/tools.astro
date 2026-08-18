@@ -4,13 +4,14 @@ import { SITE_NAME } from '../lib/site';
 import { AI_TOOLS, AI_TOOL_CATEGORIES } from '../lib/ai-tools';
 
 const description = `Explore the ${SITE_NAME} AI tools directory. Find AI assistants, coding tools, app builders, image generators, video tools, automation platforms, and more.`;
+const categorySlug = (category: string) => category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   name: 'The Tool Shed AI Tools Directory',
   description,
   numberOfItems: AI_TOOLS.length,
-  itemListElement: AI_TOOLS.map((tool, index) => ({ '@type': 'ListItem', position: index + 1, name: tool.name })),
+  itemListElement: AI_TOOLS.map((tool, index) => ({ '@type': 'ListItem', position: index + 1, name: tool.name, url: new URL(`/tools/${tool.slug}`, Astro.site).toString() })),
 };
 ---
 
@@ -22,15 +23,15 @@ const jsonLd = {
       <p class="tools-directory__intro">Find the right AI tool for the job. Explore assistants, coding tools, app builders, creative tools, research platforms, automation, and more.</p>
     </header>
 
-    <section class="tools-directory__controls" aria-label="Tool directory filters">
+    <section class="tools-directory__controls" aria-label="Tool directory search and categories">
       <label class="tools-search">
         <span class="sr-only">Search AI tools</span>
         <input id="tool-search" type="search" placeholder="Search tools, categories, or use cases…" autocomplete="off" />
       </label>
-      <div class="tools-categories" role="group" aria-label="Filter by category">
-        <button type="button" class="tool-filter is-active" data-category="All">All</button>
-        {AI_TOOL_CATEGORIES.map((category) => <button type="button" class="tool-filter" data-category={category}>{category}</button>)}
-      </div>
+      <nav class="tools-categories" aria-label="AI tool categories">
+        <a class="tool-filter is-active" href="/tools">All</a>
+        {AI_TOOL_CATEGORIES.map((category) => <a class="tool-filter" href={`/tools/category/${categorySlug(category)}`}>{category}</a>)}
+      </nav>
     </section>
 
     <div class="tools-directory__meta">
@@ -38,12 +39,12 @@ const jsonLd = {
       <span>Directory expanding</span>
     </div>
 
-    <section class="tool-grid" id="tool-grid" aria-live="polite">
+    <section class="tool-grid" id="tool-grid" aria-label="AI tools">
       {AI_TOOLS.map((tool) => {
         const domain = new URL(tool.url).hostname.replace(/^www\./, '');
         const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
         return (
-          <article class="tool-card" data-search={`${tool.name} ${tool.description} ${tool.category} ${tool.bestFor} ${tool.tags.join(' ')}`.toLowerCase()} data-category={tool.category}>
+          <article class="tool-card" data-search={`${tool.name} ${tool.description} ${tool.category} ${tool.bestFor} ${tool.tags.join(' ')}`.toLowerCase()}>
             <div class="tool-card__topline">
               <span class="tool-card__category">{tool.category}</span>
               {tool.affiliate && <span class="tool-card__badge">Partner</span>}
@@ -58,9 +59,7 @@ const jsonLd = {
             <p>{tool.description}</p>
             <div class="tool-card__best"><strong>Best for:</strong> {tool.bestFor}</div>
             <div class="tool-card__tags">{tool.tags.slice(0, 4).map((tag) => <span>{tag}</span>)}</div>
-            <a class="tool-card__link" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'}>
-              {tool.name} <span aria-hidden="true">→</span>
-            </a>
+            <a class="tool-card__link" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'}>{tool.name} <span aria-hidden="true">→</span></a>
           </article>
         );
       })}
@@ -79,7 +78,7 @@ const jsonLd = {
   .tools-search input { width: 100%; box-sizing: border-box; border: 1px solid #3a342c; background: #080909; color: var(--color-text); border-radius: .4rem; padding: .8rem .9rem; outline: none; }
   .tools-search input:focus { border-color: var(--shed-blue); box-shadow: 0 0 0 3px rgba(23,140,255,.12); }
   .tools-categories { display: flex; gap: .45rem; flex-wrap: wrap; margin-top: .75rem; }
-  .tool-filter { border: 1px solid #3a342c; background: transparent; color: #aaa69e; border-radius: 999px; padding: .45rem .7rem; font: inherit; font-size: .78rem; cursor: pointer; }
+  .tool-filter { display:inline-flex; align-items:center; border: 1px solid #3a342c; background: transparent; color: #aaa69e; border-radius: 999px; padding: .45rem .7rem; font: inherit; font-size: .78rem; cursor: pointer; text-decoration:none; }
   .tool-filter:hover, .tool-filter.is-active { color: #fff; border-color: var(--shed-blue); background: rgba(23,140,255,.1); }
   .tools-directory__meta { display: flex; justify-content: space-between; gap: 1rem; color: #77736d; font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; margin: 1.5rem 0 .75rem; }
   .tools-directory__meta strong { color: #d7d1c8; }
@@ -103,6 +102,7 @@ const jsonLd = {
   .tool-card__link:hover { color: var(--shed-blue); }
   .tools-empty { padding: 3rem 1rem; text-align: center; color: var(--color-text-muted); border: 1px dashed var(--color-border); border-radius: .6rem; margin-top: 1rem; }
   .tools-disclosure { max-width: 48rem; margin: 2.5rem auto 0; color: #6f6b65; font-size: .72rem; line-height: 1.6; text-align: center; }
+  .tool-card[hidden] { display: none !important; }
   @media (max-width: 980px) { .tool-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
   @media (max-width: 640px) { .tools-directory { padding-top: 2.5rem; } .tools-directory__controls { position: static; } .tool-grid { grid-template-columns: 1fr; } }
 </style>
@@ -110,29 +110,20 @@ const jsonLd = {
 <script>
   const search = document.querySelector<HTMLInputElement>('#tool-search');
   const cards = Array.from(document.querySelectorAll<HTMLElement>('.tool-card'));
-  const filters = Array.from(document.querySelectorAll<HTMLButtonElement>('.tool-filter'));
   const count = document.querySelector<HTMLElement>('#tool-count');
   const empty = document.querySelector<HTMLElement>('#tools-empty');
-  let activeCategory = 'All';
 
   function render() {
     const query = (search?.value ?? '').trim().toLowerCase();
     let visible = 0;
     cards.forEach((card) => {
-      const matchesCategory = activeCategory === 'All' || card.dataset.category === activeCategory;
       const matchesQuery = !query || (card.dataset.search ?? '').includes(query);
-      const show = matchesCategory && matchesQuery;
-      card.hidden = !show;
-      if (show) visible += 1;
+      card.hidden = !matchesQuery;
+      if (matchesQuery) visible += 1;
     });
     if (count) count.textContent = String(visible);
     if (empty) empty.hidden = visible !== 0;
   }
 
   search?.addEventListener('input', render);
-  filters.forEach((filter) => filter.addEventListener('click', () => {
-    activeCategory = filter.dataset.category ?? 'All';
-    filters.forEach((item) => item.classList.toggle('is-active', item === filter));
-    render();
-  }));
 </script>
