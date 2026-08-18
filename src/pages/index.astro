@@ -9,129 +9,56 @@ const latestPosts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime())
   .slice(0, 3);
 
-// Deterministic weekly rotation: everyone sees the same six tools for a given week.
+// Deterministic weekly rotation: everyone sees the same featured set for a given week.
 const now = new Date();
 const weekNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / (7 * 24 * 60 * 60 * 1000));
 const eligibleTools = AI_TOOLS.filter((tool) => tool.category && tool.name);
-const categories = [...new Set(eligibleTools.map((tool) => tool.category))];
-
-const hash = (value: string) => {
-  let h = 2166136261;
-  for (let i = 0; i < value.length; i++) {
-    h ^= value.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-};
-
-const rankedForWeek = (week: number) =>
-  [...eligibleTools].sort((a, b) => hash(`${a.slug}:${week}`) - hash(`${b.slug}:${week}`));
-
+const hash = (value: string) => { let h = 2166136261; for (let i = 0; i < value.length; i++) { h ^= value.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const rankedForWeek = (week: number) => [...eligibleTools].sort((a, b) => hash(`${a.slug}:${week}`) - hash(`${b.slug}:${week}`));
 const currentRanked = rankedForWeek(weekNumber);
-const previousSlugs = new Set(rankedForWeek(weekNumber - 1).slice(0, 6).map((tool) => tool.slug));
-const featuredTools = categories
-  .map((category, index) => {
-    const categoryTools = currentRanked.filter((tool) => tool.category === category && !previousSlugs.has(tool.slug));
-    return categoryTools[index % Math.max(categoryTools.length, 1)];
-  })
-  .filter(Boolean)
-  .slice(0, 6);
-
-for (const tool of currentRanked) {
-  if (featuredTools.length >= 6) break;
-  if (!featuredTools.some((item) => item.slug === tool.slug) && !previousSlugs.has(tool.slug)) {
-    featuredTools.push(tool);
-  }
-}
+const previousSlugs = new Set(rankedForWeek(weekNumber - 1).slice(0, 10).map((tool) => tool.slug));
+const featuredTools = currentRanked.filter((tool) => !previousSlugs.has(tool.slug)).slice(0, 10);
 ---
 
 <BaseLayout title={SITE_NAME} description={SITE_DESCRIPTION} path="/">
   <div class="home-page">
     <section class="shed-hero" aria-labelledby="hero-title">
-      <div class="shed-hero__wall" aria-hidden="true"></div>
-      <div class="shed-hero__workbench" aria-hidden="true"></div>
-      <div class="shed-hero__tools" aria-hidden="true">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-      </div>
-      <div class="shed-hero__circuits" aria-hidden="true"></div>
-      <div class="shed-hero__laptop" aria-hidden="true">
-        <div class="shed-hero__screen"><span></span><span></span><span></span><span></span><span></span></div>
-      </div>
-      <div class="shed-hero__lamp" aria-hidden="true"></div>
+      <div class="shed-hero__wall" aria-hidden="true"></div><div class="shed-hero__workbench" aria-hidden="true"></div>
+      <div class="shed-hero__tools" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="shed-hero__circuits" aria-hidden="true"></div><div class="shed-hero__laptop" aria-hidden="true"><div class="shed-hero__screen"><span></span><span></span><span></span><span></span><span></span></div></div><div class="shed-hero__lamp" aria-hidden="true"></div>
       <div class="shed-hero__copy">
         <span class="shed-hero__eyebrow">AI tools · automation · practical resources</span>
-        <h1 id="hero-title">
-          <span class="shed-hero__the">THE</span>
-          <span class="shed-hero__tool">TOOL</span>
-          <span class="shed-hero__shed">SHED</span>
-        </h1>
+        <h1 id="hero-title"><span class="shed-hero__the">THE</span><span class="shed-hero__tool">TOOL</span><span class="shed-hero__shed">SHED</span></h1>
 
         <div class="featured-tools-carousel" aria-label="Featured AI tools this week">
-          <div class="featured-tools-carousel__header">
-            <span>Featured this week</span>
-            <a href="/tools">Explore all tools →</a>
-          </div>
+          <div class="featured-tools-carousel__header"><span>Featured this week</span><a href="/tools">Explore all tools →</a></div>
           <div class="featured-tools-carousel__track">
             {featuredTools.map((tool) => {
               const domain = new URL(tool.url).hostname.replace(/^www\./, '');
-              const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-              return (
-                <a class="featured-tool-card" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'}>
-                  <img src={iconUrl} alt="" width="42" height="42" loading="lazy" decoding="async" />
-                  <span class="featured-tool-card__body">
-                    <strong>{tool.name}</strong>
-                    <small>{tool.bestFor}</small>
-                  </span>
-                  <span class="featured-tool-card__arrow" aria-hidden="true">→</span>
-                </a>
-              );
+              const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+              return <a class="featured-tool-icon" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'} title={tool.name} aria-label={`Visit ${tool.name}`}><img src={iconUrl} alt={tool.name} width="56" height="56" loading="lazy" decoding="async" /></a>;
             })}
           </div>
         </div>
 
         <p>Useful things for people who want to build, automate, and actually get something done.</p>
-        <div class="shed-hero__actions">
-          <a class="hero-button hero-button--primary" href="/tools">Explore Tools <span>→</span></a>
-          <a class="hero-button" href="/blog">Read the Blog <span>→</span></a>
-        </div>
+        <div class="shed-hero__actions"><a class="hero-button hero-button--primary" href="/tools">Explore Tools <span>→</span></a><a class="hero-button" href="/blog">Read the Blog <span>→</span></a></div>
       </div>
       <div class="shed-hero__tagline">BUILD <b>•</b> AUTOMATE <b>•</b> GROW</div>
     </section>
 
-    {latestPosts.length > 0 && (
-      <section class="home-section home-section--latest" aria-labelledby="latest-heading">
-        <div class="wrapper">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">From the bench</span>
-              <h2 id="latest-heading">Latest</h2>
-            </div>
-            <a href="/blog">View all →</a>
-          </div>
-          <div class="blog-index__grid">
-            {latestPosts.map((post) => (
-              <ArticleCard post={post} />
-            ))}
-          </div>
-        </div>
-      </section>
-    )}
+    {latestPosts.length > 0 && <section class="home-section home-section--latest" aria-labelledby="latest-heading"><div class="wrapper"><div class="section-heading"><div><span class="eyebrow">From the bench</span><h2 id="latest-heading">Latest</h2></div><a href="/blog">View all →</a></div><div class="blog-index__grid">{latestPosts.map((post) => <ArticleCard post={post} />)}</div></div></section>}
   </div>
 </BaseLayout>
 
 <style>
   .featured-tools-carousel { margin: 1.35rem auto 1.5rem; width: min(100%, 920px); text-align: left; }
   .featured-tools-carousel__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .65rem; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-  .featured-tools-carousel__header span { opacity: .72; }
-  .featured-tools-carousel__header a { color: inherit; text-decoration: none; opacity: .8; letter-spacing: .02em; text-transform: none; }
-  .featured-tools-carousel__header a:hover { opacity: 1; text-decoration: underline; }
-  .featured-tools-carousel__track { display: flex; gap: .75rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; padding: .15rem .1rem .65rem; }
-  .featured-tool-card { flex: 0 0 min(275px, 78vw); min-height: 78px; display: flex; align-items: center; gap: .8rem; padding: .8rem .9rem; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: rgba(7,10,14,.72); color: inherit; text-decoration: none; scroll-snap-align: start; backdrop-filter: blur(8px); transition: transform .18s ease, border-color .18s ease, background .18s ease; }
-  .featured-tool-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.32); background: rgba(7,10,14,.9); }
-  .featured-tool-card img { flex: 0 0 42px; width: 42px; height: 42px; border-radius: 10px; background: #fff; padding: 4px; object-fit: contain; }
-  .featured-tool-card__body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: .18rem; }
-  .featured-tool-card__body strong { font-size: .95rem; line-height: 1.1; }
-  .featured-tool-card__body small { overflow: hidden; color: rgba(255,255,255,.65); font-size: .72rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-  .featured-tool-card__arrow { flex: 0 0 auto; font-size: 1rem; opacity: .65; }
-  @media (max-width: 600px) { .featured-tools-carousel { margin-top: 1rem; } .featured-tools-carousel__header { font-size: .68rem; } .featured-tool-card { flex-basis: 82vw; } }
+  .featured-tools-carousel__header span { opacity: .72; }.featured-tools-carousel__header a { color: inherit; text-decoration: none; opacity: .8; letter-spacing: .02em; text-transform: none; }.featured-tools-carousel__header a:hover { opacity: 1; text-decoration: underline; }
+  .featured-tools-carousel__track { display: flex; align-items: center; justify-content: center; gap: clamp(.7rem, 1.7vw, 1.1rem); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: .2rem .25rem .6rem; mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); }
+  .featured-tools-carousel__track::-webkit-scrollbar { display: none; }
+  .featured-tool-icon { flex: 0 0 auto; width: 68px; height: 68px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.15); border-radius: 17px; background: rgba(7,10,14,.76); box-shadow: 0 8px 20px rgba(0,0,0,.18); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  .featured-tool-icon:hover,.featured-tool-icon:focus-visible { transform: translateY(-3px) scale(1.06); border-color: rgba(255,255,255,.4); box-shadow: 0 10px 26px rgba(0,0,0,.28); outline: none; }
+  .featured-tool-icon img { width: 52px; height: 52px; border-radius: 13px; background: #fff; padding: 4px; object-fit: contain; }
+  @media (max-width: 700px) { .featured-tools-carousel { margin-top: 1rem; }.featured-tools-carousel__track { justify-content: flex-start; gap: .65rem; }.featured-tool-icon { width: 58px; height: 58px; border-radius: 15px; }.featured-tool-icon img { width: 44px; height: 44px; border-radius: 11px; } }
 </style>
