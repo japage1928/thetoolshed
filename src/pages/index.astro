@@ -3,10 +3,49 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import { SITE_NAME, SITE_DESCRIPTION } from '../lib/site';
+import { AI_TOOLS } from '../lib/ai-tools';
 
 const latestPosts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime())
   .slice(0, 3);
+
+// Deterministic weekly rotation: the same featured set is shown to everyone
+// during a given week, while the seed changes each week. A category-aware pass
+// keeps the landing page varied and avoids immediately repeating last week's set.
+const now = new Date();
+const weekNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / (7 * 24 * 60 * 60 * 1000));
+const eligibleTools = AI_TOOLS.filter((tool) => tool.category && tool.name);
+const categories = [...new Set(eligibleTools.map((tool) => tool.category))];
+
+const hash = (value: string) => {
+  let h = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+};
+
+const rankedForWeek = (week: number) =>
+  [...eligibleTools].sort((a, b) => hash(`${a.slug}:${week}`) - hash(`${b.slug}:${week}`));
+
+const currentRanked = rankedForWeek(weekNumber);
+const previousSlugs = new Set(rankedForWeek(weekNumber - 1).slice(0, 6).map((tool) => tool.slug));
+const featuredTools = categories
+  .map((category, index) => {
+    const categoryTools = currentRanked.filter((tool) => tool.category === category && !previousSlugs.has(tool.slug));
+    return categoryTools[index % Math.max(categoryTools.length, 1)];
+  })
+  .filter(Boolean)
+  .slice(0, 6);
+
+// Fill any gaps without allowing a previous-week repeat when possible.
+for (const tool of currentRanked) {
+  if (featuredTools.length >= 6) break;
+  if (!featuredTools.some((item) => item.slug === tool.slug) && !previousSlugs.has(tool.slug)) {
+    featuredTools.push(tool);
+  }
+}
 ---
 
 <BaseLayout title={SITE_NAME} description={SITE_DESCRIPTION} path="/">
@@ -38,6 +77,36 @@ const latestPosts = (await getCollection('blog', ({ data }) => !data.draft))
       <div class="shed-hero__tagline">BUILD <b>•</b> AUTOMATE <b>•</b> GROW</div>
     </section>
 
+    <section class="home-section featured-tools" aria-labelledby="featured-tools-heading">
+      <div class="wrapper">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Fresh from the shed</span>
+            <h2 id="featured-tools-heading">Featured AI Tools</h2>
+          </div>
+          <a href="/tools">Explore all tools →</a>
+        </div>
+        <p class="featured-tools__intro">A rotating weekly selection of useful AI tools worth knowing about.</p>
+        <div class="featured-tools__grid">
+          {featuredTools.map((tool) => {
+            const domain = new URL(tool.url).hostname.replace(/^www\./, '');
+            const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            return (
+              <a class="featured-tool-card" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'}>
+                <div class="featured-tool-card__top">
+                  <img src={iconUrl} alt="" width="48" height="48" loading="lazy" decoding="async" />
+                  <span class="featured-tool-card__category">{tool.category}</span>
+                </div>
+                <h3>{tool.name}</h3>
+                <p>{tool.bestFor}</p>
+                <span class="featured-tool-card__link">Visit tool →</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+
     {latestPosts.length > 0 && (
       <section class="home-section home-section--latest" aria-labelledby="latest-heading">
         <div class="wrapper">
@@ -58,3 +127,18 @@ const latestPosts = (await getCollection('blog', ({ data }) => !data.draft))
     )}
   </div>
 </BaseLayout>
+
+<style>
+  .featured-tools__intro { margin: -1rem 0 1.5rem; color: var(--muted, #8b949e); }
+  .featured-tools__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+  .featured-tool-card { display: block; padding: 1.25rem; border: 1px solid var(--border, #30363d); border-radius: 14px; background: var(--surface, #11161c); color: inherit; text-decoration: none; transition: transform .18s ease, border-color .18s ease; }
+  .featured-tool-card:hover { transform: translateY(-3px); border-color: var(--accent, #6e7681); }
+  .featured-tool-card__top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .featured-tool-card__top img { width: 48px; height: 48px; border-radius: 12px; }
+  .featured-tool-card__category { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; opacity: .7; text-align: right; }
+  .featured-tool-card h3 { margin: 1rem 0 .35rem; }
+  .featured-tool-card p { margin: 0 0 1rem; color: var(--muted, #8b949e); }
+  .featured-tool-card__link { font-size: .85rem; font-weight: 700; }
+  @media (max-width: 800px) { .featured-tools__grid { grid-template-columns: 1fr; } }
+  @media (min-width: 801px) and (max-width: 1050px) { .featured-tools__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
