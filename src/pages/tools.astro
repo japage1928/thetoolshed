@@ -39,21 +39,31 @@ const jsonLd = {
     </div>
 
     <section class="tool-grid" id="tool-grid" aria-live="polite">
-      {AI_TOOLS.map((tool) => (
-        <article class="tool-card" data-search={`${tool.name} ${tool.description} ${tool.category} ${tool.bestFor} ${tool.tags.join(' ')}`.toLowerCase()} data-category={tool.category}>
-          <div class="tool-card__topline">
-            <span class="tool-card__category">{tool.category}</span>
-            {tool.affiliate && <span class="tool-card__badge">Partner</span>}
-          </div>
-          <h2>{tool.name}</h2>
-          <p>{tool.description}</p>
-          <div class="tool-card__best"><strong>Best for:</strong> {tool.bestFor}</div>
-          <div class="tool-card__tags">{tool.tags.slice(0, 4).map((tag) => <span>{tag}</span>)}</div>
-          <a class="tool-card__link" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'}>
-            {tool.name} <span aria-hidden="true">→</span>
-          </a>
-        </article>
-      ))}
+      {AI_TOOLS.map((tool) => {
+        const domain = new URL(tool.url).hostname.replace(/^www\./, '');
+        const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+        return (
+          <article class="tool-card" data-search={`${tool.name} ${tool.description} ${tool.category} ${tool.bestFor} ${tool.tags.join(' ')}`.toLowerCase()} data-category={tool.category}>
+            <div class="tool-card__topline">
+              <span class="tool-card__category">{tool.category}</span>
+              {tool.affiliate && <span class="tool-card__badge">Partner</span>}
+            </div>
+            <h2 class="tool-card__name">
+              <span class="tool-card__icon-wrap" aria-hidden="true">
+                <img class="tool-card__icon" src={iconUrl} alt="" width="40" height="40" loading="lazy" decoding="async" />
+                <span class="tool-card__icon-fallback">{tool.name.charAt(0)}</span>
+              </span>
+              <span>{tool.name}</span>
+            </h2>
+            <p>{tool.description}</p>
+            <div class="tool-card__best"><strong>Best for:</strong> {tool.bestFor}</div>
+            <div class="tool-card__tags">{tool.tags.slice(0, 4).map((tag) => <span>{tag}</span>)}</div>
+            <a class="tool-card__link" href={tool.url} target="_blank" rel={tool.affiliate ? 'sponsored noopener noreferrer' : 'noopener noreferrer'}>
+              {tool.name} <span aria-hidden="true">→</span>
+            </a>
+          </article>
+        );
+      })}
     </section>
 
     <p class="tools-empty" id="tools-empty" hidden>No tools match that search.</p>
@@ -79,7 +89,11 @@ const jsonLd = {
   .tool-card__topline { display: flex; justify-content: space-between; gap: .5rem; align-items: center; }
   .tool-card__category { color: var(--shed-blue); font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
   .tool-card__badge { color: #d9b27b; border: 1px solid rgba(200,139,75,.35); background: rgba(154,93,47,.12); border-radius: 999px; padding: .2rem .45rem; font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; }
-  .tool-card h2 { margin: .65rem 0 .4rem; color: #f1eee7; font-size: 1.25rem; }
+  .tool-card__name { display: flex; align-items: center; gap: .65rem; margin: .65rem 0 .4rem; color: #f1eee7; font-size: 1.25rem; }
+  .tool-card__icon-wrap { position: relative; display: inline-grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid #332f29; border-radius: .55rem; background: #090a09; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.28); }
+  .tool-card__icon { display: block; width: 30px; height: 30px; object-fit: contain; border-radius: .35rem; }
+  .tool-card__icon-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: #d7d1c8; font-size: 1rem; font-weight: 800; background: #151412; }
+  .tool-card__icon[src] + .tool-card__icon-fallback { opacity: 0; pointer-events: none; }
   .tool-card p { color: #aaa69e; line-height: 1.55; font-size: .9rem; margin: 0; }
   .tool-card__best { margin-top: .8rem; color: #c7c2ba; font-size: .78rem; line-height: 1.45; }
   .tool-card__best strong { color: #e5e0d7; }
