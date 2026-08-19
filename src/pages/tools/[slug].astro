@@ -11,16 +11,7 @@ const domain = new URL(tool.website_url).hostname.replace(/^www\./, '');
 const iconUrl = tool.icon_url || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 const description = `${tool.name}: ${tool.description}`;
 const pricing = tool.pricing_summary || 'Pricing varies by plan and usage. Check the vendor site for current free, trial, and paid options.';
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: tool.name,
-  description: tool.description,
-  applicationCategory: tool.category,
-  url: new URL(`/tools/${tool.slug}`, Astro.site).toString(),
-  mainEntityOfPage: new URL(`/tools/${tool.slug}`, Astro.site).toString(),
-  offers: { '@type': 'Offer', url: tool.website_url, description: pricing },
-};
+const jsonLd = {'@context':'https://schema.org','@type':'SoftwareApplication',name:tool.name,description:tool.description,applicationCategory:tool.category,url:new URL(`/tools/${tool.slug}`,Astro.site).toString(),mainEntityOfPage:new URL(`/tools/${tool.slug}`,Astro.site).toString(),offers:{'@type':'Offer',url:tool.website_url,description:pricing}};
 ---
 <BaseLayout title={`${tool.name} | The Tool Shed`} description={description} path={`/tools/${tool.slug}`} jsonLd={jsonLd}>
 <div class="wrapper tool-detail">
@@ -31,14 +22,11 @@ const jsonLd = {
     <section><h2>What is {tool.name}?</h2><p class="body-copy">{tool.description}</p></section>
     <div class="tool-meta"><div><strong>Best for</strong><span>{tool.best_for}</span></div><div><strong>Tags</strong><span>{tool.tags.join(' · ')}</span></div></div>
     <section><h2>Pricing</h2><p class="body-copy">{pricing}</p></section>
-    <section class="split-grid">
-      <div><h2>Pros</h2><ul class="feature-list">{tool.pros.map((item)=><li>{item}</li>)}</ul></div>
-      <div><h2>Cons</h2><ul class="feature-list">{tool.cons.map((item)=><li>{item}</li>)}</ul></div>
-    </section>
+    <section class="split-grid"><div><h2>Pros</h2><ul class="feature-list">{tool.pros.map((item)=><li>{item}</li>)}</ul></div><div><h2>Cons</h2><ul class="feature-list">{tool.cons.map((item)=><li>{item}</li>)}</ul></div></section>
     <section><h2>Best-fit use cases</h2><ul class="feature-list">{tool.use_cases.map((item)=><li>{item}</li>)}</ul></section>
-    {alternatives.length > 0 && <section><h2>Alternatives</h2><div class="link-grid">{alternatives.map((item)=><a href={`/tools/${item.slug}"><strong>{item.name}</strong><span>{item.description}</span></a>)}</div></section>}
+    {alternatives.length > 0 && <section><h2>Alternatives</h2><div class="link-grid">{alternatives.map((item)=><a href={`/tools/${item.slug}`}><strong>{item.name}</strong><span>{item.description}</span></a>)}</div></section>}
     <section><h2>Frequently asked questions</h2><div class="faq-list">{tool.faq.map((item)=><details><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div></section>
-    {related.length > 0 && <section><div class="section-row"><h2>Related tools</h2><a href="/tools">Browse all →</a></div><div class="link-grid">{related.map((item)=><a href={`/tools/${item.slug}"><strong>{item.name}</strong><span>{item.category} · {item.best_for}</span></a>)}</div></section>}
+    {related.length > 0 && <section><div class="section-row"><h2>Related tools</h2><a href="/tools">Browse all →</a></div><div class="link-grid">{related.map((item)=><a href={`/tools/${item.slug}`}><strong>{item.name}</strong><span>{item.category} · {item.best_for}</span></a>)}</div></section>}
     <div class="tool-actions"><a class="hero-button hero-button--primary" href={toolUrl(tool)} target="_blank" rel={tool.is_affiliate?'sponsored noopener noreferrer':'noopener noreferrer'} id="visit-tool" data-tool-name={tool.name} data-tool-slug={tool.slug} data-tool-category={tool.category} data-affiliate={tool.is_affiliate?'true':'false'}>Visit {tool.name} <span>→</span></a><a class="hero-button" href="/tools">Back to directory</a></div>
     {tool.is_affiliate && <p class="disclosure">This is a partner link. The Tool Shed may earn a commission if you sign up or purchase through it, at no additional cost to you.</p>}
   </article>
