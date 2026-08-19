@@ -1,31 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ArticleCard from '../../components/ArticleCard.astro';
-import { SITE_NAME } from '../../lib/site';
+import { getPublishedPosts } from '../../lib/supabase';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime(),
-);
+const posts = await getPublishedPosts();
 ---
-
-<BaseLayout
-  title="Blog"
-  description={`Articles from ${SITE_NAME}, published weekly.`}
-  path="/blog"
->
-  <div class="wrapper" style="padding-top: 2rem; padding-bottom: 3rem;">
-    <h1 class="page-title">Blog</h1>
-    {
-      posts.length === 0 ? (
-        <p class="empty-state">No articles published yet. Check back soon.</p>
-      ) : (
-        <div class="blog-index__grid">
-          {posts.map((post) => (
-            <ArticleCard post={post} />
-          ))}
-        </div>
-      )
-    }
-  </div>
+<BaseLayout title="Blog" description="Articles from The Tool Shed, covering AI tools, workflows, automation, and practical resources." path="/blog">
+<div class="wrapper blog-page"><header class="blog-hero"><span class="eyebrow">The Tool Shed</span><h1 class="page-title">Blog</h1><p>Practical articles about AI tools, automation, workflows, and useful things worth putting to work.</p></header>{posts.length===0?<p class="empty-state">No articles published yet. Check back soon.</p>:<div class="blog-index__grid">{posts.map(post=><article class="post-card"><span class="eyebrow">{post.category||'Article'}</span><h2><a href={`/blog/${post.slug}`}>{post.title}</a></h2><p>{post.excerpt}</p><div class="post-card__meta">{post.published_at?new Date(post.published_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):''}</div><a class="post-card__link" href={`/blog/${post.slug}`}>Read article →</a></article>)}</div>}</div>
 </BaseLayout>
+<style>
+.blog-page{padding-top:3rem;padding-bottom:5rem}.blog-hero{max-width:48rem;margin-bottom:2.25rem}.blog-hero p{max-width:42rem;color:var(--color-text-muted);font-size:1.05rem;line-height:1.7}.blog-index__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.post-card{display:flex;flex-direction:column;padding:1.25rem;border:1px solid var(--color-border);border-radius:.6rem;background:linear-gradient(145deg,#11110f,#0b0c0c);min-height:16rem}.post-card h2{margin:.55rem 0}.post-card h2 a{color:#f1eee7;text-decoration:none}.post-card p{color:#aaa69e;line-height:1.6}.post-card__meta{margin-top:auto;color:#77736d;font-size:.72rem}.post-card__link{margin-top:.8rem;padding-top:.75rem;border-top:1px solid #25221e;color:#e9eef2;text-decoration:none;font-size:.82rem;font-weight:700}.post-card__link:hover{color:var(--shed-blue)}@media(max-width:980px){.blog-index__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.blog-index__grid{grid-template-columns:1fr}}
+</style>
