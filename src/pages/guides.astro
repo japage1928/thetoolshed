@@ -1,12 +1,3 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE_NAME } from '../lib/site';
+return Astro.redirect('/blog', 301);
 ---
-
-<BaseLayout title="Guides" description={`Guides from ${SITE_NAME}.`} path="/guides">
-  <div class="wrapper section-page">
-    <span class="eyebrow">Learn</span>
-    <h1 class="page-title">Guides</h1>
-    <div class="empty-state-panel" aria-hidden="true"></div>
-  </div>
-</BaseLayout>
