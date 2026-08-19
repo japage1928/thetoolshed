@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Admin Login | The Tool Shed" description="Private Tool Shed administration." path="/admin/login">
+  <main class="admin-login">
+    <section class="login-card" aria-labelledby="login-title">
+      <span class="eyebrow">THE TOOL SHED · ADMIN</span>
+      <h1 id="login-title">Sign in</h1>
+      <p>Private administration area. There is no public account registration.</p>
+      <form id="login-form">
+        <label>Email<input id="email" name="email" type="email" autocomplete="username" required /></label>
+        <label>Password<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
+        <button type="submit">Sign in <span>→</span></button>
+        <p id="error" class="error" role="alert" hidden></p>
+      </form>
+    </section>
+  </main>
+</BaseLayout>
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  const url = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
+  const key = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY;
+  const supabase = createClient(url, key);
+  const form = document.querySelector<HTMLFormElement>('#login-form');
+  const error = document.querySelector<HTMLElement>('#error');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    error?.setAttribute('hidden', '');
+    const email = (document.querySelector<HTMLInputElement>('#email'))?.value ?? '';
+    const password = (document.querySelector<HTMLInputElement>('#password'))?.value ?? '';
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      if (error) { error.textContent = 'Invalid email or password.'; error.removeAttribute('hidden'); }
+      return;
+    }
+    window.location.href = '/admin';
+  });
+</script>
+<style>
+.admin-login{min-height:70vh;display:grid;place-items:center;padding:4rem 1rem}.login-card{width:min(100%,420px);padding:2rem;border:1px solid var(--color-border);border-radius:1rem;background:#10110f;box-shadow:0 20px 60px rgba(0,0,0,.25)}.login-card h1{margin:.45rem 0}.login-card>p{color:#8f8b84;font-size:.9rem;line-height:1.5}.login-card form{display:grid;gap:1rem;margin-top:1.5rem}.login-card label{display:grid;gap:.4rem;color:#aaa69e;font-size:.8rem;font-weight:700}.login-card input{width:100%;box-sizing:border-box;padding:.8rem;border:1px solid var(--color-border);border-radius:.5rem;background:#090a09;color:#f1eee7}.login-card button{border:0;border-radius:.5rem;padding:.85rem 1rem;background:#e9e4d8;color:#10110f;font-weight:800;cursor:pointer}.error{color:#e58b8b!important;font-size:.8rem!important}
+</style>
