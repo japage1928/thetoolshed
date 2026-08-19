@@ -25,30 +25,16 @@ const payhipProductId = workflow.payhip_product_id;
       </div>
       {workflow.included.length > 0 && <section class="workflow-included"><h2>What's included</h2><ul>{workflow.included.map((item) => <li>{item}</li>)}</ul></section>}
       <section class="purchase" aria-label="Purchase workflow">
-        <div><span class="eyebrow">Get this workflow</span><h2>{priceLabel}</h2></div>
-        {workflow.is_free ? <a class="hero-button hero-button--primary" href={payhipProductId ? `https://payhip.com/b/${payhipProductId}` : '#'} target="_blank" rel="noopener noreferrer">Get Workflow <span>→</span></a> : payhipProductId ? <div class="payhip-embed-page" data-key={payhipProductId}><span class="payhip-loading">Loading checkout…</span></div> : <p>Purchase link coming soon.</p>}
+        <div class="purchase-copy"><span class="eyebrow">Get this workflow</span><h2>{priceLabel}</h2></div>
+        {workflow.is_free ? <a class="hero-button hero-button--primary" href={payhipProductId ? `https://payhip.com/b/${payhipProductId}` : '#'} target="_blank" rel="noopener noreferrer">Get Workflow <span>→</span></a> : payhipProductId ? <div class="payhip-embed-page" data-key={payhipProductId}></div> : <p>Purchase link coming soon.</p>}
       </section>
       <p class="disclosure">Checkout and digital delivery are handled securely by Payhip.</p>
     </article>
   </div>
 </BaseLayout>
 
-{payhipProductId && !workflow.is_free && <script is:inline define:vars={{ payhipProductId }}>
-  const loadPayhip = () => {
-    if (document.querySelector('script[data-payhip-embed]')) return;
-    const script = document.createElement('script');
-    script.src = 'https://payhip.com/embed-page.js?v=24u68985';
-    script.async = true;
-    script.dataset.payhipEmbed = 'true';
-    document.head.appendChild(script);
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadPayhip, { once: true });
-  } else {
-    loadPayhip();
-  }
-</script>}
+{payhipProductId && !workflow.is_free && <script is:inline src="https://payhip.com/embed-page.js?v=24u68985"></script>}
 
 <style>
-.workflow-detail{max-width:60rem;padding:3rem 0 5rem}.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:2.5rem}.breadcrumbs a{color:#aaa69e;text-decoration:none}.workflow-hero{display:flex;gap:1.25rem;align-items:flex-start}.workflow-hero>img{width:96px;height:96px;object-fit:cover;border-radius:18px;background:#fff}.workflow-hero p{max-width:48rem;color:#aaa69e;font-size:1.05rem;line-height:1.65}.workflow-info{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}.workflow-info div{padding:1rem;border:1px solid var(--color-border);border-radius:.6rem;background:#10110f}.workflow-info strong{display:block;color:#77736d;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}.workflow-info span{color:#e3dfd7;font-size:.9rem}.workflow-included{margin:2rem 0}.workflow-included h2{font-size:1.2rem}.workflow-included li{margin:.5rem 0;color:#aaa69e}.purchase{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;margin-top:2.5rem;padding:1.5rem;border:1px solid var(--color-border);border-radius:.75rem;background:linear-gradient(145deg,#141411,#0c0d0c)}.purchase h2{margin:.25rem 0 0;font-size:2rem}.payhip-embed-page{min-width:220px;min-height:80px}.payhip-loading{color:#77736d;font-size:.8rem}.disclosure{color:#77736d;font-size:.72rem;line-height:1.6;margin-top:1rem}@media(max-width:640px){.workflow-hero{flex-direction:column}.workflow-info{grid-template-columns:1fr}.purchase{flex-direction:column;align-items:stretch}.payhip-embed-page{min-width:0}}
+.workflow-detail{max-width:60rem;padding:3rem 0 5rem}.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:2.5rem}.breadcrumbs a{color:#aaa69e;text-decoration:none}.workflow-hero{display:flex;gap:1.25rem;align-items:flex-start}.workflow-hero>img{width:96px;height:96px;object-fit:cover;border-radius:18px;background:#fff}.workflow-hero p{max-width:48rem;color:#aaa69e;font-size:1.05rem;line-height:1.65}.workflow-info{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}.workflow-info div{padding:1rem;border:1px solid var(--color-border);border-radius:.6rem;background:#10110f}.workflow-info strong{display:block;color:#77736d;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}.workflow-info span{color:#e3dfd7;font-size:.9rem}.workflow-included{margin:2rem 0}.workflow-included h2{font-size:1.2rem}.workflow-included li{margin:.5rem 0;color:#aaa69e}.purchase{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;margin-top:2.5rem;padding:1.5rem;border:1px solid var(--color-border);border-radius:.75rem;background:linear-gradient(145deg,#141411,#0c0d0c)}.purchase h2{margin:.25rem 0 0;font-size:2rem}.purchase-copy{flex:0 0 auto}.payhip-embed-page{min-width:220px;min-height:80px}.disclosure{color:#77736d;font-size:.72rem;line-height:1.6;margin-top:1rem}@media(max-width:640px){.workflow-hero{flex-direction:column}.workflow-info{grid-template-columns:1fr}.purchase{flex-direction:column;align-items:stretch}.payhip-embed-page{min-width:0}}
 </style>
