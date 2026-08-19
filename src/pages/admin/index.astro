@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { hasAdminSession } from '../../lib/admin-auth';
+
+if (!(await hasAdminSession(Astro.request))) {
+  return Astro.redirect('/admin/login', 302);
+}
 ---
 <BaseLayout title="Admin Dashboard | The Tool Shed" description="Private Tool Shed administration." path="/admin" noindex>
   <main class="admin-shell">
