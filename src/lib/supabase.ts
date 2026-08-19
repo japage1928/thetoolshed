@@ -32,6 +32,25 @@ export type DbPost = {
   updated_at: string;
 };
 
+export type DbWorkflow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  price: number;
+  image_url: string | null;
+  included: string[];
+  apps_required: string[];
+  payhip_product_id: string | null;
+  featured: boolean;
+  is_free: boolean;
+  is_published: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+};
+
 const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -69,6 +88,15 @@ export async function getPublishedPosts() {
 export async function getPostBySlug(slug: string) {
   const posts = await query<DbPost>('blog_posts', `slug=eq.${encodeURIComponent(slug)}&is_draft=eq.false&limit=1`);
   return posts[0] ?? null;
+}
+
+export async function getWorkflows() {
+  return query<DbWorkflow>('workflows', 'is_published=eq.true&order=featured.desc,created_at.desc');
+}
+
+export async function getWorkflowBySlug(slug: string) {
+  const workflows = await query<DbWorkflow>('workflows', `slug=eq.${encodeURIComponent(slug)}&is_published=eq.true&limit=1`);
+  return workflows[0] ?? null;
 }
 
 export function toolUrl(tool: DbTool) {
