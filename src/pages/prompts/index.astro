@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPrompts } from '../../lib/supabase';
+
+const items = await getPrompts();
+const categories = [...new Set(items.map((item) => item.category))].sort();
+---
+
+<BaseLayout title="AI Prompts & Loops | The Tool Shed" description="A searchable library of practical AI prompts and iterative AI loops." path="/prompts">
+  <div class="wrapper prompts-page">
+    <header class="prompts-hero">
+      <span class="eyebrow">THE TOOL SHED</span>
+      <h1 class="page-title">AI Prompts &amp; Loops</h1>
+      <p>Practical prompts and repeatable AI systems designed to help you get better results from your AI tools.</p>
+    </header>
+    <nav class="type-tabs" aria-label="Prompt type"><a class="active" href="/prompts">All</a><a href="/prompts?type=prompt">Prompts</a><a href="/prompts?type=loop">Loops</a></nav>
+    {categories.length > 0 && <nav class="category-filters" aria-label="Categories"><a href="/prompts">All categories</a>{categories.map((category) => <a href={`#${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{category}</a>)}</nav>}
+    <section class="prompt-grid" aria-label="AI prompts and loops">
+      {items.length === 0 ? <div class="empty-state"><h2>Library is ready</h2><p>Published prompts and loops will appear here when you add them through the database.</p></div> : items.map((item) => (
+        <article class="prompt-card" id={item.category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}>
+          {item.image_url && <img src={item.image_url} alt="" loading="lazy" />}
+          <div class="prompt-card__body">
+            <div class="meta"><span>{item.type === 'loop' ? 'AI LOOP' : 'AI PROMPT'}</span><span>{item.category}</span></div>
+            <h2><a href={`/prompts/${item.slug}`}>{item.name}</a></h2>
+            <p>{item.description}</p>
+            <div class="bottom"><strong>{item.is_free ? 'Free' : `$${Number(item.price).toFixed(2)}`}</strong><a href={`/prompts/${item.slug}`}>View →</a></div>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+.prompts-page{padding:4rem 0 5rem}.prompts-hero{max-width:50rem;margin-bottom:2rem}.prompts-hero p{color:var(--color-text-muted);font-size:1.08rem;line-height:1.7}.type-tabs,.category-filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}.type-tabs a,.category-filters a{border:1px solid var(--color-border);border-radius:999px;padding:.45rem .75rem;color:#aaa69e;text-decoration:none;font-size:.78rem}.type-tabs a.active,.type-tabs a:hover,.category-filters a:hover{color:#fff;border-color:var(--shed-blue)}.prompt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:1.5rem}.prompt-card{overflow:hidden;border:1px solid var(--color-border);border-radius:.7rem;background:#10110f}.prompt-card>img{width:100%;aspect-ratio:16/9;object-fit:cover}.prompt-card__body{padding:1.1rem}.meta{display:flex;justify-content:space-between;color:#77736d;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em}.prompt-card h2{font-size:1.2rem;margin:.55rem 0}.prompt-card h2 a{color:#f1eee7;text-decoration:none}.prompt-card p{color:#aaa69e;line-height:1.55;font-size:.9rem;min-height:4.2rem}.bottom{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:.8rem;border-top:1px solid #25221e}.bottom a{color:var(--shed-blue);font-size:.8rem;font-weight:700;text-decoration:none}.empty-state{grid-column:1/-1;border:1px dashed var(--color-border);border-radius:.7rem;padding:3rem;text-align:center;color:#aaa69e}@media(max-width:900px){.prompt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.prompts-page{padding:2.5rem 0 4rem}.prompt-grid{grid-template-columns:1fr}}
+</style>
