@@ -63,6 +63,14 @@ const pageTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
     <meta name="twitter:description" content={description} />
     {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3CCH0VWGCF"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){window.dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-3CCH0VWGCF');
+    </script>
+
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body>
