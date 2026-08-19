@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPromptBySlug } from '../../lib/supabase';
+
+export const prerender = false;
+const item = await getPromptBySlug(Astro.params.slug ?? '');
+if (!item) return Astro.redirect('/prompts', 302);
+
+const title = `${item.name} | The Tool Shed`;
+const description = item.description || `Use this ${item.type} with your AI tools.`;
+const payhipUrl = item.payhip_product_id ? `https://payhip.com/b/${item.payhip_product_id}` : null;
+const priceLabel = item.is_free ? 'Free' : `$${Number(item.price).toFixed(2)}`;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: item.name,
+  description,
+  url: new URL(`/prompts/${item.slug}`, Astro.site).toString(),
+};
+---
+
+<BaseLayout title={title} description={description} path={`/prompts/${item.slug}`} jsonLd={jsonLd}>
+  <div class="wrapper prompt-detail">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/prompts">AI Prompts &amp; Loops</a><span>/</span><span>{item.name}</span></nav>
+    <article>
+      <header>
+        <div class="meta"><span>{item.type === 'loop' ? 'AI LOOP' : 'AI PROMPT'}</span><span>{item.category}</span></div>
+        <h1 class="page-title">{item.name}</h1>
+        <p class="lead">{description}</p>
+      </header>
+      <div class="info-grid">
+        <div><strong>Type</strong><span>{item.type === 'loop' ? 'AI Loop' : 'AI Prompt'}</span></div>
+        <div><strong>Price</strong><span>{priceLabel}</span></div>
+        {item.compatible_tools.length > 0 && <div><strong>Works with</strong><span>{item.compatible_tools.join(' · ')}</span></div>}
+      </div>
+      <section class="prompt-box">
+        <div class="prompt-box__header"><h2>{item.type === 'loop' ? 'Loop' : 'Prompt'}</h2><button id="copy-prompt" type="button">Copy</button></div>
+        <pre id="prompt-text">{item.prompt_text}</pre>
+        <p id="copy-status" class="copy-status" aria-live="polite"></p>
+      </section>
+      {payhipUrl && <section class="purchase"><div><span class="eyebrow">Get this {item.type}</span><h2>{priceLabel}</h2></div><a class="hero-button hero-button--primary" href={payhipUrl} target="_blank" rel="noopener noreferrer" id="payhip-link">Get It →</a></section>}
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+.prompt-detail{max-width:64rem;padding:3rem 0 5rem}.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:2.5rem}.breadcrumbs a{color:#aaa69e;text-decoration:none}.meta{display:flex;gap:.75rem;color:#77736d;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em}.page-title{margin:.5rem 0}.lead{max-width:50rem;color:#aaa69e;font-size:1.08rem;line-height:1.7}.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}.info-grid div{padding:1rem;border:1px solid var(--color-border);border-radius:.6rem;background:#10110f}.info-grid strong{display:block;color:#77736d;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}.info-grid span{color:#e3dfd7;font-size:.9rem}.prompt-box{border:1px solid var(--color-border);border-radius:.75rem;overflow:hidden;background:#0d0e0d}.prompt-box__header{display:flex;justify-content:space-between;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--color-border)}.prompt-box h2{font-size:.9rem;margin:0}.prompt-box button{border:1px solid var(--color-border);background:#171815;color:#e3dfd7;border-radius:.4rem;padding:.45rem .7rem;cursor:pointer}.prompt-box pre{white-space:pre-wrap;margin:0;padding:1.25rem;color:#d9d5cc;font:inherit;font-size:.9rem;line-height:1.65}.copy-status{min-height:1.2rem;padding:0 1.25rem;color:#77736d;font-size:.72rem}.purchase{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2rem;padding:1.25rem;border:1px solid var(--color-border);border-radius:.75rem;background:#10110f}.purchase h2{margin:.2rem 0 0}@media(max-width:640px){.info-grid{grid-template-columns:1fr}.purchase{flex-direction:column;align-items:stretch}}
+</style>
+
+<script>
+const button = document.querySelector<HTMLButtonElement>('#copy-prompt');
+const text = document.querySelector<HTMLElement>('#prompt-text')?.textContent ?? '';
+const status = document.querySelector<HTMLElement>('#copy-status');
+button?.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(text);
+    if (status) status.textContent = 'Copied to clipboard.';
+    const gtag = (window as any).gtag;
+    if (typeof gtag === 'function') gtag('event', 'prompt_copy', { prompt_slug: location.pathname.split('/').pop() ?? '' });
+  } catch {
+    if (status) status.textContent = 'Copy failed. Select the text and copy it manually.';
+  }
+});
+</script>
