@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Analytics | Admin | The Tool Shed" description="Private analytics administration." path="/admin/analytics">
+  <main class="admin-page">
+    <a class="back" href="/admin">← Dashboard</a>
+    <header><span class="eyebrow">ADMIN</span><h1>Analytics</h1><p>Google Analytics 4 reporting area.</p></header>
+    <section class="panel"><h2>GA4</h2><p>The site's GA4 measurement ID is <strong>G-3CCH0VWGCF</strong>. Live reporting has not been connected to the admin dashboard yet, so no numbers are fabricated here.</p><p class="note">Once the GA4 reporting API is connected server-side, this page can display visitors, page views, traffic sources, tool clicks, workflow clicks, and other site events.</p></section>
+  </main>
+</BaseLayout>
+<style>.admin-page{max-width:1000px;margin:auto;padding:2.5rem 1.25rem 5rem}.back{color:#aaa69e;text-decoration:none;font-size:.8rem}.admin-page header{margin:2rem 0}.admin-page h1{margin:.3rem 0}.admin-page header p{color:#8f8b84}.panel{border:1px solid var(--color-border);border-radius:.7rem;background:#10110f;padding:1.4rem}.panel h2{font-size:1rem}.panel p{color:#aaa69e;line-height:1.65;font-size:.88rem}.panel .note{border-top:1px solid var(--color-border);padding-top:1rem}</style>
