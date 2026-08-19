@@ -5,21 +5,30 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Permanently move the default Netlify production URL to the primary domain.
 [[redirects]]
   from = "https://thetoolshed.netlify.app/*"
   to = "https://thetoolshed.work/:splat"
   status = 301
   force = true
 
-# Keep the old sitemap path working while making the canonical sitemap /sitemap.xml.
 [[redirects]]
   from = "/sitemap-index.xml"
   to = "/sitemap.xml"
   status = 301
   force = true
 
-# Never cache protected admin pages or admin API responses at the CDN.
+[[redirects]]
+  from = "/guides"
+  to = "/blog"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/guides/*"
+  to = "/blog"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/admin/*"
   [headers.values]
@@ -35,6 +44,3 @@
     Netlify-CDN-Cache-Control = "no-store"
     Pragma = "no-cache"
     X-Robots-Tag = "noindex, nofollow, noarchive"
-
-# The @astrojs/netlify adapter generates the required Netlify Functions
-# configuration automatically at build time.
