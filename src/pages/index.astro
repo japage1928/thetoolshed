@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import EmailCapture from '../components/EmailCapture.astro';
 import { SITE_NAME, SITE_DESCRIPTION } from '../lib/site';
 import { getPublishedPosts, getPrompts, getTools, getWorkflows, toolUrl } from '../lib/supabase';
 const tools = await getTools();
@@ -11,9 +12,8 @@ const now = new Date();
 const weekNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / (7 * 24 * 60 * 60 * 1000));
 const hash = (value: string) => { let h = 2166136261; for (let i = 0; i < value.length; i++) { h ^= value.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const rankedForWeek = (week: number) => [...eligibleTools].sort((a, b) => hash(`${a.slug}:${week}`) - hash(`${b.slug}:${week}`));
-const currentRanked = rankedForWeek(weekNumber);
 const previousSlugs = new Set(rankedForWeek(weekNumber - 1).slice(0, 10).map((tool) => tool.slug));
-const featuredTools = currentRanked.filter((tool) => !previousSlugs.has(tool.slug)).slice(0, 10);
+const featuredTools = rankedForWeek(weekNumber).filter((tool) => !previousSlugs.has(tool.slug)).slice(0, 10);
 const featuredPrompts = prompts.filter((item) => item.featured).slice(0, 3);
 const featuredWorkflows = workflows.filter((item) => item.featured).slice(0, 3);
 ---
@@ -24,6 +24,7 @@ const featuredWorkflows = workflows.filter((item) => item.featured).slice(0, 3);
 <p>Useful things for people who want to build, automate, and actually get something done.</p><div class="shed-hero__actions"><a class="hero-button hero-button--primary" href="/tools">Explore Tools <span>→</span></a><a class="hero-button" href="/prompts">AI Prompts &amp; Loops <span>→</span></a></div></div><div class="shed-hero__tagline">BUILD <b>•</b> AUTOMATE <b>•</b> GROW</div></section>
 <section class="home-section home-section--resources" aria-labelledby="resources-heading"><div class="wrapper"><div class="section-heading"><div><span class="eyebrow">The bench</span><h2 id="resources-heading">Tools, prompts &amp; workflows</h2></div></div><div class="resource-grid"><article class="resource-panel"><span class="eyebrow">AI PROMPTS &amp; LOOPS</span><h3>Ready-to-use AI instructions</h3><p>Useful prompts and iterative loops for writing, research, career work, productivity, and more.</p>{featuredPrompts.length > 0 && <ul>{featuredPrompts.map((item)=><li><a href={`/prompts/${item.slug}`}>{item.name}</a></li>)}</ul>}<a class="resource-panel__cta" href="/prompts">Browse prompts &amp; loops →</a></article><article class="resource-panel"><span class="eyebrow">WORKFLOWS</span><h3>Practical systems you can run</h3><p>Ready-made automations and workflows designed to turn repetitive work into repeatable systems.</p>{featuredWorkflows.length > 0 && <ul>{featuredWorkflows.map((item)=><li><a href={`/templates/${item.slug}`}>{item.name}</a></li>)}</ul>}<a class="resource-panel__cta" href="/templates">Browse workflows →</a></article></div></div></section>
 {latestPosts.length>0&&<section class="home-section home-section--latest" aria-labelledby="latest-heading"><div class="wrapper"><div class="section-heading"><div><span class="eyebrow">From the bench</span><h2 id="latest-heading">Latest</h2></div><a href="/blog">View all →</a></div><div class="blog-index__grid">{latestPosts.map(post=><article class="db-post-card"><span class="eyebrow">{post.category || 'Article'}</span><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p>{post.excerpt}</p><a class="db-post-card__link" href={`/blog/${post.slug}`}>Read article →</a></article>)}</div></div></section>}
+<section class="home-section"><div class="wrapper"><EmailCapture source="homepage" /></div></section>
 <section class="home-section home-section--x" aria-labelledby="x-heading"><div class="wrapper x-callout"><div><span class="eyebrow">Follow the builder</span><h2 id="x-heading">More AI experiments, tools &amp; ideas on X</h2><p>Follow John for practical AI finds, experiments, workflows, and what actually works.</p></div><a class="hero-button hero-button--primary" href="https://x.com/john_page1990" target="_blank" rel="me noopener noreferrer">Follow @john_page1990 on X <span>→</span></a></div></section>
 </div>
 </BaseLayout>
