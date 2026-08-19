@@ -4,6 +4,7 @@ import { SITE_NAME } from '../lib/site';
 const path = Astro.url.pathname;
 const links = [
   { href: '/tools', label: 'Tools' },
+  { href: '/prompts', label: 'AI Prompts' },
   { href: '/guides', label: 'Guides' },
   { href: '/templates', label: 'Templates' },
   { href: '/blog', label: 'Blog' },
@@ -19,12 +20,7 @@ const links = [
     </a>
     <nav class="site-header__nav" aria-label="Primary">
       {links.map((link) => (
-        <a
-          href={link.href}
-          aria-current={path === link.href || path.startsWith(`${link.href}/`) ? 'page' : undefined}
-        >
-          {link.label}
-        </a>
+        <a href={link.href} aria-current={path === link.href || path.startsWith(`${link.href}/`) ? 'page' : undefined}>{link.label}</a>
       ))}
     </nav>
   </div>
