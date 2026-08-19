@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
-<BaseLayout title="Admin Login | The Tool Shed" description="Private Tool Shed administration." path="/admin/login">
+<BaseLayout title="Admin Login | The Tool Shed" description="Private Tool Shed administration." path="/admin/login" noindex>
   <main class="admin-login">
     <section class="login-card" aria-labelledby="login-title">
       <span class="eyebrow">THE TOOL SHED · ADMIN</span>
@@ -17,19 +17,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   </main>
 </BaseLayout>
 <script>
-  import { createClient } from '@supabase/supabase-js';
-  const url = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
-  const key = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY;
-  const supabase = createClient(url, key);
   const form = document.querySelector<HTMLFormElement>('#login-form');
   const error = document.querySelector<HTMLElement>('#error');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     error?.setAttribute('hidden', '');
-    const email = (document.querySelector<HTMLInputElement>('#email'))?.value ?? '';
-    const password = (document.querySelector<HTMLInputElement>('#password'))?.value ?? '';
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError) {
+    const email = document.querySelector<HTMLInputElement>('#email')?.value ?? '';
+    const password = document.querySelector<HTMLInputElement>('#password')?.value ?? '';
+    const response = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
       if (error) { error.textContent = 'Invalid email or password.'; error.removeAttribute('hidden'); }
       return;
     }
