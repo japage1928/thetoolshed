@@ -1,5 +1,6 @@
 export type DbTool = {
   id: string; name: string; slug: string; description: string; category: string; best_for: string; tags: string[]; website_url: string; affiliate_url: string | null; icon_url: string | null; is_affiliate: boolean; is_featured_eligible: boolean; is_active: boolean; sort_order: number;
+  pricing_summary: string | null; pros: string[]; cons: string[]; use_cases: string[]; alternative_slugs: string[]; faq: Array<{ question: string; answer: string }>;
 };
 export type DbPost = { id: string; title: string; slug: string; excerpt: string; content: string; featured_image_url: string | null; category: string | null; tags: string[]; seo_title: string | null; seo_description: string | null; is_draft: boolean; published_at: string | null; created_at: string; updated_at: string; };
 export type DbWorkflow = { id: string; name: string; slug: string; description: string; category: string; difficulty: string; price: number; image_url: string | null; included: string[]; apps_required: string[]; payhip_product_id: string | null; featured: boolean; is_free: boolean; is_published: boolean; seo_title: string | null; seo_description: string | null; };
