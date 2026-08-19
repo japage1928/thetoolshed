@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getWorkflows } from '../../lib/supabase';
+
+const workflows = await getWorkflows();
+const categories = [...new Set(workflows.map((workflow) => workflow.category))];
+---
+
+<BaseLayout title="AI Workflows | The Tool Shed" description="Discover practical AI and automation workflows from The Tool Shed." path="/workflows">
+  <div class="wrapper workflows-page">
+    <header class="workflows-hero">
+      <span class="eyebrow">The Tool Shed</span>
+      <h1 class="page-title">Workflows</h1>
+      <p>Practical AI and automation workflows you can put to work without rebuilding the wheel.</p>
+    </header>
+    <nav class="workflow-filters" aria-label="Workflow categories">
+      <a href="/workflows" class="is-active">All</a>
+      {categories.map((category) => <a href={`#${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{category}</a>)}
+    </nav>
+    <section class="workflow-grid" aria-label="Workflows">
+      {workflows.map((workflow) => (
+        <article class="workflow-card" id={workflow.category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}>
+          {workflow.image_url && <img src={workflow.image_url} alt="" loading="lazy" />}
+          <div class="workflow-card__body">
+            <div class="workflow-card__meta"><span>{workflow.category}</span><span>{workflow.difficulty}</span></div>
+            <h2><a href={`/workflows/${workflow.slug}`}>{workflow.name}</a></h2>
+            <p>{workflow.description}</p>
+            <div class="workflow-card__bottom"><strong>{workflow.is_free ? 'Free' : `$${Number(workflow.price).toFixed(2)}`}</strong><a href={`/workflows/${workflow.slug}`}>View workflow →</a></div>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+.workflows-page{padding:4rem 0 5rem}.workflows-hero{max-width:48rem;margin-bottom:2rem}.workflows-hero p{color:var(--color-text-muted);font-size:1.08rem;line-height:1.7}.workflow-filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}.workflow-filters a{border:1px solid var(--color-border);border-radius:999px;padding:.45rem .75rem;color:#aaa69e;text-decoration:none;font-size:.78rem}.workflow-filters a:hover,.workflow-filters .is-active{border-color:var(--shed-blue);color:#fff}.workflow-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.workflow-card{overflow:hidden;border:1px solid var(--color-border);border-radius:.7rem;background:#10110f}.workflow-card>img{width:100%;aspect-ratio:16/9;object-fit:cover}.workflow-card__body{padding:1.1rem}.workflow-card__meta{display:flex;justify-content:space-between;color:#77736d;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em}.workflow-card h2{font-size:1.2rem;margin:.55rem 0}.workflow-card h2 a{color:#f1eee7;text-decoration:none}.workflow-card p{color:#aaa69e;line-height:1.55;font-size:.9rem;min-height:4.2rem}.workflow-card__bottom{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:.8rem;border-top:1px solid #25221e}.workflow-card__bottom strong{color:#f1eee7}.workflow-card__bottom a{color:var(--shed-blue);font-size:.8rem;font-weight:700;text-decoration:none}@media(max-width:900px){.workflow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.workflows-page{padding:2.5rem 0 4rem}.workflow-grid{grid-template-columns:1fr}}
+</style>
