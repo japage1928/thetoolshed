@@ -4,8 +4,63 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 <BaseLayout title="Analytics | Admin | The Tool Shed" description="Private analytics administration." path="/admin/analytics">
   <main class="admin-page">
     <a class="back" href="/admin">← Dashboard</a>
-    <header><span class="eyebrow">ADMIN</span><h1>Analytics</h1><p>Google Analytics 4 reporting area.</p></header>
-    <section class="panel"><h2>GA4</h2><p>The site's GA4 measurement ID is <strong>G-3CCH0VWGCF</strong>. Live reporting has not been connected to the admin dashboard yet, so no numbers are fabricated here.</p><p class="note">Once the GA4 reporting API is connected server-side, this page can display visitors, page views, traffic sources, tool clicks, workflow clicks, and other site events.</p></section>
+    <header><span class="eyebrow">ADMIN</span><h1>Analytics</h1><p>Live Google Analytics 4 reporting for The Tool Shed.</p></header>
+
+    <section class="panel status-panel"><div><span class="eyebrow">GA4</span><h2>Google Analytics 4</h2><p>Measurement ID: <strong>G-3CCH0VWGCF</strong></p></div><span id="status" class="status">Loading…</span></section>
+
+    <section id="error" class="panel error-panel" hidden></section>
+
+    <section class="metrics" id="metrics" aria-label="Analytics overview">
+      <article><span>ACTIVE USERS</span><strong id="active-users">—</strong><small>Last 28 days</small></article>
+      <article><span>TOTAL USERS</span><strong id="total-users">—</strong><small>Last 28 days</small></article>
+      <article><span>SESSIONS</span><strong id="sessions">—</strong><small>Last 28 days</small></article>
+      <article><span>PAGE VIEWS</span><strong id="page-views">—</strong><small>Last 28 days</small></article>
+    </section>
+
+    <div class="grid">
+      <section class="panel"><div class="section-heading"><h2>Top pages</h2><span>28 days</span></div><div id="pages" class="table-wrap"><p class="muted">Loading…</p></div></section>
+      <section class="panel"><div class="section-heading"><h2>Traffic sources</h2><span>28 days</span></div><div id="channels" class="table-wrap"><p class="muted">Loading…</p></div></section>
+    </div>
+
+    <p id="updated" class="updated"></p>
   </main>
 </BaseLayout>
-<style>.admin-page{max-width:1000px;margin:auto;padding:2.5rem 1.25rem 5rem}.back{color:#aaa69e;text-decoration:none;font-size:.8rem}.admin-page header{margin:2rem 0}.admin-page h1{margin:.3rem 0}.admin-page header p{color:#8f8b84}.panel{border:1px solid var(--color-border);border-radius:.7rem;background:#10110f;padding:1.4rem}.panel h2{font-size:1rem}.panel p{color:#aaa69e;line-height:1.65;font-size:.88rem}.panel .note{border-top:1px solid var(--color-border);padding-top:1rem}</style>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  const url = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
+  const key = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY;
+  const supabase = createClient(url, key);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = '/admin/login';
+  } else {
+    const response = await fetch('/api/admin/analytics', { headers: { Authorization: `Bearer ${session.access_token}` } });
+    const data = await response.json();
+    const status = document.querySelector('#status');
+    if (!response.ok || data.error) {
+      status!.textContent = 'Needs setup';
+      status!.classList.add('status--error');
+      const error = document.querySelector('#error') as HTMLElement;
+      error.hidden = false;
+      error.innerHTML = `<strong>GA4 reporting is not ready.</strong><p>${data.error || 'The reporting service could not load data.'}</p><p>Configure <code>GA4_PROPERTY_ID</code>, <code>GA4_SERVICE_ACCOUNT_EMAIL</code>, and <code>GA4_SERVICE_ACCOUNT_PRIVATE_KEY</code> in Netlify environment variables. The service account must have Viewer access to the GA4 property.</p>`;
+    } else {
+      status!.textContent = 'Live';
+      status!.classList.add('status--live');
+      const fmt = new Intl.NumberFormat();
+      document.querySelector('#active-users')!.textContent = fmt.format(data.overview.activeUsers);
+      document.querySelector('#total-users')!.textContent = fmt.format(data.overview.totalUsers);
+      document.querySelector('#sessions')!.textContent = fmt.format(data.overview.sessions);
+      document.querySelector('#page-views')!.textContent = fmt.format(data.overview.pageViews);
+      const pages = document.querySelector('#pages')!;
+      pages.innerHTML = data.pages.length ? data.pages.map((item: {path:string;views:number;users:number}) => `<div class="row"><span>${item.path}</span><strong>${fmt.format(item.views)}</strong></div>`).join('') : '<p class="muted">No page data yet.</p>';
+      const channels = document.querySelector('#channels')!;
+      channels.innerHTML = data.channels.length ? data.channels.map((item: {channel:string;sessions:number;users:number}) => `<div class="row"><span>${item.channel}</span><strong>${fmt.format(item.sessions)}</strong></div>`).join('') : '<p class="muted">No traffic data yet.</p>';
+      document.querySelector('#updated')!.textContent = `Updated ${new Date(data.generatedAt).toLocaleString()}`;
+    }
+  }
+</script>
+
+<style>
+.admin-page{max-width:1100px;margin:auto;padding:2.5rem 1.25rem 5rem}.back{color:#aaa69e;text-decoration:none;font-size:.8rem}.admin-page header{margin:2rem 0}.admin-page h1{margin:.3rem 0}.admin-page header p{color:#8f8b84}.panel{border:1px solid var(--color-border);border-radius:.7rem;background:#10110f;padding:1.25rem}.status-panel{display:flex;align-items:center;justify-content:space-between;gap:1rem}.status-panel h2{margin:.3rem 0;font-size:1.05rem}.status-panel p{margin:0;color:#aaa69e;font-size:.82rem}.status{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa69e}.status--live{color:#75c98b}.status--error{color:#e58b8b}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0}.metrics article{border:1px solid var(--color-border);border-radius:.7rem;background:#10110f;padding:1.15rem}.metrics span{display:block;color:#77736d;font-size:.63rem;letter-spacing:.1em}.metrics strong{display:block;font-size:1.7rem;margin:.4rem 0}.metrics small{color:#77736d}.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.section-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem}.section-heading h2{font-size:1rem;margin:0}.section-heading span{color:#77736d;font-size:.7rem}.table-wrap{display:grid}.row{display:flex;justify-content:space-between;gap:1rem;padding:.75rem 0;border-top:1px solid var(--color-border);font-size:.8rem}.row span{color:#aaa69e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.muted,.updated{color:#77736d;font-size:.78rem}.error-panel{margin:1rem 0;border-color:#593232}.error-panel strong{color:#e58b8b}.error-panel p{color:#aaa69e;line-height:1.6;font-size:.82rem}.error-panel code{color:#e1ddd5}.updated{text-align:right;margin-top:1rem}@media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}@media(max-width:500px){.metrics{grid-template-columns:1fr}.status-panel{align-items:flex-start;flex-direction:column}}
+</style>
