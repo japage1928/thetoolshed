@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Permanently move the default Netlify production URL to the primary domain.
+[[redirects]]
+  from = "https://thetoolshed.netlify.app/*"
+  to = "https://thetoolshed.work/:splat"
+  status = 301
+  force = true
+
 # The @astrojs/netlify adapter generates the required Netlify Functions
 # configuration automatically at build time (for the dynamic /api/blog/publish
 # route). No manual [functions] block is needed.
