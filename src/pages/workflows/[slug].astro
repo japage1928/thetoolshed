@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getWorkflowBySlug } from '../../lib/supabase';
 
-export const prerender = true;
+export const prerender = false;
 const workflow = await getWorkflowBySlug(Astro.params.slug ?? '');
 if (!workflow) return Astro.redirect('/workflows', 302);
 const description = workflow.seo_description || workflow.description;
