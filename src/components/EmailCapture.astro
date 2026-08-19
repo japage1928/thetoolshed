@@ -1,0 +1,51 @@
+---
+interface Props {
+  source?: string;
+  compact?: boolean;
+}
+const { source = 'website', compact = false } = Astro.props;
+---
+
+<section class:list={['email-capture', compact && 'email-capture--compact']} aria-labelledby={`email-heading-${source}`}>
+  <div>
+    <span class="eyebrow">FREE AI RESOURCES</span>
+    <h2 id={`email-heading-${source}`}>Get useful AI prompts and tools in your inbox.</h2>
+    <p>Join the Tool Shed list for practical prompts, workflow ideas, and useful AI finds. No daily inbox assault.</p>
+  </div>
+  <form class="email-capture__form" data-source={source}>
+    <label class="sr-only" for={`subscriber-email-${source}`}>Email address</label>
+    <input id={`subscriber-email-${source}`} name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+    <button type="submit">Get the free prompt pack <span>→</span></button>
+    <p class="email-capture__status" role="status" aria-live="polite" hidden></p>
+  </form>
+</section>
+
+<style>
+.email-capture{display:grid;grid-template-columns:1.2fr 1fr;gap:2rem;align-items:center;padding:1.5rem;border:1px solid var(--color-border);border-radius:.8rem;background:#0f100f}.email-capture h2{margin:.45rem 0;font-size:1.35rem}.email-capture p{color:#aaa69e;line-height:1.55;margin:.5rem 0 0}.email-capture__form{display:grid;gap:.65rem}.email-capture input{width:100%;box-sizing:border-box;padding:.8rem;border:1px solid var(--color-border);border-radius:.5rem;background:#090a09;color:#f1eee7}.email-capture button{border:0;border-radius:.5rem;padding:.8rem 1rem;background:#e9e4d8;color:#10110f;font-weight:800;cursor:pointer}.email-capture__status{font-size:.78rem}.email-capture--compact{grid-template-columns:1fr;margin-top:2rem}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:700px){.email-capture{grid-template-columns:1fr}}
+</style>
+
+<script>
+document.querySelectorAll<HTMLFormElement>('.email-capture__form').forEach((form) => {
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = form.querySelector<HTMLInputElement>('input[name="email"]');
+    const button = form.querySelector<HTMLButtonElement>('button');
+    const status = form.querySelector<HTMLElement>('.email-capture__status');
+    if (!input || !status || !button) return;
+    button.disabled = true;
+    status.hidden = false;
+    status.textContent = 'Saving your signup…';
+    try {
+      const response = await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: input.value, source: form.dataset.source, incentive: 'free-ai-prompt-pack' }) });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Signup failed');
+      status.textContent = 'You’re on the list. The prompt pack is coming soon.';
+      input.value = '';
+      const gtag = (window as any).gtag;
+      if (typeof gtag === 'function') gtag('event', 'email_signup', { source: form.dataset.source, incentive: 'free-ai-prompt-pack' });
+    } catch {
+      status.textContent = 'Something went wrong. Please try again.';
+    } finally { button.disabled = false; }
+  });
+});
+</script>
