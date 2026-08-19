@@ -32,6 +32,8 @@ const {
 const canonicalURL = new URL(path, Astro.site);
 const ogImageURL = image ? new URL(image, Astro.site).toString() : undefined;
 const pageTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
+const privateRoute = Astro.url.pathname.startsWith('/admin');
+const shouldNoindex = noindex || privateRoute;
 ---
 
 <!doctype html>
@@ -41,13 +43,13 @@ const pageTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-site-verification" content="Ay7N9xyMQ9vnzuyJ0aaK7HpW2B12wqN01bkfjz7bgIc" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap-index.xml" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} Blog`} href="/rss.xml" />
 
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {shouldNoindex && <meta name="robots" content="noindex, nofollow" />}
 
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content={SITE_NAME} />
