@@ -12,15 +12,21 @@
   status = 301
   force = true
 
+# Keep the old sitemap path working while making the canonical sitemap /sitemap.xml.
+[[redirects]]
+  from = "/sitemap-index.xml"
+  to = "/sitemap.xml"
+  status = 301
+  force = true
+
 # Never cache protected admin pages or admin API responses at the CDN.
-# This is especially important on custom domains so an old authenticated/unauthenticated
-# response cannot be replayed after the server-side auth middleware has changed.
 [[headers]]
   for = "/admin/*"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
     Netlify-CDN-Cache-Control = "no-store"
     Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
 
 [[headers]]
   for = "/api/admin/*"
@@ -28,7 +34,7 @@
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
     Netlify-CDN-Cache-Control = "no-store"
     Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
 
 # The @astrojs/netlify adapter generates the required Netlify Functions
-# configuration automatically at build time (for the dynamic /api/blog/publish
-# route). No manual [functions] block is needed.
+# configuration automatically at build time.
