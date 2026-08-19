@@ -1,7 +1,6 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 import netlify from '@astrojs/netlify';
-import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 
 const site = process.env.PUBLIC_SITE_URL || 'https://thetoolshed.work';
@@ -19,8 +18,5 @@ export default defineConfig({
       GITHUB_BRANCH: envField.string({ context: 'server', access: 'secret' }),
     },
   },
-  integrations: [
-    sitemap({ filter: (page) => !page.includes('/api/') }),
-    mdx(),
-  ],
+  integrations: [mdx()],
 });
