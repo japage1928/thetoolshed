@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getWorkflows } from '../../../lib/supabase';
+const workflows = await getWorkflows();
+---
+<BaseLayout title="Workflows | Admin | The Tool Shed" description="Private workflow administration." path="/admin/workflows">
+  <main class="admin-page">
+    <a class="back" href="/admin">← Dashboard</a>
+    <header><div><span class="eyebrow">ADMIN</span><h1>Workflows</h1><p>Review the workflow records currently stored in Supabase.</p></div><a class="button" href="/workflows">View public page →</a></header>
+    <section class="list">{workflows.length ? workflows.map((workflow) => <article><div><span class="status">{workflow.is_published ? 'PUBLISHED' : 'DRAFT'}</span><h2>{workflow.name}</h2><p>{workflow.description}</p></div><a href={`/workflows/${workflow.slug}`}>View →</a></article>) : <p class="empty">No workflow records found.</p>}</section>
+  </main>
+</BaseLayout>
+<style>.admin-page{max-width:1100px;margin:auto;padding:2.5rem 1.25rem 5rem}.back{color:#aaa69e;text-decoration:none;font-size:.8rem}.admin-page header{display:flex;justify-content:space-between;gap:1rem;align-items:end;margin:2rem 0}.admin-page h1{margin:.3rem 0}.admin-page header p{color:#8f8b84}.button{padding:.7rem .9rem;border:1px solid var(--color-border);border-radius:.5rem;color:#eee;text-decoration:none;font-size:.8rem}.list{display:grid;gap:.75rem}.list article{display:flex;justify-content:space-between;gap:1rem;padding:1rem;border:1px solid var(--color-border);border-radius:.65rem;background:#10110f}.list h2{font-size:1rem;margin:.4rem 0}.list p{color:#8f8b84;font-size:.82rem;margin:0;line-height:1.5}.list a{color:#aaa69e;text-decoration:none;white-space:nowrap}.status{font-size:.62rem;color:#77736d;letter-spacing:.1em}.empty{color:#8f8b84}@media(max-width:600px){.admin-page header{align-items:flex-start;flex-direction:column}.list article{flex-direction:column}}</style>
