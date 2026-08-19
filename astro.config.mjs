@@ -4,7 +4,7 @@ import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 
-const site = process.env.PUBLIC_SITE_URL || 'https://thetoolshed.netlify.app';
+const site = process.env.PUBLIC_SITE_URL || 'https://thetoolshed.work';
 
 export default defineConfig({
   site,
