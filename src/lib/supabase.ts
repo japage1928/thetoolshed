@@ -51,8 +51,10 @@ export type DbWorkflow = {
   seo_description: string | null;
 };
 
-const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Netlify provides these values at runtime/build time. The publishable key is safe
+// for the public client and is also used by these server-rendered read queries.
+const url = process.env.PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 async function query<T>(table: string, params: string): Promise<T[]> {
   if (!url || !key) return [];
