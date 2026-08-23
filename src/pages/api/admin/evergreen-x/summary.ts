@@ -9,7 +9,7 @@ async function adminUser(request: Request) {
   const response = await fetch(`${url}/auth/v1/user`, { headers: { apikey: key, Authorization: `Bearer ${token}` } });
   if (!response.ok) return null;
   const user = await response.json();
-  const allowed = (process.env.EVERGREEN_X_ADMIN_EMAILS || '').split(',').map((v) => v.trim().toLowerCase()).filter(Boolean);
+  const allowed = (process.env.TOOL_SHED_ADMIN_EMAILS || process.env.EVERGREEN_X_ADMIN_EMAILS || '').split(',').map((v) => v.trim().toLowerCase()).filter(Boolean);
   if (!user?.email || !allowed.includes(String(user.email).toLowerCase())) return null;
   return user;
 }
