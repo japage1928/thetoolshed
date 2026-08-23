@@ -2,11 +2,11 @@ import type { APIRoute } from 'astro';
 import {
   getServerDb,
   json,
-  publishToX,
   requireUuid,
   safeError,
   verifyInternalService,
 } from '../../../../lib/evergreen-x/server';
+import { publishToXNormalized } from '../../../../lib/evergreen-x/x-publish';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (attemptError) throw attemptError;
     if (!attempt || attempt.status !== 'reserved') return json({ error: 'Publish attempt does not match this reservation.' }, 409);
 
-    const result = await publishToX(userId, post.content);
+    const result = await publishToXNormalized(userId, post.content);
     return json(result, result.ok ? 200 : (result.permanent ? 422 : 503));
   } catch (error) {
     return safeError(error);
