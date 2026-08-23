@@ -86,8 +86,10 @@ function noStore(response: Response) {
 export const onRequest = defineMiddleware(async ({ request, redirect }, next) => {
   const url = new URL(request.url);
   const isAdmin = url.pathname.startsWith('/admin') && url.pathname !== '/admin/login';
-  const isSaasApp = url.pathname.startsWith('/app/evergreen-x');
-  const saasLaunched = process.env.EVERGREEN_X_LAUNCH_ENABLED === 'true';
+  const isEvergreenApp = url.pathname.startsWith('/app/evergreen-x');
+  const isStoryStudioApp = url.pathname.startsWith('/app/story-studio');
+  const isSaasApp = isEvergreenApp || isStoryStudioApp;
+  const evergreenLaunched = process.env.EVERGREEN_X_LAUNCH_ENABLED === 'true';
 
   if (!isAdmin && !isSaasApp) return next();
 
@@ -96,7 +98,7 @@ export const onRequest = defineMiddleware(async ({ request, redirect }, next) =>
   }
 
   if (isSaasApp) {
-    if (!saasLaunched) return noStore(redirect('/tools/evergreen-x-scheduler?coming_soon=1', 302));
+    if (isEvergreenApp && !evergreenLaunched) return noStore(redirect('/tools/evergreen-x-scheduler?coming_soon=1', 302));
     const user = await getSupabaseUser(getCookie(request, SAAS_COOKIE));
     if (!user) {
       const refreshed = await refreshSaasSession(request);
