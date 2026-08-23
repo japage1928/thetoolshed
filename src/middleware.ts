@@ -15,18 +15,25 @@ function authConfig() {
   };
 }
 
-async function validSupabaseToken(token: string | undefined) {
+function allowedAdminEmails() {
+  return (process.env.TOOL_SHED_ADMIN_EMAILS || process.env.EVERGREEN_X_ADMIN_EMAILS || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function getSupabaseUser(token: string | undefined) {
   const { url, key } = authConfig();
-  if (!token || !url || !key) return false;
+  if (!token || !url || !key) return null;
   try {
     const response = await fetch(`${url}/auth/v1/user`, {
       headers: { apikey: key, Authorization: `Bearer ${decodeURIComponent(token)}` },
     });
-    if (!response.ok) return false;
+    if (!response.ok) return null;
     const user = await response.json();
-    return Boolean(user?.id && user?.email);
+    return user?.id && user?.email ? user : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -71,13 +78,14 @@ export const onRequest = defineMiddleware(async ({ request, redirect }, next) =>
   if (!isAdmin && !isSaasApp) return next();
 
   if (isAdmin) {
-    const valid = await validSupabaseToken(getCookie(request, ADMIN_COOKIE));
-    if (!valid) return noStore(redirect('/admin/login', 302));
+    const user = await getSupabaseUser(getCookie(request, ADMIN_COOKIE));
+    const allowed = allowedAdminEmails();
+    if (!user || !allowed.length || !allowed.includes(String(user.email).toLowerCase())) return noStore(redirect('/admin/login', 302));
   }
 
   if (isSaasApp) {
-    const valid = await validSupabaseToken(getCookie(request, SAAS_COOKIE));
-    if (!valid) {
+    const user = await getSupabaseUser(getCookie(request, SAAS_COOKIE));
+    if (!user) {
       const refreshed = await refreshSaasSession(request);
       if (!refreshed) return noStore(redirect(`/account?next=${encodeURIComponent(url.pathname)}`, 302));
       const response = noStore(await next());
