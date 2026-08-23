@@ -1,13 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-const next = Astro.url.searchParams.get('next') || '/app/evergreen-x';
+const next = Astro.url.searchParams.get('next') || '/';
 ---
 <BaseLayout title="Account" description="Sign in or create your Tool Shed account." path="/account" noindex>
   <section class="account-shell">
     <div class="card">
       <span class="eyebrow">THE TOOL SHED · ACCOUNT</span>
-      <h1>Evergreen X Scheduler</h1>
-      <p>Sign in or create an account to manage your scheduler.</p>
+      <h1>Your Tool Shed account</h1>
+      <p>Sign in once to use Tool Shed apps like Story Studio and the Evergreen X Scheduler.</p>
       <div class="tabs"><button class="tab active" data-mode="login">Sign in</button><button class="tab" data-mode="register">Create account</button></div>
       <form id="auth-form" data-mode="login" data-next={next}>
         <label>Email<input id="email" type="email" autocomplete="email" required /></label>
@@ -46,7 +46,7 @@ const next = Astro.url.searchParams.get('next') || '/app/evergreen-x';
         if (status) status.textContent = 'Check your email to confirm your account, then sign in.';
         return;
       }
-      window.location.href = form.dataset.next || '/app/evergreen-x';
+      window.location.href = form.dataset.next || '/';
     } catch (error) {
       if (status) status.textContent = error instanceof Error ? error.message : 'Authentication failed.';
     } finally {
