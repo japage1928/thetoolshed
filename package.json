@@ -8,7 +8,10 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "typecheck": "astro check",
+    "lint": "eslint src/lib/evergreen-x src/pages/api/auth src/pages/api/evergreen-x src/pages/api/internal/evergreen-x src/pages/api/admin/evergreen-x tests",
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.5",
@@ -26,6 +29,11 @@
     }
   },
   "devDependencies": {
-    "@types/sanitize-html": "^2.16.0"
+    "@astrojs/check": "^0.9.10",
+    "@types/sanitize-html": "^2.16.0",
+    "eslint": "^9.39.5",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.67.0"
   }
 }

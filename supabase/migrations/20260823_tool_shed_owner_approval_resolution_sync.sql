@@ -1,0 +1,5 @@
+-- Applied to production on 2026-08-23.
+-- Updates public.admin_resolve_approval so owner approval/denial keeps
+-- company_autonomy_queue and linked company_interdepartment_requests in sync.
+-- Approve: queue -> queued/autonomous, linked request -> requested.
+-- Deny: queue -> denied, linked request -> blocked with owner reason.

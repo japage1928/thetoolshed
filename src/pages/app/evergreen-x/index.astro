@@ -1,0 +1,155 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Evergreen X Scheduler Dashboard" description="Manage your evergreen X scheduler." path="/app/evergreen-x" noindex>
+  <section class="app-shell">
+    <div class="topbar">
+      <div><span class="eyebrow">EVERGREEN X POST SCHEDULER</span><h1>Your scheduler</h1></div>
+      <div class="top-actions"><a href="/tools/evergreen-x-scheduler">Product page</a><button id="logout">Sign out</button></div>
+    </div>
+
+    <div id="notice" class="notice" hidden></div>
+
+    <section class="cards" id="summary-cards">
+      <article><span>Scheduler</span><strong id="scheduler-state">Loading…</strong></article>
+      <article><span>X account</span><strong id="x-state">Loading…</strong><small id="x-user"></small></article>
+      <article><span>Next scheduled post</span><strong id="next-post">—</strong></article>
+      <article><span>Published this period</span><strong id="published-count">0</strong></article>
+      <article><span>Regular usage</span><strong id="regular-usage">—</strong></article>
+      <article><span>URL usage</span><strong id="url-usage">—</strong></article>
+      <article><span>Ready queue</span><strong id="ready-count">0</strong></article>
+      <article><span>Failed</span><strong id="failed-count">0</strong></article>
+    </section>
+
+    <section class="panel connection-panel">
+      <div><span class="eyebrow">X CONNECTION</span><h2>Customer-owned X account</h2><p>OAuth credentials stay server-side. The scheduler never uses the site owner's X account.</p></div>
+      <div class="panel-actions"><a id="connect-x" class="primary" href="/api/evergreen-x/x/connect">Connect X</a><button id="disconnect-x" class="danger">Disconnect</button></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><span class="eyebrow">POST LIBRARY</span><h2>Add evergreen content</h2></div><span id="quota-preview" class="muted"></span></div>
+      <form id="post-form" class="composer">
+        <textarea id="post-content" maxlength="280" rows="4" placeholder="Write an evergreen X post…" required></textarea>
+        <div class="composer-foot"><span><b id="char-count">0</b>/280 · <span id="category-preview">Regular post</span></span><div><button type="submit" data-status="DRAFT">Save draft</button><button type="submit" data-status="READY" class="primary">Add READY</button></div></div>
+      </form>
+      <div id="post-list" class="post-list"><p class="muted">Loading posts…</p></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><span class="eyebrow">SCHEDULER SETTINGS</span><h2>Posting pace</h2></div></div>
+      <form id="settings-form" class="settings-grid">
+        <label class="toggle"><input id="scheduler_enabled" type="checkbox" /> <span>Scheduler enabled</span></label>
+        <label>Minimum interval (minutes)<input id="minimum_interval_minutes" type="number" min="30" step="1" required /></label>
+        <label>Maximum interval (minutes)<input id="maximum_interval_minutes" type="number" min="30" step="1" required /></label>
+        <label>Daily post limit<input id="daily_post_limit" type="number" min="1" max="100" step="1" required /></label>
+        <label>Timezone<input id="timezone" type="text" placeholder="America/Detroit" required /></label>
+        <p class="hint">Example: 120–360 minutes means each next post can be scheduled randomly between 2 and 6 hours later.</p>
+        <button type="submit" class="primary">Save settings</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><span class="eyebrow">SUBSCRIPTION</span><h2>Plan & billing</h2></div><button id="manage-billing">Manage subscription</button></div>
+      <div id="plan-list" class="plan-list"><p class="muted">Loading plans…</p></div>
+    </section>
+  </section>
+</BaseLayout>
+
+<script>
+  type Dashboard = any;
+  let dashboard: Dashboard = null;
+  const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector);
+  const notice = $('#notice');
+  const showNotice = (message: string, error = false) => { if (!notice) return; notice.hidden = false; notice.textContent = message; notice.classList.toggle('error', error); };
+  const api = async (path: string, init: RequestInit = {}) => {
+    const response = await fetch(`/api/evergreen-x/${path}`, { ...init, headers: { 'content-type': 'application/json', ...(init.headers || {}) } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+    return data;
+  };
+  const formatDate = (value?: string) => value ? new Date(value).toLocaleString() : '—';
+  const usageText = (bucket: any) => `${bucket?.used ?? 0} / ${bucket?.limit ?? 'Not configured'}`;
+  const classifyPreview = (content: string) => /(^|[^\w])(https?:\/\/|www\.)\S+/i.test(content) || /(^|[^\w])[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+(\/\S*)?/i.test(content);
+
+  async function loadDashboard() {
+    dashboard = await api('dashboard');
+    $('#scheduler-state')!.textContent = dashboard.scheduler?.scheduler_enabled ? 'Active' : 'Paused';
+    $('#x-state')!.textContent = dashboard.x?.connection_status === 'connected' && dashboard.x?.oauth_relay_ready ? 'Connected' : dashboard.x?.connection_status === 'reconnect_required' ? 'Reconnect X' : 'Not connected';
+    $('#x-user')!.textContent = dashboard.x?.x_username ? `@${dashboard.x.x_username}` : '';
+    $('#next-post')!.textContent = formatDate(dashboard.scheduler?.next_post_at);
+    $('#published-count')!.textContent = String(dashboard.counts?.published ?? 0);
+    $('#regular-usage')!.textContent = usageText(dashboard.usage?.regular);
+    $('#url-usage')!.textContent = usageText(dashboard.usage?.url);
+    $('#ready-count')!.textContent = String(dashboard.counts?.ready ?? 0);
+    $('#failed-count')!.textContent = String(dashboard.counts?.failed ?? 0);
+    const connected = dashboard.x?.connection_status === 'connected' && dashboard.x?.oauth_relay_ready;
+    $('#connect-x')!.textContent = connected ? 'Reconnect X' : 'Connect X';
+    ($('#disconnect-x') as HTMLButtonElement).disabled = !connected;
+    const s = dashboard.scheduler || {};
+    ($('#scheduler_enabled') as HTMLInputElement).checked = Boolean(s.scheduler_enabled);
+    ($('#minimum_interval_minutes') as HTMLInputElement).value = String(s.minimum_interval_minutes ?? 120);
+    ($('#maximum_interval_minutes') as HTMLInputElement).value = String(s.maximum_interval_minutes ?? 360);
+    ($('#daily_post_limit') as HTMLInputElement).value = String(s.daily_post_limit ?? 8);
+    ($('#timezone') as HTMLInputElement).value = s.timezone || 'America/Detroit';
+    updateQuotaPreview();
+  }
+
+  function updateQuotaPreview() {
+    const content = ($('#post-content') as HTMLTextAreaElement)?.value || '';
+    const isUrl = classifyPreview(content);
+    $('#category-preview')!.textContent = isUrl ? 'URL post' : 'Regular post';
+    const bucket = isUrl ? dashboard?.usage?.url : dashboard?.usage?.regular;
+    const remaining = bucket?.limit == null ? 'limit not configured' : `${Math.max(0, bucket.limit - bucket.used)} remaining`;
+    $('#quota-preview')!.textContent = `${isUrl ? 'URL' : 'Regular'} quota: ${remaining}`;
+  }
+
+  async function loadPosts() {
+    const { posts } = await api('posts');
+    const list = $('#post-list')!;
+    if (!posts.length) { list.innerHTML = '<p class="muted">No posts yet. Add your first evergreen post above.</p>'; return; }
+    list.innerHTML = posts.map((post: any) => `
+      <article class="post" data-id="${post.id}">
+        <div class="post-main"><div class="badges"><span>${post.contains_url ? 'URL' : 'Regular'}</span><span>${post.status}</span><span>Attempts ${post.attempt_count}</span></div><p>${escapeHtml(post.content)}</p>${post.last_error ? `<small class="post-error">${escapeHtml(post.last_error)}</small>` : ''}<small>${post.scheduled_at ? `Scheduled ${formatDate(post.scheduled_at)} · ` : ''}${post.posted_at ? `Posted ${formatDate(post.posted_at)}` : ''}</small></div>
+        <div class="post-actions">${post.status === 'DRAFT' || post.status === 'PAUSED' ? '<button data-action="ready">READY</button>' : ''}${['READY','FAILED','PAUSED'].includes(post.status) ? '<button data-action="draft">DRAFT</button>' : ''}${post.status === 'FAILED' ? '<button data-action="retry">Retry</button>' : ''}${!['RESERVED','POSTED'].includes(post.status) ? '<button data-action="edit">Edit</button>' : ''}${post.status !== 'RESERVED' ? '<button data-action="delete" class="danger">Delete</button>' : ''}</div>
+      </article>`).join('');
+  }
+
+  function escapeHtml(value: string) { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
+
+  async function loadPlans() {
+    const { plans, billingConfigured } = await api('plans');
+    const container = $('#plan-list')!;
+    if (!plans.length) { container.innerHTML = '<p class="muted">No active plans are configured yet.</p>'; return; }
+    container.innerHTML = plans.map((plan: any) => `<article><h3>${escapeHtml(plan.name)}</h3><p>Regular posts: ${plan.regular_post_limit ?? 'Not configured'}<br>URL posts: ${plan.url_post_limit}</p><strong>${plan.price_cents == null ? 'Price pending' : `$${(plan.price_cents/100).toFixed(2)}/${plan.billing_interval}`}</strong><button data-plan="${plan.id}" ${billingConfigured ? '' : 'disabled'}>${billingConfigured ? 'Choose plan' : 'Billing setup pending'}</button></article>`).join('');
+  }
+
+  $('#post-content')?.addEventListener('input', () => { const value = ($('#post-content') as HTMLTextAreaElement).value; $('#char-count')!.textContent = String(Array.from(value).length); updateQuotaPreview(); });
+  $('#post-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null;
+    const content = ($('#post-content') as HTMLTextAreaElement).value;
+    try { await api('posts', { method: 'POST', body: JSON.stringify({ content, status: submitter?.dataset.status }) }); ($('#post-content') as HTMLTextAreaElement).value = ''; $('#char-count')!.textContent = '0'; await Promise.all([loadDashboard(), loadPosts()]); showNotice('Post saved.'); } catch (error) { showNotice(error instanceof Error ? error.message : 'Unable to save post.', true); }
+  });
+  $('#post-list')?.addEventListener('click', async (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]'); if (!button) return;
+    const row = button.closest<HTMLElement>('.post'); if (!row?.dataset.id) return;
+    const action = button.dataset.action!;
+    try {
+      if (action === 'delete') await api(`posts/${row.dataset.id}`, { method: 'DELETE' });
+      else if (action === 'edit') { const current = row.querySelector('p')?.textContent || ''; const content = prompt('Edit post', current); if (content == null) return; await api(`posts/${row.dataset.id}`, { method: 'PATCH', body: JSON.stringify({ content }) }); }
+      else await api(`posts/${row.dataset.id}/${action}`, { method: 'POST', body: '{}' });
+      await Promise.all([loadDashboard(), loadPosts()]);
+    } catch (error) { showNotice(error instanceof Error ? error.message : 'Unable to update post.', true); }
+  });
+  $('#settings-form')?.addEventListener('submit', async (event) => { event.preventDefault(); try { await api('settings', { method: 'PATCH', body: JSON.stringify({ scheduler_enabled: ($('#scheduler_enabled') as HTMLInputElement).checked, minimum_interval_minutes: Number(($('#minimum_interval_minutes') as HTMLInputElement).value), maximum_interval_minutes: Number(($('#maximum_interval_minutes') as HTMLInputElement).value), daily_post_limit: Number(($('#daily_post_limit') as HTMLInputElement).value), timezone: ($('#timezone') as HTMLInputElement).value.trim() }) }); await loadDashboard(); showNotice('Scheduler settings saved.'); } catch (error) { showNotice(error instanceof Error ? error.message : 'Unable to save settings.', true); } });
+  $('#disconnect-x')?.addEventListener('click', async () => { if (!confirm('Disconnect this X account?')) return; try { await api('x/disconnect', { method: 'POST', body: '{}' }); await loadDashboard(); } catch (error) { showNotice(error instanceof Error ? error.message : 'Unable to disconnect X.', true); } });
+  $('#plan-list')?.addEventListener('click', async (event) => { const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-plan]'); if (!button?.dataset.plan) return; try { const { url } = await api('billing/checkout', { method: 'POST', body: JSON.stringify({ plan_id: button.dataset.plan }) }); window.location.href = url; } catch (error) { showNotice(error instanceof Error ? error.message : 'Billing is unavailable.', true); } });
+  $('#manage-billing')?.addEventListener('click', async () => { try { const { url } = await api('billing/portal', { method: 'POST', body: '{}' }); window.location.href = url; } catch (error) { showNotice(error instanceof Error ? error.message : 'Billing portal is unavailable.', true); } });
+  $('#logout')?.addEventListener('click', async () => { await fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); window.location.href = '/account'; });
+
+  Promise.all([loadDashboard(), loadPosts(), loadPlans()]).catch((error) => showNotice(error instanceof Error ? error.message : 'Unable to load dashboard.', true));
+</script>
+
+<style>
+.app-shell{width:min(1180px,calc(100% - 2rem));margin:0 auto;padding:3rem 0 6rem}.topbar,.panel-head,.connection-panel{display:flex;justify-content:space-between;gap:1rem;align-items:center}.topbar h1{font-size:clamp(2rem,5vw,3.6rem);margin:.3rem 0}.eyebrow{font-size:.72rem;letter-spacing:.15em;font-weight:800;color:#c7a76a}.top-actions,.panel-actions{display:flex;gap:.6rem;align-items:center}.top-actions a,.top-actions button,.panel button,.panel a{border:1px solid var(--color-border);border-radius:.5rem;padding:.65rem .8rem;background:#151613;color:#e9e4d8;text-decoration:none;font-weight:750;cursor:pointer}.primary{background:#ece6da!important;color:#111!important;border-color:#ece6da!important}.danger{color:#e6a0a0!important}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin:1.5rem 0}.cards article,.panel{border:1px solid var(--color-border);border-radius:.8rem;background:#10110f}.cards article{padding:1rem;display:grid;gap:.35rem}.cards span,.cards small,.muted{color:#8f8b84;font-size:.8rem}.cards strong{font-size:1.15rem}.panel{padding:1.35rem;margin-top:1rem}.panel h2{margin:.3rem 0}.panel p{color:#969188;line-height:1.55}.notice{padding:.8rem 1rem;border:1px solid #6e643e;background:#17160f;border-radius:.5rem;color:#d5c18d}.notice.error{border-color:#713f3f;color:#e4a3a3}.composer{display:grid;gap:.7rem}.composer textarea,.settings-grid input{width:100%;box-sizing:border-box;border:1px solid var(--color-border);border-radius:.55rem;background:#090a09;color:#f1eee7;padding:.85rem}.composer-foot{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:#8f8b84;font-size:.8rem}.composer-foot div{display:flex;gap:.5rem}.post-list{display:grid;gap:.65rem;margin-top:1rem}.post{display:flex;justify-content:space-between;gap:1rem;padding:1rem;border:1px solid var(--color-border);border-radius:.65rem;background:#0b0c0a}.post-main{min-width:0}.post p{color:#f0ece4;white-space:pre-wrap;overflow-wrap:anywhere}.post small{color:#817d76}.post-error{display:block!important;color:#e4a3a3!important;margin:.35rem 0}.badges{display:flex;gap:.35rem;flex-wrap:wrap}.badges span{font-size:.68rem;padding:.2rem .4rem;border-radius:.35rem;border:1px solid var(--color-border);color:#aaa69e}.post-actions{display:flex;gap:.35rem;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}.settings-grid label{display:grid;gap:.35rem;color:#aaa69e;font-size:.8rem;font-weight:700}.settings-grid .toggle{display:flex;align-items:center}.settings-grid .toggle input{width:auto}.hint{grid-column:1/-1;margin:0}.settings-grid button{width:max-content}.plan-list{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}.plan-list article{padding:1rem;border:1px solid var(--color-border);border-radius:.6rem}.plan-list article button{display:block;margin-top:.8rem;width:100%}@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.plan-list{grid-template-columns:1fr}.topbar,.connection-panel{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.cards{grid-template-columns:1fr}.panel-head,.composer-foot,.post{align-items:stretch;flex-direction:column}.settings-grid{grid-template-columns:1fr}.top-actions,.panel-actions{width:100%;flex-wrap:wrap}}
+</style>

@@ -1,0 +1,46 @@
+name: Evergreen X SaaS CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/evergreen-x/**'
+      - 'src/pages/api/auth/**'
+      - 'src/pages/api/evergreen-x/**'
+      - 'src/pages/api/internal/evergreen-x/**'
+      - 'src/pages/api/admin/**'
+      - 'src/pages/app/evergreen-x/**'
+      - 'src/pages/admin/evergreen-x.astro'
+      - 'src/pages/tools/evergreen-x-scheduler.astro'
+      - 'src/pages/account.astro'
+      - 'src/middleware.ts'
+      - 'tests/**'
+      - 'supabase/migrations/**'
+      - 'package.json'
+      - 'eslint.config.js'
+      - 'netlify.toml'
+      - '.github/workflows/evergreen-x-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type check
+        run: npm run typecheck
+      - name: Lint new server code
+        run: npm run lint
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+        env:
+          PUBLIC_SITE_URL: https://thetoolshed.work
+          PUBLIC_SUPABASE_URL: https://example.supabase.co
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: test_publishable_key

@@ -5,11 +5,36 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[context.deploy-preview]
+  command = "npm run typecheck && npm run lint && npm test && npm run build"
+
 [[redirects]]
   from = "https://thetoolshed.netlify.app/*"
   to = "https://thetoolshed.work/:splat"
   status = 301
   force = true
+
+# Protect public account endpoints from brute-force and signup abuse.
+[[redirects]]
+  from = "/api/auth/*"
+  to = "/api/auth/:splat"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 10
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
+
+# The scheduler calls this once per reserved publish; aggressive client bursts are never legitimate.
+[[redirects]]
+  from = "/api/internal/evergreen-x/*"
+  to = "/api/internal/evergreen-x/:splat"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 30
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
 
 [[redirects]]
   from = "/sitemap-index.xml"
@@ -39,6 +64,30 @@
 
 [[headers]]
   for = "/api/admin/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/app/evergreen-x/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/api/evergreen-x/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/api/internal/evergreen-x/*"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
     Netlify-CDN-Cache-Control = "no-store"

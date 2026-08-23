@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { hasAdminSession } from '../../lib/admin-auth';
+if (!(await hasAdminSession(Astro.request))) return Astro.redirect('/admin/login', 302);
+---
+<BaseLayout title="Approvals | The Tool Shed" description="Owner approval queue." path="/admin/approvals" noindex>
+  <main class="shell">
+    <header><div><span class="eyebrow">OWNER CONTROL</span><h1>Approval Queue</h1><p>Anything escalated for human approval lands here with the context needed to make a decision.</p></div><a href="/admin">← Dashboard</a></header>
+    <div class="summary"><strong id="count">—</strong><span>waiting for your decision</span></div>
+    <div id="notice" class="notice" hidden></div>
+    <section id="queue" class="queue"><p class="muted">Loading approvals…</p></section>
+  </main>
+</BaseLayout>
+<script>
+  const queue = document.querySelector<HTMLElement>('#queue')!;
+  const count = document.querySelector<HTMLElement>('#count')!;
+  const notice = document.querySelector<HTMLElement>('#notice')!;
+  const esc = (value: unknown) => { const d=document.createElement('div'); d.textContent=String(value ?? ''); return d.innerHTML; };
+  const money = (v: unknown) => v == null ? '—' : `$${Number(v).toFixed(2)}`;
+  const show = (m:string, bad=false) => { notice.hidden=false; notice.textContent=m; notice.classList.toggle('bad',bad); };
+
+  async function load() {
+    const r = await fetch('/api/admin/approvals', { headers: { accept: 'application/json' } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Unable to load approvals.');
+    const items = Array.isArray(data.items) ? data.items : [];
+    count.textContent = String(items.length);
+    if (!items.length) { queue.innerHTML='<article class="empty"><h2>Nothing waiting</h2><p>The company has no items requiring your approval.</p></article>'; return; }
+    queue.innerHTML = items.map((item:any) => `<article class="item" data-id="${esc(item.id)}">
+      <div class="item-head"><div><div class="badges"><span>${esc(item.priority || 'normal')}</span><span>${esc(item.approval_level)}</span><span>${esc(item.department_key || item.assigned_department || 'company')}</span></div><h2>${esc(item.title || item.request_objective || 'Approval request')}</h2></div><time>${new Date(item.created_at).toLocaleString()}</time></div>
+      <p class="description">${esc(item.description || item.request_objective || 'No description provided.')}</p>
+      <dl><div><dt>Source</dt><dd>${esc(item.source_executive || item.requester_department || 'Unknown')}</dd></div><div><dt>Action</dt><dd>${esc(item.action_type || '—')}</dd></div><div><dt>Estimated cost</dt><dd>${money(item.estimated_cost)}</dd></div><div><dt>Estimated value</dt><dd>${money(item.estimated_value)}</dd></div><div><dt>Risk</dt><dd>${esc(item.risk_class || '—')}</dd></div><div><dt>Expected outcome</dt><dd>${esc(item.expected_outcome || '—')}</dd></div></dl>
+      ${item.last_error ? `<div class="error-detail"><b>Last error</b><p>${esc(item.last_error)}</p></div>` : ''}
+      ${item.request_evidence ? `<details><summary>Evidence / supporting details</summary><pre>${esc(JSON.stringify(item.request_evidence,null,2))}</pre></details>` : ''}
+      <label>Decision note <textarea rows="2" placeholder="Optional reason or instruction"></textarea></label>
+      <div class="actions"><button data-decision="deny" class="deny">Deny</button><button data-decision="approve" class="approve">Approve</button></div>
+    </article>`).join('');
+  }
+
+  queue.addEventListener('click', async (event) => {
+    const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button[data-decision]'); if(!button) return;
+    const item=button.closest<HTMLElement>('.item'); if(!item?.dataset.id) return;
+    const decision=button.dataset.decision!;
+    if (decision==='deny' && !confirm('Deny this item?')) return;
+    item.querySelectorAll('button').forEach((b:any)=>b.disabled=true);
+    const reason=(item.querySelector('textarea') as HTMLTextAreaElement)?.value || '';
+    const r=await fetch('/api/admin/approvals',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({queue_id:item.dataset.id,decision,reason})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){ item.querySelectorAll('button').forEach((b:any)=>b.disabled=false); show(data.error||'Unable to resolve item.',true); return; }
+    show(decision==='approve' ? 'Approved and returned to the execution queue.' : 'Denied and closed.');
+    await load();
+  });
+
+  load().catch((e)=>show(e.message,true));
+</script>
+<style>
+.shell{width:min(1100px,calc(100% - 2rem));margin:0 auto;padding:3rem 0 6rem}.shell header{display:flex;justify-content:space-between;gap:2rem;align-items:flex-start}.shell header h1{font-size:clamp(2rem,6vw,4rem);margin:.35rem 0}.shell header p,.muted{color:#938f87}.shell header a{color:#c9c3b8;text-decoration:none}.eyebrow{font-size:.7rem;letter-spacing:.16em;color:#c7a76a;font-weight:800}.summary{display:flex;gap:.6rem;align-items:baseline;margin:2rem 0}.summary strong{font-size:2rem}.summary span{color:#8e8a83}.queue{display:grid;gap:1rem}.item,.empty{border:1px solid var(--color-border);background:#10110f;border-radius:.8rem;padding:1.3rem}.item-head{display:flex;justify-content:space-between;gap:1rem}.item-head h2{margin:.55rem 0;font-size:1.2rem}.item time{font-size:.75rem;color:#77736d;white-space:nowrap}.badges{display:flex;gap:.4rem;flex-wrap:wrap}.badges span{padding:.25rem .45rem;border:1px solid #3a3935;border-radius:99px;font-size:.65rem;text-transform:uppercase;color:#bcb6ab}.description{color:#d3cec5;line-height:1.55}dl{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin:1rem 0}dl div{border-top:1px solid #292a27;padding-top:.55rem}dt{font-size:.65rem;color:#77736d;text-transform:uppercase}dd{margin:.2rem 0 0;font-size:.85rem}details{margin:1rem 0;color:#aaa59c}pre{white-space:pre-wrap;overflow:auto;background:#090a09;padding:.8rem;border-radius:.5rem;font-size:.72rem}.item label{display:grid;gap:.4rem;font-size:.75rem;color:#8f8b84}.item textarea{background:#090a09;color:#eee9df;border:1px solid #33332f;border-radius:.5rem;padding:.7rem}.actions{display:flex;justify-content:flex-end;gap:.6rem;margin-top:.8rem}.actions button{padding:.7rem 1rem;border-radius:.5rem;border:1px solid #3a3935;font-weight:800;cursor:pointer}.approve{background:#e9e4d8;color:#10110f}.deny{background:#17110f;color:#e3aaa2}.notice{margin:1rem 0;padding:.8rem;border:1px solid #52633f;border-radius:.5rem}.notice.bad{border-color:#6d3c3c;color:#e1a1a1}.error-detail{border-left:3px solid #7c4949;padding-left:.8rem;color:#d7a09a}@media(max-width:700px){.shell header,.item-head{display:block}.item time{display:block;margin-top:.5rem}dl{grid-template-columns:1fr 1fr}}@media(max-width:450px){dl{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:1fr 1fr}}
+</style>

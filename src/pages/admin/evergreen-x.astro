@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Evergreen X SaaS Admin" description="Owner metrics for Evergreen X Post Scheduler." path="/admin/evergreen-x" noindex>
+  <section class="admin-shell">
+    <div class="head"><div><span class="eyebrow">OWNER VIEW</span><h1>Evergreen X SaaS</h1></div><a href="/admin">Back to admin</a></div>
+    <div id="status" class="status">Loading SaaS metrics…</div>
+    <div id="totals" class="cards"></div>
+    <section class="panel"><span class="eyebrow">CUSTOMERS NEAR QUOTA</span><h2>80%+ usage</h2><div id="near-quota"><p>No data loaded.</p></div></section>
+  </section>
+</BaseLayout>
+<script>
+  const status = document.querySelector<HTMLElement>('#status');
+  const totals = document.querySelector<HTMLElement>('#totals');
+  const near = document.querySelector<HTMLElement>('#near-quota');
+  fetch('/api/admin/evergreen-x/summary').then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to load metrics.');
+    if (status) status.hidden = true;
+    if (totals) totals.innerHTML = Object.entries(data.totals).map(([key,value]) => `<article><span>${key.replaceAll('_',' ')}</span><strong>${value}</strong></article>`).join('');
+    if (near) near.innerHTML = data.near_quota.length ? data.near_quota.map((item:any) => `<article><b>${item.plan_id}</b><small>User ${item.user_id}</small><p>Regular ${item.regular}/${item.regular_limit ?? 'n/a'} · URL ${item.url}/${item.url_limit ?? 'n/a'}</p></article>`).join('') : '<p>No customers are currently near quota.</p>';
+  }).catch((error) => { if (status) status.textContent = error.message; });
+</script>
+<style>
+.admin-shell{width:min(1100px,calc(100% - 2rem));margin:0 auto;padding:3rem 0 6rem}.head{display:flex;justify-content:space-between;gap:1rem;align-items:center}.head h1{margin:.35rem 0;font-size:clamp(2rem,5vw,3.5rem)}.head a{color:#d8d1c5}.eyebrow{font-size:.72rem;letter-spacing:.15em;color:#c7a76a;font-weight:800}.status,.panel,.cards article{border:1px solid var(--color-border);background:#10110f;border-radius:.7rem}.status{padding:1rem}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}.cards article{padding:1rem;display:grid;gap:.35rem}.cards span{text-transform:capitalize;color:#97928a;font-size:.8rem}.cards strong{font-size:1.55rem}.panel{padding:1.2rem}.panel h2{margin:.35rem 0 1rem}.panel article{padding:.8rem 0;border-top:1px solid var(--color-border);display:grid;gap:.25rem}.panel small,.panel p{color:#918c84}@media(max-width:700px){.cards{grid-template-columns:1fr 1fr}.head{align-items:flex-start;flex-direction:column}}@media(max-width:450px){.cards{grid-template-columns:1fr}}
+</style>
