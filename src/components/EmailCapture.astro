@@ -25,27 +25,58 @@ const { source = 'website', compact = false } = Astro.props;
 </style>
 
 <script>
+const EMAIL_CAPTURE_ENDPOINT = 'https://japage628.app.n8n.cloud/webhook/tool-shed-email-capture';
+
 document.querySelectorAll<HTMLFormElement>('.email-capture__form').forEach((form) => {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const input = form.querySelector<HTMLInputElement>('input[name="email"]');
     const button = form.querySelector<HTMLButtonElement>('button');
     const status = form.querySelector<HTMLElement>('.email-capture__status');
-    if (!input || !status || !button) return;
+    if (!input || !status || !button || button.disabled) return;
+
     button.disabled = true;
     status.hidden = false;
     status.textContent = 'Saving your signup…';
+
     try {
-      const response = await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: input.value, source: form.dataset.source, incentive: 'free-ai-prompt-pack' }) });
-      const result = await response.json();
-      if (!response.ok || !result.ok) throw new Error(result.error || 'Signup failed');
-      status.textContent = 'You’re on the list. The prompt pack is coming soon.';
-      input.value = '';
-      const gtag = (window as any).gtag;
-      if (typeof gtag === 'function') gtag('event', 'email_signup', { source: form.dataset.source, incentive: 'free-ai-prompt-pack' });
+      const response = await fetch(EMAIL_CAPTURE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: input.value.trim(),
+          name: '',
+          source: form.dataset.source || 'website',
+          consent: true,
+        }),
+      });
+
+      if (response.ok) {
+        status.textContent = 'You’re on the list.';
+        input.value = '';
+        const gtag = (window as any).gtag;
+        if (typeof gtag === 'function') gtag('event', 'email_signup', { source: form.dataset.source || 'website', incentive: 'free-ai-prompt-pack' });
+        return;
+      }
+
+      if (response.status === 400) {
+        let message = 'Please check your email address and try again.';
+        try {
+          const result = await response.json();
+          message = result?.message || result?.error || message;
+        } catch {
+          // Keep the safe validation fallback when the backend does not return JSON.
+        }
+        status.textContent = message;
+        return;
+      }
+
+      status.textContent = 'Something went wrong. Please try again.';
     } catch {
       status.textContent = 'Something went wrong. Please try again.';
-    } finally { button.disabled = false; }
+    } finally {
+      button.disabled = false;
+    }
   });
 });
 </script>
