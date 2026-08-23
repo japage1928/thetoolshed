@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Comic Book Beta | Story Studio" description="Create a paid Story Studio comic beta project." path="/app/story-studio/comic-beta" noindex>
+  <main class="shell">
+    <a class="back" href="/app/story-studio">← Story Studio</a>
+    <span class="eyebrow">PAID BETA</span><h1>Comic Book Beta</h1>
+    <p>Build the concept, characters, scenes, and visual direction inside Story Studio. Comics are deliberately not sold as publisher-ready yet because repeating the same hero’s face for twenty panels remains one of AI’s favorite practical jokes.</p>
+    <form id="form" class="card">
+      <label>Working title<input id="title" placeholder="Optional" /></label>
+      <label>Audience<input id="audience" placeholder="Teen, adult, ages 8–12..." /></label>
+      <label class="wide">Comic idea<textarea id="idea" rows="6" required placeholder="Describe the premise, main character, conflict, and visual feel..."></textarea></label>
+      <label>Tone<input id="tone" placeholder="Funny, noir, superhero, adventurous..." /></label>
+      <button class="primary">Create Comic Beta Project</button>
+    </form>
+    <div id="status" class="status" hidden></div>
+  </main>
+</BaseLayout>
+<script>
+ const f=document.querySelector<HTMLFormElement>('#form'); const status=document.querySelector<HTMLElement>('#status');
+ f?.addEventListener('submit',async e=>{e.preventDefault();if(!status)return;status.hidden=false;status.classList.remove('bad');status.textContent='Creating comic beta project…';try{const body={project_type:'comic_book',title:(document.querySelector<HTMLInputElement>('#title')?.value||''),idea:(document.querySelector<HTMLTextAreaElement>('#idea')?.value||''),target_audience:(document.querySelector<HTMLInputElement>('#audience')?.value||''),tone:(document.querySelector<HTMLInputElement>('#tone')?.value||'')};const r=await fetch('/api/story-studio/projects',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Request failed (${r.status})`);location.href='/app/story-studio';}catch(err){status.classList.add('bad');status.textContent=err instanceof Error?err.message:'Unable to create comic beta project.';}});
+</script>
+<style>
+.shell{width:min(850px,calc(100% - 2rem));margin:0 auto;padding:4rem 0 7rem}.back{display:inline-block;color:#a9a49b;margin-bottom:2.5rem}.eyebrow{display:block;font-size:.72rem;letter-spacing:.16em;color:#c7a76a;font-weight:850}.shell h1{font-size:clamp(2.7rem,7vw,5rem);margin:.35rem 0}.shell>p{color:#a29e95;line-height:1.7;max-width:740px}.card{margin-top:2rem;padding:1.2rem;border:1px solid var(--color-border);border-radius:.8rem;background:#10110f;display:grid;grid-template-columns:1fr 1fr;gap:.85rem}.card label{display:grid;gap:.35rem;color:#aaa59c;font-size:.78rem;font-weight:750}.wide{grid-column:1/-1}.card input,.card textarea{padding:.8rem;border:1px solid var(--color-border);border-radius:.5rem;background:#090a09;color:#f1eee7}.primary{width:max-content;padding:.8rem 1rem;border:0;border-radius:.55rem;background:#ece6da;color:#111;font-weight:850;cursor:pointer}.status{margin-top:1rem;padding:.8rem 1rem;border:1px solid #665d3d;border-radius:.55rem;color:#d7c18d}.status.bad{border-color:#713f3f;color:#e4a3a3}@media(max-width:600px){.card{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
