@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Evergreen X Post Scheduler" description="Load your evergreen posts once, choose a posting pace, and keep your X account active automatically." path="/tools/evergreen-x-scheduler">
+  <section class="hero wrap">
+    <span class="eyebrow">THE TOOL SHED · SAAS</span>
+    <h1>Put Your Evergreen X Posts on Autopilot</h1>
+    <p>Load your posts once, choose your posting pace, and let The Tool Shed keep your X account active automatically.</p>
+    <div class="actions">
+      <a class="primary" href="/account?next=/app/evergreen-x">Start Scheduling</a>
+      <a class="secondary" href="#how">See How It Works</a>
+    </div>
+  </section>
+
+  <section id="how" class="wrap section">
+    <div class="section-head"><span class="eyebrow">HOW IT WORKS</span><h2>Four steps. No automation plumbing.</h2></div>
+    <div class="grid four">
+      <article><b>01</b><h3>Connect X</h3><p>Authorize your own X account securely.</p></article>
+      <article><b>02</b><h3>Add evergreen posts</h3><p>Build a reusable library of posts worth publishing again.</p></article>
+      <article><b>03</b><h3>Choose posting pace</h3><p>Set minimum and maximum intervals plus a daily limit.</p></article>
+      <article><b>04</b><h3>Let it run</h3><p>The scheduler selects eligible READY posts and tracks results.</p></article>
+    </div>
+  </section>
+
+  <section class="wrap section">
+    <div class="section-head"><span class="eyebrow">BUILT FOR CONTROL</span><h2>Automatic without being mysterious</h2></div>
+    <div class="grid benefits">
+      <article><h3>Randomized intervals</h3><p>A 120–360 minute range means the next eligible post can land anywhere between 2 and 6 hours later.</p></article>
+      <article><h3>Reusable library</h3><p>Keep drafts, READY posts, published history, and failed items in one place.</p></article>
+      <article><h3>Daily limits</h3><p>Set a posting ceiling and let the scheduler enforce it automatically.</p></article>
+      <article><h3>Pause anytime</h3><p>Stop the scheduler without deleting your content library or X connection.</p></article>
+      <article><h3>Failure handling</h3><p>See failed posts, correct them, and retry instead of losing them in an invisible queue.</p></article>
+      <article><h3>Separate URL quotas</h3><p>Regular text posts and URL posts are tracked independently so usage stays understandable.</p></article>
+    </div>
+  </section>
+
+  <section class="wrap section pricing" id="pricing">
+    <div class="section-head"><span class="eyebrow">PRICING</span><h2>Plan limits come from live configuration</h2><p>Regular-post limits can change as the product evolves. URL allowances are intentionally smaller.</p></div>
+    <div id="plans" class="grid three"><article><h3>Sign in to view current plans</h3><p>Current pricing and limits are loaded from the product configuration rather than hardcoded into this page.</p><a class="primary" href="/account?next=/app/evergreen-x">View plans</a></article></div>
+  </section>
+</BaseLayout>
+
+<style>
+.wrap{width:min(1120px,calc(100% - 2rem));margin-inline:auto}.hero{padding:7rem 0 5rem;text-align:center}.hero h1{font-size:clamp(2.7rem,8vw,5.8rem);line-height:.96;letter-spacing:-.055em;margin:.7rem auto 1.25rem;max-width:980px}.hero p{max-width:720px;margin:0 auto;color:#aaa69e;font-size:1.12rem;line-height:1.7}.eyebrow{font-size:.75rem;letter-spacing:.16em;font-weight:800;color:#c7a76a}.actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:2rem}.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;padding:.85rem 1.1rem;border-radius:.55rem;font-weight:800;text-decoration:none}.primary{background:#ece6da;color:#111}.secondary{border:1px solid var(--color-border);color:#ece6da}.section{padding:4rem 0}.section-head{max-width:720px;margin-bottom:1.7rem}.section-head h2{font-size:clamp(1.8rem,4vw,3rem);margin:.4rem 0}.section-head p{color:#99948b;line-height:1.6}.grid{display:grid;gap:1rem}.four{grid-template-columns:repeat(4,1fr)}.three{grid-template-columns:repeat(3,1fr)}.benefits{grid-template-columns:repeat(3,1fr)}article{padding:1.35rem;border:1px solid var(--color-border);border-radius:.8rem;background:#10110f}article b{color:#c7a76a;font-size:.78rem}article h3{margin:.5rem 0;font-size:1.05rem}article p{color:#969188;line-height:1.6;font-size:.92rem}.pricing{padding-bottom:7rem}@media(max-width:850px){.four,.benefits,.three{grid-template-columns:1fr 1fr}}@media(max-width:560px){.hero{padding-top:4.5rem}.four,.benefits,.three{grid-template-columns:1fr}}
+</style>
