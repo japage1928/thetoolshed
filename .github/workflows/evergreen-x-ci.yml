@@ -7,14 +7,17 @@ on:
       - 'src/pages/api/auth/**'
       - 'src/pages/api/evergreen-x/**'
       - 'src/pages/api/internal/evergreen-x/**'
-      - 'src/pages/api/admin/evergreen-x/**'
+      - 'src/pages/api/admin/**'
       - 'src/pages/app/evergreen-x/**'
+      - 'src/pages/admin/evergreen-x.astro'
       - 'src/pages/tools/evergreen-x-scheduler.astro'
       - 'src/pages/account.astro'
       - 'src/middleware.ts'
       - 'tests/**'
+      - 'supabase/migrations/**'
       - 'package.json'
       - 'eslint.config.js'
+      - 'netlify.toml'
       - '.github/workflows/evergreen-x-ci.yml'
   workflow_dispatch:
 
@@ -27,8 +30,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package.json
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Type check
