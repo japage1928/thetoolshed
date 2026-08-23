@@ -5,6 +5,9 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[context.deploy-preview]
+  command = "npm run typecheck && npm run lint && npm test && npm run build"
+
 [[redirects]]
   from = "https://thetoolshed.netlify.app/*"
   to = "https://thetoolshed.work/:splat"
