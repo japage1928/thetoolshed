@@ -8,10 +8,12 @@ export const POST: APIRoute = async ({ request }) => {
     assertSameOrigin(request);
     const { user } = await storyContext(request);
     const configured = String(process.env.STORY_STUDIO_ADMIN_EMAIL || '').trim();
+    const testKey = String(process.env.STORY_STUDIO_TEST_KEY || '').trim();
     if (!configured) return json({ error: 'Story Studio admin email is not configured. Set STORY_STUDIO_ADMIN_EMAIL before running the test book.' }, 503);
+    if (!testKey) return json({ error: 'Story Studio test security key is not configured. Set STORY_STUDIO_TEST_KEY before running the test book.' }, 503);
     const adminEmail = configured.toLowerCase();
     if (String(user.email || '').toLowerCase() !== adminEmail) return json({ error: 'Admin access required.' }, 403);
-    const response = await fetch(TEST_WEBHOOK, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ source:'story-studio-dashboard', admin_email:configured, requested_at:new Date().toISOString() }) });
+    const response = await fetch(TEST_WEBHOOK, { method:'POST', headers:{'content-type':'application/json','x-story-studio-test-key':testKey}, body:JSON.stringify({ source:'story-studio-dashboard', admin_email:configured, requested_at:new Date().toISOString() }) });
     if (!response.ok) return json({ error:`Test workflow failed to start (${response.status}).` }, 502);
     return json({ ok:true, message:'Test book generated and emailed to the configured Story Studio admin inbox.' });
   } catch (e) { return safeError(e); }
