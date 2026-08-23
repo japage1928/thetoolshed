@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Story Studio | Turn an Idea Into a Finished Book" description="Turn a rough idea into a structured book, children's book, or story with AI-assisted interviewing, outlining, writing, editing, illustrations, and export-ready content." path="/tools/story-studio">
+  <main>
+    <section class="hero wrap">
+      <span class="eyebrow">THE TOOL SHED · STORY STUDIO</span>
+      <h1>Turn an idea into something worth reading.</h1>
+      <p>Start with a rough concept. Story Studio helps shape the premise, build a story bible, outline the work, write it section by section, preserve continuity, and generate artwork where it belongs.</p>
+      <div class="actions"><a class="primary" href="/account?next=/app/story-studio">Start Free</a><a class="secondary" href="#how">See how it works</a></div>
+      <div class="pipeline" aria-label="Creation pipeline"><span>Idea</span><b>→</b><span>Story Bible</span><b>→</b><span>Outline</span><b>→</b><span>Draft</span><b>→</b><span>Visuals</span><b>→</b><span>Finished Work</span></div>
+    </section>
+
+    <section id="how" class="wrap section">
+      <div class="section-head"><span class="eyebrow">BUILT FOR ACTUAL PROJECTS</span><h2>More than a giant prompt box</h2></div>
+      <div class="grid three">
+        <article><h3>Children’s books</h3><p>Build an illustrated prototype with persistent characters, visual direction, page planning, and generated cover art.</p></article>
+        <article><h3>Books & stories</h3><p>Develop premise, characters, settings, continuity rules, outlines, chapters, and scenes without losing the plot halfway through.</p></article>
+        <article><h3>Project memory</h3><p>The Story Bible stays attached to the project so later sections inherit the important facts instead of creatively forgetting them.</p></article>
+      </div>
+    </section>
+
+    <section class="wrap section pricing">
+      <div class="section-head"><span class="eyebrow">PRICING</span><h2>Try it free, pay when the project grows.</h2></div>
+      <div class="grid four">
+        <article class="plan"><h3>Free</h3><strong>$0</strong><p>1 active project<br>5,000 words/month<br>5 images/month<br>8-page children’s prototype</p><a href="/account?next=/app/story-studio">Start Free</a></article>
+        <article class="plan"><h3>Creator</h3><strong>$15/mo</strong><p>5 active projects<br>50,000 words/month<br>25 images/month<br>Commercial use</p></article>
+        <article class="plan featured"><span class="badge">POPULAR</span><h3>Author</h3><strong>$29/mo</strong><p>15 active projects<br>150,000 words/month<br>75 images/month<br>Full-length work</p></article>
+        <article class="plan"><h3>Studio</h3><strong>$59/mo</strong><p>50 active projects<br>400,000 words/month<br>200 images/month<br>Heavy visual production</p></article>
+      </div>
+      <p class="billing-note">Paid checkout will be enabled as the billing layer is connected. The Free tier is usable now.</p>
+    </section>
+  </main>
+</BaseLayout>
+<style>
+.wrap{width:min(1120px,calc(100% - 2rem));margin-inline:auto}.hero{padding:6.5rem 0 4.5rem;text-align:center}.hero h1{font-size:clamp(2.8rem,8vw,6rem);line-height:.94;letter-spacing:-.055em;max-width:980px;margin:.7rem auto 1.3rem}.hero>p{max-width:780px;margin:0 auto;color:#aaa69e;font-size:1.08rem;line-height:1.7}.eyebrow{font-size:.72rem;letter-spacing:.16em;font-weight:850;color:#c7a76a}.actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin:2rem 0}.actions a,.plan a{padding:.85rem 1rem;border-radius:.55rem;text-decoration:none;font-weight:850}.primary,.plan a{background:#ece6da;color:#111}.secondary{border:1px solid var(--color-border);color:#ece6da}.pipeline{display:flex;justify-content:center;align-items:center;gap:.55rem;flex-wrap:wrap;color:#8f8b84;font-size:.78rem;margin-top:2rem}.pipeline span{padding:.4rem .6rem;border:1px solid var(--color-border);border-radius:99px;background:#10110f}.pipeline b{color:#5f5c56}.section{padding:4rem 0}.section-head{max-width:720px;margin-bottom:1.5rem}.section-head h2{font-size:clamp(1.8rem,4vw,3rem);margin:.35rem 0}.grid{display:grid;gap:1rem}.three{grid-template-columns:repeat(3,1fr)}.four{grid-template-columns:repeat(4,1fr)}article{padding:1.3rem;border:1px solid var(--color-border);border-radius:.8rem;background:#10110f}article h3{margin:.2rem 0 .65rem}article p{color:#969188;line-height:1.65}.plan strong{display:block;font-size:1.75rem;margin:.4rem 0}.plan a{display:inline-block;margin-top:.5rem}.featured{border-color:#74613c;position:relative}.badge{position:absolute;right:.8rem;top:.8rem;font-size:.62rem;letter-spacing:.12em;color:#d7b975}.billing-note{text-align:center;color:#77736d;font-size:.82rem;margin-top:1rem}.pricing{padding-bottom:7rem}@media(max-width:900px){.four{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr}}@media(max-width:560px){.hero{padding-top:4.5rem}.four{grid-template-columns:1fr}}
+</style>
