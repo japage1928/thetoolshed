@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const next = Astro.url.searchParams.get('next') || '/app/evergreen-x';
+---
+<BaseLayout title="Account" description="Sign in or create your Tool Shed account." path="/account" noindex>
+  <section class="account-shell">
+    <div class="card">
+      <span class="eyebrow">THE TOOL SHED · ACCOUNT</span>
+      <h1>Evergreen X Scheduler</h1>
+      <p>Sign in or create an account to manage your scheduler.</p>
+      <div class="tabs"><button class="tab active" data-mode="login">Sign in</button><button class="tab" data-mode="register">Create account</button></div>
+      <form id="auth-form" data-mode="login" data-next={next}>
+        <label>Email<input id="email" type="email" autocomplete="email" required /></label>
+        <label>Password<input id="password" type="password" minlength="8" autocomplete="current-password" required /></label>
+        <button class="submit" type="submit">Sign in</button>
+        <p id="status" class="status" hidden></p>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('#auth-form');
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
+  const status = document.querySelector<HTMLElement>('#status');
+  const submit = document.querySelector<HTMLButtonElement>('.submit');
+  tabs.forEach((tab) => tab.addEventListener('click', () => {
+    tabs.forEach((item) => item.classList.toggle('active', item === tab));
+    if (form) form.dataset.mode = tab.dataset.mode || 'login';
+    if (submit) submit.textContent = tab.dataset.mode === 'register' ? 'Create account' : 'Sign in';
+    const password = document.querySelector<HTMLInputElement>('#password');
+    if (password) password.autocomplete = tab.dataset.mode === 'register' ? 'new-password' : 'current-password';
+    status?.setAttribute('hidden', '');
+  }));
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const mode = form.dataset.mode || 'login';
+    const email = document.querySelector<HTMLInputElement>('#email')?.value || '';
+    const password = document.querySelector<HTMLInputElement>('#password')?.value || '';
+    if (submit) submit.disabled = true;
+    if (status) { status.hidden = false; status.textContent = mode === 'register' ? 'Creating account…' : 'Signing in…'; }
+    try {
+      const response = await fetch(`/api/auth/${mode}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const data = await response.json();
+      if (!response.ok && response.status !== 202) throw new Error(data.error || 'Authentication failed.');
+      if (data.confirmationRequired) {
+        if (status) status.textContent = 'Check your email to confirm your account, then sign in.';
+        return;
+      }
+      window.location.href = form.dataset.next || '/app/evergreen-x';
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : 'Authentication failed.';
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+</script>
+<style>
+.account-shell{min-height:72vh;display:grid;place-items:center;padding:4rem 1rem}.card{width:min(100%,460px);padding:2rem;border:1px solid var(--color-border);border-radius:1rem;background:#10110f}.eyebrow{font-size:.72rem;letter-spacing:.15em;font-weight:800;color:#c7a76a}.card h1{margin:.5rem 0}.card>p{color:#97928a}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin:1.5rem 0;background:#090a09;padding:.3rem;border-radius:.6rem}.tab{padding:.65rem;border:0;border-radius:.45rem;background:transparent;color:#99948b;font-weight:800;cursor:pointer}.tab.active{background:#1b1c19;color:#f1eee7}form{display:grid;gap:1rem}label{display:grid;gap:.4rem;font-size:.82rem;font-weight:800;color:#aaa69e}input{padding:.82rem;border:1px solid var(--color-border);border-radius:.5rem;background:#090a09;color:#f1eee7}.submit{padding:.85rem;border:0;border-radius:.5rem;background:#ece6da;color:#111;font-weight:800;cursor:pointer}.status{color:#c7a76a;font-size:.85rem;line-height:1.5}
+</style>
