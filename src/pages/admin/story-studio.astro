@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Story Studio Admin" description="Story Studio production test console." path="/admin/story-studio" noindex>
+  <main class="shell">
+    <span class="eyebrow">THE TOOL SHED · STORY STUDIO · ADMIN</span>
+    <h1>Production test console</h1>
+    <p>Run the fixed children’s-book smoke test through the live generation and email-delivery workflow.</p>
+    <section class="card">
+      <div><h2>Milo and the Moon Lantern</h2><p>12-page children’s test story · ages 4–7 · gentle bedtime tone · continuity and illustration prompts included.</p></div>
+      <button id="run" class="primary">Run Test Book</button>
+    </section>
+    <div id="status" class="status" hidden></div>
+    <a class="back" href="/app/story-studio">← Back to Story Studio</a>
+  </main>
+</BaseLayout>
+<script>
+  const button=document.querySelector<HTMLButtonElement>('#run'); const status=document.querySelector<HTMLElement>('#status');
+  button?.addEventListener('click',async()=>{ if(!button||!status)return; button.disabled=true; status.hidden=false; status.classList.remove('bad'); status.textContent='Generating the test book and sending it to the configured admin inbox…'; try{ const r=await fetch('/api/story-studio/test-book',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}); const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||`Test failed (${r.status})`); status.textContent=d.message||'Test book sent.'; }catch(e){status.classList.add('bad');status.textContent=e instanceof Error?e.message:'Test failed.';}finally{button.disabled=false;} });
+</script>
+<style>
+.shell{width:min(860px,calc(100% - 2rem));margin:0 auto;padding:5rem 0}.eyebrow{font-size:.72rem;letter-spacing:.15em;color:#c7a76a;font-weight:850}.shell h1{font-size:clamp(2.4rem,7vw,4.7rem);line-height:1;margin:.5rem 0 1rem}.shell>p{color:#9b978f;max-width:650px;line-height:1.65}.card{margin:2rem 0 1rem;padding:1.2rem;border:1px solid var(--color-border);border-radius:.8rem;background:#10110f;display:flex;justify-content:space-between;align-items:center;gap:1rem}.card h2{margin:.1rem 0}.card p{color:#918d85;line-height:1.5}.primary{padding:.8rem 1rem;border:0;border-radius:.55rem;background:#ece6da;color:#111;font-weight:850;cursor:pointer;white-space:nowrap}.primary:disabled{opacity:.5}.status{padding:.9rem 1rem;border:1px solid #665d3d;border-radius:.55rem;color:#d7c18d;margin:1rem 0}.status.bad{border-color:#713f3f;color:#e4a3a3}.back{display:inline-block;margin-top:1rem;color:#b9b4aa}@media(max-width:650px){.card{display:block}.primary{margin-top:1rem;width:100%}}
+</style>
