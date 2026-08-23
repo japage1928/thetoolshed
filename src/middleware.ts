@@ -15,13 +15,6 @@ function authConfig() {
   };
 }
 
-function allowedAdminEmails() {
-  return (process.env.TOOL_SHED_ADMIN_EMAILS || process.env.EVERGREEN_X_ADMIN_EMAILS || '')
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 async function getSupabaseUser(token: string | undefined) {
   const { url, key } = authConfig();
   if (!token || !url || !key) return null;
@@ -34,6 +27,26 @@ async function getSupabaseUser(token: string | undefined) {
     return user?.id && user?.email ? user : null;
   } catch {
     return null;
+  }
+}
+
+async function isAdminToken(token: string | undefined) {
+  const { url, key } = authConfig();
+  if (!token || !url || !key) return false;
+  try {
+    const response = await fetch(`${url}/rest/v1/rpc/is_tool_shed_admin`, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${decodeURIComponent(token)}`,
+        'content-type': 'application/json',
+      },
+      body: '{}',
+    });
+    if (!response.ok) return false;
+    return (await response.json()) === true;
+  } catch {
+    return false;
   }
 }
 
@@ -74,16 +87,16 @@ export const onRequest = defineMiddleware(async ({ request, redirect }, next) =>
   const url = new URL(request.url);
   const isAdmin = url.pathname.startsWith('/admin') && url.pathname !== '/admin/login';
   const isSaasApp = url.pathname.startsWith('/app/evergreen-x');
+  const saasLaunched = process.env.EVERGREEN_X_LAUNCH_ENABLED === 'true';
 
   if (!isAdmin && !isSaasApp) return next();
 
   if (isAdmin) {
-    const user = await getSupabaseUser(getCookie(request, ADMIN_COOKIE));
-    const allowed = allowedAdminEmails();
-    if (!user || !allowed.length || !allowed.includes(String(user.email).toLowerCase())) return noStore(redirect('/admin/login', 302));
+    if (!await isAdminToken(getCookie(request, ADMIN_COOKIE))) return noStore(redirect('/admin/login', 302));
   }
 
   if (isSaasApp) {
+    if (!saasLaunched) return noStore(redirect('/tools/evergreen-x-scheduler?coming_soon=1', 302));
     const user = await getSupabaseUser(getCookie(request, SAAS_COOKIE));
     if (!user) {
       const refreshed = await refreshSaasSession(request);
