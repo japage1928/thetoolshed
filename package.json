@@ -10,7 +10,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "typecheck": "astro check",
-    "lint": "eslint src/lib/evergreen-x src/pages/api/auth src/pages/api/evergreen-x src/pages/api/internal/evergreen-x src/pages/api/admin/evergreen-x tests",
+    "lint": "eslint src/lib/evergreen-x src/pages/api/auth src/pages/api/evergreen-x src/pages/api/internal/evergreen-x tests",
     "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
@@ -21,6 +21,8 @@
     "@supabase/supabase-js": "^2.57.4",
     "astro": "^7.2.2",
     "js-yaml": "^5.3.0",
+    "jszip": "^3.10.1",
+    "pdf-lib": "^1.17.1",
     "sanitize-html": "^2.17.7"
   },
   "overrides": {
