@@ -7,6 +7,7 @@ import {
   cookie,
   env,
   json,
+  parseCookies,
   safeError,
 } from '../../../lib/evergreen-x/server';
 
@@ -35,6 +36,19 @@ export const POST: APIRoute = async ({ request, params }) => {
       return new Response(JSON.stringify({ ok: true }), { headers });
     }
 
+    if (action === 'refresh') {
+      const refreshToken = parseCookies(request)[SAAS_REFRESH_COOKIE];
+      if (!refreshToken) return json({ error: 'Session expired.' }, 401);
+      const response = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { apikey: key, 'content-type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.access_token) return json({ error: 'Session expired.' }, 401);
+      return withSession({ ok: true }, data.access_token, data.refresh_token || refreshToken, Number(data.expires_in || 3600));
+    }
+
     const payload = await request.json().catch(() => ({}));
     const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
     const password = typeof payload.password === 'string' ? payload.password : '';
@@ -53,19 +67,16 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     if (action === 'register') {
       const siteUrl = (env('PUBLIC_SITE_URL', false) || new URL(request.url).origin).replace(/\/$/, '');
-      const response = await fetch(`${url}/auth/v1/signup`, {
+      const redirectTo = `${siteUrl}/account?confirmed=1`;
+      const response = await fetch(`${url}/auth/v1/signup?redirect_to=${encodeURIComponent(redirectTo)}`, {
         method: 'POST',
         headers: { apikey: key, 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password, options: { emailRedirectTo: `${siteUrl}/account?confirmed=1` } }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (!response.ok) return json({ error: data.msg || data.message || 'Unable to create account.' }, 400);
       if (data.access_token) return withSession({ ok: true, confirmationRequired: false }, data.access_token, data.refresh_token, Number(data.expires_in || 3600));
       return json({ ok: true, confirmationRequired: true }, 202);
-    }
-
-    if (action === 'refresh') {
-      return json({ error: 'Use a valid action.' }, 404);
     }
 
     return json({ error: 'Not found.' }, 404);
