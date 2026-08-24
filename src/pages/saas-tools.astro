@@ -1,0 +1,155 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const products = [
+  {
+    name: 'Evergreen X Post Scheduler',
+    label: 'COMING SOON',
+    tone: 'gold',
+    promise: 'Load your evergreen posts once. Keep your X account active automatically.',
+    description: 'Connect your X account, build a reusable content library, choose a posting pace, and let the scheduler handle eligible posts while you retain pause and usage controls.',
+    features: ['Reusable post library', 'Randomized posting intervals', 'Daily limits and pause control', 'Published and failed-post history'],
+    href: '/tools/evergreen-x-scheduler',
+    cta: 'View the scheduler',
+    diagram: ['LIBRARY', 'SCHEDULE', 'PUBLISH'],
+  },
+  {
+    name: 'AI Video Studio',
+    label: 'INTERNAL BETA',
+    tone: 'blue',
+    promise: 'Give it a product link or brief. Get a controlled video-production project.',
+    description: 'Video Studio plans the concept, script, shots, continuity, QA, repairs, assembly, and publishing copy behind one simple workspace.',
+    features: ['Product URL or creative brief', 'Multi-scene production planning', 'Shot-level QA and targeted repair', 'Credits and cost guardrails'],
+    href: '/tools/video-studio',
+    cta: 'View Video Studio',
+    diagram: ['BRIEF', 'QA', 'ASSEMBLE'],
+  },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'The Tool Shed SaaS Tools',
+  description: 'Software built in-house by The Tool Shed, including the Evergreen X Post Scheduler and AI Video Studio.',
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: products.length,
+    itemListElement: products.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: product.name,
+      url: new URL(product.href, Astro.site).toString(),
+    })),
+  },
+};
+---
+
+<BaseLayout
+  title="SaaS Tools Built by The Tool Shed"
+  description="Explore The Tool Shed's homebrewed software: the Evergreen X Post Scheduler and AI Video Studio."
+  path="/saas-tools"
+  {jsonLd}
+>
+  <main class="saas-page">
+    <section class="hero wrapper">
+      <span class="eyebrow">BUILT IN THE SHED</span>
+      <h1>Our tools.<br /><em>Built to do the work.</em></h1>
+      <p>These are products we design, operate, and improve ourselves—not a pile of downloadable templates or a prettier doorway to somebody else’s API.</p>
+      <a class="jump" href="#products">Meet the tools <span aria-hidden="true">↓</span></a>
+    </section>
+
+    <section class="products wrapper" id="products" aria-label="The Tool Shed SaaS products">
+      {products.map((product, index) => (
+        <article class:list={['product', `product--${product.tone}`]}>
+          <div class="product__copy">
+            <div class="product__topline">
+              <span>0{index + 1} · THE TOOL SHED SAAS</span>
+              <b>{product.label}</b>
+            </div>
+            <h2>{product.name}</h2>
+            <p class="product__promise">{product.promise}</p>
+            <p class="product__description">{product.description}</p>
+            <ul>
+              {product.features.map((feature) => <li>{feature}</li>)}
+            </ul>
+            <a class="product__cta" href={product.href}>{product.cta} <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="product__visual" aria-hidden="true">
+            <div class="visual__window">
+              <div class="visual__bar"><i></i><i></i><i></i><span>{product.name}</span></div>
+              <div class="visual__flow">
+                {product.diagram.map((step, stepIndex) => (
+                  <>
+                    <div><small>0{stepIndex + 1}</small><strong>{step}</strong></div>
+                    {stepIndex < product.diagram.length - 1 && <span>→</span>}
+                  </>
+                ))}
+              </div>
+              <div class="visual__status"><span></span><b>{product.label}</b></div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+
+    <section class="principles wrapper">
+      <span class="eyebrow">THE STANDARD</span>
+      <h2>Software should make the outcome easier—not hand you more knobs.</h2>
+      <div>
+        <article><b>01</b><h3>Outcome first</h3><p>Each product starts with the job the customer needs finished.</p></article>
+        <article><b>02</b><h3>Automation hidden</h3><p>The machinery stays behind the interface where it belongs.</p></article>
+        <article><b>03</b><h3>Cost controlled</h3><p>Usage limits and safeguards are part of the product, not an afterthought.</p></article>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .saas-page{overflow:hidden;background:radial-gradient(circle at 78% 5%,rgba(23,140,255,.12),transparent 30rem)}
+  .wrapper{width:min(1180px,calc(100% - 2rem));margin-inline:auto}
+  .eyebrow{font-size:.7rem;letter-spacing:.18em;font-weight:900;color:#c7a76a}
+  .hero{padding:7rem 0 6rem;max-width:1180px}
+  .hero h1{max-width:1000px;margin:.8rem 0 1.6rem;font-size:clamp(3.6rem,9vw,7.8rem);line-height:.86;letter-spacing:-.07em}
+  .hero h1 em{font-family:Georgia,serif;font-weight:400;color:#9fcfff}
+  .hero p{max-width:760px;color:#aaa69e;font-size:1.12rem;line-height:1.75}
+  .jump{display:inline-flex;gap:.65rem;align-items:center;margin-top:1.4rem;color:#ece6da;font-size:.85rem;font-weight:900;text-decoration:none}
+  .jump span{color:#69b4ff}
+  .products{display:grid;gap:1.3rem;padding-bottom:7rem}
+  .product{display:grid;grid-template-columns:1.02fr .98fr;min-height:520px;border:1px solid #37332d;border-radius:1rem;background:linear-gradient(145deg,#131411,#090a09);overflow:hidden}
+  .product__copy{padding:clamp(2rem,5vw,4rem)}
+  .product__topline{display:flex;align-items:center;justify-content:space-between;gap:1rem;color:#77736d;font-size:.66rem;font-weight:800;letter-spacing:.13em}
+  .product__topline b{padding:.3rem .55rem;border:1px solid #6a5837;border-radius:99px;color:#d7b975}
+  .product--blue .product__topline b{border-color:#28557b;color:#8fc8ff}
+  .product h2{margin:2rem 0 .75rem;font-size:clamp(2.2rem,5vw,4.3rem);line-height:.96;letter-spacing:-.05em}
+  .product__promise{max-width:600px;color:#e0dbd2;font-size:1.12rem;line-height:1.55}
+  .product__description{max-width:620px;color:#918d85;line-height:1.7}
+  .product ul{display:grid;grid-template-columns:1fr 1fr;gap:.65rem 1.2rem;margin:1.7rem 0;padding:0;list-style:none}
+  .product li{position:relative;padding-left:1rem;color:#aaa69e;font-size:.82rem}
+  .product li::before{content:'';position:absolute;left:0;top:.45rem;width:.38rem;height:.38rem;border-radius:50%;background:#c7a76a}
+  .product--blue li::before{background:#178cff}
+  .product__cta{display:inline-flex;align-items:center;gap:.7rem;margin-top:.6rem;padding:.88rem 1.05rem;border-radius:.5rem;background:#ece6da;color:#10110f;font-size:.82rem;font-weight:900;text-decoration:none}
+  .product__visual{display:grid;place-items:center;padding:2rem;background:radial-gradient(circle,rgba(199,167,106,.11),transparent 65%)}
+  .product--blue .product__visual{background:radial-gradient(circle,rgba(23,140,255,.14),transparent 65%)}
+  .visual__window{width:min(100%,500px);border:1px solid #39352f;border-radius:.85rem;background:#080908;box-shadow:0 32px 80px rgba(0,0,0,.4);overflow:hidden;transform:rotate(1.2deg)}
+  .product--blue .visual__window{transform:rotate(-1.2deg)}
+  .visual__bar{display:flex;align-items:center;gap:.38rem;padding:.75rem;border-bottom:1px solid #27241f;color:#77736d;font-size:.62rem}
+  .visual__bar i{width:.48rem;height:.48rem;border-radius:50%;background:#3b3731}
+  .visual__bar span{margin-left:.4rem}
+  .visual__flow{display:flex;align-items:center;justify-content:center;gap:.5rem;min-height:220px;padding:1.2rem}
+  .visual__flow>div{display:flex;flex-direction:column;justify-content:space-between;width:100px;aspect-ratio:1;border:1px solid #37332d;border-radius:.6rem;padding:.75rem;background:#11120f}
+  .visual__flow small{color:#68645d;font-size:.6rem}
+  .visual__flow strong{font-size:.7rem;letter-spacing:.08em}
+  .visual__flow>span{color:#625d55}
+  .visual__status{display:flex;align-items:center;gap:.5rem;padding:.8rem 1rem;border-top:1px solid #27241f;color:#8e8981;font-size:.62rem;letter-spacing:.12em}
+  .visual__status span{width:.5rem;height:.5rem;border-radius:50%;background:#c7a76a;box-shadow:0 0 10px rgba(199,167,106,.5)}
+  .product--blue .visual__status span{background:#178cff;box-shadow:0 0 10px rgba(23,140,255,.6)}
+  .principles{padding:6rem 0 8rem;border-top:1px solid var(--color-border)}
+  .principles>h2{max-width:920px;margin:.7rem 0 2rem;font-size:clamp(2.2rem,5vw,4.4rem);line-height:1;letter-spacing:-.045em}
+  .principles>div{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  .principles article{padding:1.3rem;border:1px solid var(--color-border);border-radius:.7rem;background:#10110f}
+  .principles article>b{color:#69655e;font-size:.7rem}
+  .principles h3{margin:1.2rem 0 .5rem}
+  .principles p{color:#918d85;font-size:.9rem;line-height:1.6}
+  @media(max-width:900px){.product{grid-template-columns:1fr}.product__visual{min-height:360px}.principles>div{grid-template-columns:1fr}}
+  @media(max-width:600px){.hero{padding:4.5rem 0}.hero h1{font-size:3.8rem}.product__copy{padding:1.5rem}.product ul{grid-template-columns:1fr}.product__visual{padding:1rem;min-height:300px}.visual__flow{gap:.25rem}.visual__flow>div{width:74px;padding:.55rem}.visual__flow>span{font-size:.75rem}}
+</style>

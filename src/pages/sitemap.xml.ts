@@ -1,15 +1,14 @@
 import type { APIRoute } from 'astro';
-import { getPublishedPosts, getPrompts, getTools, getWorkflows } from '../lib/supabase';
+import { getPublishedPosts, getPrompts, getTools } from '../lib/supabase';
 
 const esc = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 const base = 'https://thetoolshed.work';
 
 export const GET: APIRoute = async () => {
-  const staticPaths = ['/', '/tools', '/prompts', '/templates', '/blog', '/about', '/privacy-policy'];
-  const [tools, workflows, prompts, posts] = await Promise.all([getTools(), getWorkflows(), getPrompts(), getPublishedPosts()]);
+  const staticPaths = ['/', '/saas-tools', '/tools', '/tools/evergreen-x-scheduler', '/tools/video-studio', '/prompts', '/blog', '/about', '/privacy-policy'];
+  const [tools, prompts, posts] = await Promise.all([getTools(), getPrompts(), getPublishedPosts()]);
   const urls = new Set(staticPaths.map((path) => `${base}${path}`));
   tools.forEach((item) => urls.add(`${base}/tools/${encodeURIComponent(item.slug)}`));
-  workflows.forEach((item) => urls.add(`${base}/templates/${encodeURIComponent(item.slug)}`));
   prompts.forEach((item) => urls.add(`${base}/prompts/${encodeURIComponent(item.slug)}`));
   posts.forEach((item) => urls.add(`${base}/blog/${encodeURIComponent(item.slug)}`));
 
