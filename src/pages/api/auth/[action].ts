@@ -1,4 +1,6 @@
 import type { APIRoute } from 'astro';
+import { dispatchVideoEmailSafely } from '../../../lib/video-studio/email';
+import { safeRelativePath } from '../../../lib/video-studio/server';
 import {
   SAAS_ACCESS_COOKIE,
   SAAS_REFRESH_COOKIE,
@@ -13,6 +15,33 @@ import {
 
 const supabaseUrl = () => (process.env.PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const publishableKey = () => process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '';
+
+type AuthUserData = {
+  user?: {
+    id?: string;
+    email?: string;
+    user_metadata?: Record<string, unknown>;
+  };
+};
+
+async function sendVideoStudioWelcome(data: AuthUserData, next: string) {
+  if (!next.startsWith('/app/video-studio')) return;
+  const user = data.user;
+  if (!user?.id || !user.email) return;
+  const metadata = user.user_metadata || {};
+  const name = typeof metadata.full_name === 'string'
+    ? metadata.full_name
+    : typeof metadata.name === 'string'
+      ? metadata.name
+      : null;
+  await dispatchVideoEmailSafely({
+    event_id: `video_welcome:${user.id}`,
+    event_type: 'welcome',
+    user_id: user.id,
+    email: user.email,
+    name,
+  });
+}
 
 function withSession(body: unknown, accessToken: string, refreshToken?: string, expiresIn = 3600) {
   const headers = new Headers({ 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
@@ -52,6 +81,7 @@ export const POST: APIRoute = async ({ request, params }) => {
     const payload = await request.json().catch(() => ({}));
     const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
     const password = typeof payload.password === 'string' ? payload.password : '';
+    const next = safeRelativePath(typeof payload.next === 'string' ? payload.next : null, '/');
     if (!email || !password || password.length < 8) return json({ error: 'Enter a valid email and a password of at least 8 characters.' }, 400);
 
     if (action === 'login') {
@@ -62,6 +92,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       });
       const data = await response.json();
       if (!response.ok || !data.access_token) return json({ error: 'Invalid email or password.' }, 401);
+      await sendVideoStudioWelcome(data, next);
       return withSession({ ok: true }, data.access_token, data.refresh_token, Number(data.expires_in || 3600));
     }
 
@@ -75,7 +106,10 @@ export const POST: APIRoute = async ({ request, params }) => {
       });
       const data = await response.json();
       if (!response.ok) return json({ error: data.msg || data.message || 'Unable to create account.' }, 400);
-      if (data.access_token) return withSession({ ok: true, confirmationRequired: false }, data.access_token, data.refresh_token, Number(data.expires_in || 3600));
+      if (data.access_token) {
+        await sendVideoStudioWelcome(data, next);
+        return withSession({ ok: true, confirmationRequired: false }, data.access_token, data.refresh_token, Number(data.expires_in || 3600));
+      }
       return json({ ok: true, confirmationRequired: true }, 202);
     }
 

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createAstroSupabaseClient } from '../../../lib/supabase-ssr';
+import { dispatchVideoEmailSafely } from '../../../lib/video-studio/email';
 import {
   safeRelativePath,
   VIDEO_ACCESS_COOKIE,
@@ -16,6 +17,22 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const { supabase, responseHeaders } = createAstroSupabaseClient(request, cookies);
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error || !data.session?.access_token) throw error || new Error('No session returned.');
+
+    if (next.startsWith('/app/video-studio') && data.user?.id && data.user.email) {
+      const metadata = data.user.user_metadata || {};
+      const name = typeof metadata.full_name === 'string'
+        ? metadata.full_name
+        : typeof metadata.name === 'string'
+          ? metadata.name
+          : null;
+      await dispatchVideoEmailSafely({
+        event_id: `video_welcome:${data.user.id}`,
+        event_type: 'welcome',
+        user_id: data.user.id,
+        email: data.user.email,
+        name,
+      });
+    }
 
     const secure = requestUrl.protocol === 'https:';
     cookies.set(VIDEO_ACCESS_COOKIE, data.session.access_token, {
