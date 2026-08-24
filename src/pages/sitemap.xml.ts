@@ -5,7 +5,22 @@ const esc = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;'
 const base = 'https://thetoolshed.work';
 
 export const GET: APIRoute = async () => {
-  const staticPaths = ['/', '/saas-tools', '/tools', '/tools/evergreen-x-scheduler', '/tools/video-studio', '/prompts', '/blog', '/about', '/privacy-policy'];
+  const staticPaths = [
+    '/',
+    '/saas-tools',
+    '/tools',
+    '/tools/evergreen-x-scheduler',
+    '/tools/video-studio',
+    '/prompts',
+    '/blog',
+    '/about',
+    '/support',
+    '/terms',
+    '/privacy-policy',
+    '/acceptable-use',
+    '/refund-policy',
+    '/privacy-choices',
+  ];
   const [tools, prompts, posts] = await Promise.all([getTools(), getPrompts(), getPublishedPosts()]);
   const urls = new Set(staticPaths.map((path) => `${base}${path}`));
   tools.forEach((item) => urls.add(`${base}/tools/${encodeURIComponent(item.slug)}`));

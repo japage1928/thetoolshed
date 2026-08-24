@@ -1,63 +1,393 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { safeRelativePath } from '../lib/video-studio/server';
-const next = safeRelativePath(Astro.url.searchParams.get('next'), '/');
+const next = safeRelativePath(Astro.url.searchParams.get('next'), '/account');
 const oauthError = Astro.url.searchParams.get('oauth_error');
 ---
-<BaseLayout title="Account" description="Sign in or create your Tool Shed account." path="/account" noindex>
-  <section class="account-shell">
-    <div class="card">
+
+<BaseLayout title="Account" description="Manage your Tool Shed account, subscription, payments, credits, usage, and privacy choices." path="/account" noindex>
+  <section class="account-shell wrapper">
+    <div id="account-loading" class="loading-card" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <strong>Loading your account…</strong>
+    </div>
+
+    <section id="auth-view" class="auth-card" hidden>
       <span class="eyebrow">THE TOOL SHED · ACCOUNT</span>
       <h1>Your Tool Shed account</h1>
-      <p>Sign in once to use Tool Shed apps like Video Studio, Story Studio, and the Evergreen X Scheduler.</p>
+      <p>Sign in once to use Tool Shed apps and manage billing, usage, credits, support, and privacy controls.</p>
       <a class="google" href={`/api/auth/google?next=${encodeURIComponent(next)}`}><span aria-hidden="true">G</span> Continue with Google</a>
+      <p class="oauth-terms">By continuing with Google, you confirm you are at least 18 and agree to the <a href="/terms">Terms</a> and <a href="/acceptable-use">Acceptable Use Policy</a>, and acknowledge the <a href="/privacy-policy">Privacy Policy</a>.</p>
       <div class="divider"><span>or use email</span></div>
-      <div class="tabs"><button class="tab active" data-mode="login">Sign in</button><button class="tab" data-mode="register">Create account</button></div>
+      <div class="tabs"><button class="tab active" type="button" data-mode="login">Sign in</button><button class="tab" type="button" data-mode="register">Create account</button></div>
       <form id="auth-form" data-mode="login" data-next={next}>
         <label>Email<input id="email" type="email" autocomplete="email" required /></label>
-        <label>Password<input id="password" type="password" minlength="8" autocomplete="current-password" required /></label>
+        <label>Password<input id="password" type="password" minlength="10" autocomplete="current-password" required /></label>
+        <label id="terms-row" class="terms-row" hidden>
+          <input id="terms" type="checkbox" />
+          <span>I am at least 18 and agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/acceptable-use" target="_blank">Acceptable Use Policy</a>, and acknowledge the <a href="/privacy-policy" target="_blank">Privacy Policy</a>.</span>
+        </label>
         <button class="submit" type="submit">Sign in</button>
-        <p id="status" class="status" hidden={!oauthError}>{oauthError ? 'Google sign-in could not be completed. Email sign-in is still available.' : ''}</p>
+        <button id="forgot-password" class="text-button" type="button">Forgot password?</button>
+        <p id="auth-status" class="status" hidden={!oauthError} aria-live="polite">{oauthError ? 'Google sign-in could not be completed. Email sign-in is still available.' : ''}</p>
       </form>
-    </div>
+      <p class="auth-legal">Necessary session cookies are used for sign-in. Optional analytics remains off unless you allow it.</p>
+    </section>
+
+    <section id="dashboard-view" class="dashboard" hidden>
+      <header class="account-header">
+        <div>
+          <span class="eyebrow">THE TOOL SHED · ACCOUNT</span>
+          <h1>Account & billing</h1>
+          <p id="account-email">—</p>
+        </div>
+        <div class="header-actions">
+          <a href="/app/video-studio">Open Video Studio</a>
+          <button id="sign-out" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <section id="legal-update" class="legal-update" data-next={next} hidden>
+        <div>
+          <span>ACTION REQUIRED</span>
+          <h2>Review the current Tool Shed policies</h2>
+          <p>Before using a hosted Tool Shed app, confirm the policies that govern your account, content, subscription, and privacy choices.</p>
+        </div>
+        <label>
+          <input id="legal-confirmation" type="checkbox" />
+          <span>I am at least 18 and agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/acceptable-use" target="_blank">Acceptable Use Policy</a>, and acknowledge the <a href="/privacy-policy" target="_blank">Privacy Policy</a>.</span>
+        </label>
+        <button id="accept-policies" type="button">Accept current policies</button>
+        <p id="legal-status" hidden aria-live="polite"></p>
+      </section>
+
+      <div class="metric-grid" aria-label="Video Studio usage summary">
+        <article><span>AVAILABLE CREDITS</span><strong id="available-credits">—</strong><small>Ready to use</small></article>
+        <article><span>CREDITS USED</span><strong id="credits-used">—</strong><small>Account history</small></article>
+        <article><span>PROJECTS</span><strong id="project-count">—</strong><small>Video Studio</small></article>
+        <article><span>GENERATIONS</span><strong id="generation-count">—</strong><small id="generation-detail">— completed</small></article>
+      </div>
+
+      <div class="account-grid">
+        <article class="panel billing-panel">
+          <div class="panel-heading"><div><span>BILLING</span><h2>Subscription & payments</h2></div><span id="subscription-badge" class="badge">Loading</span></div>
+          <dl>
+            <div><dt>Plan</dt><dd id="plan-name">—</dd></div>
+            <div><dt>Status</dt><dd id="subscription-status">—</dd></div>
+            <div><dt>Next date</dt><dd id="renewal-date">—</dd></div>
+          </dl>
+          <p id="billing-copy">View invoices, update your payment method, or cancel through Stripe’s secure customer portal.</p>
+          <button id="manage-billing" class="primary-action" type="button">Manage billing</button>
+          <p id="billing-status" class="inline-status" hidden aria-live="polite"></p>
+          <small>Card details are handled by Stripe and are never stored by The Tool Shed.</small>
+        </article>
+
+        <article class="panel activity-panel">
+          <div class="panel-heading"><div><span>USAGE</span><h2>Recent credit activity</h2></div></div>
+          <div id="credit-activity" class="activity-list"><p>Loading activity…</p></div>
+        </article>
+
+        <article class="panel support-panel">
+          <div class="panel-heading"><div><span>HELP</span><h2>Support & security</h2></div></div>
+          <div class="action-list">
+            <a href="mailto:hello@thetoolshed.work?subject=Video%20Studio%20support"><span><strong>Contact support</strong><small>Account, billing, or project help</small></span><b>↗</b></a>
+            <a href="/account/reset-password"><span><strong>Change password</strong><small>Email-password accounts</small></span><b>→</b></a>
+            <a href="/support"><span><strong>Support center</strong><small>Quick answers and safe contact guidance</small></span><b>→</b></a>
+          </div>
+        </article>
+
+        <article class="panel data-panel">
+          <div class="panel-heading"><div><span>PRIVACY</span><h2>Your data</h2></div></div>
+          <p>Download a JSON copy of your Video Studio projects, generations, settings, subscription history, and credit ledger.</p>
+          <div class="data-actions">
+            <a class="secondary-action" href="/api/account/export" download>Export my data</a>
+            <a class="secondary-action" href="/privacy-choices">Privacy choices</a>
+          </div>
+          <details class="danger-zone">
+            <summary>Delete Tool Shed account</summary>
+            <p>This permanently removes account-linked Tool Shed SaaS data. Active subscriptions must be canceled and ended first. Limited transaction or security records may be retained where legally required.</p>
+            <form id="delete-account-form">
+              <label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" pattern="DELETE" required /></label>
+              <button type="submit">Permanently delete account</button>
+            </form>
+            <p id="delete-status" class="inline-status" hidden aria-live="polite"></p>
+          </details>
+        </article>
+      </div>
+
+      <nav class="policy-links" aria-label="Account policies">
+        <a href="/terms">Terms</a><a href="/privacy-policy">Privacy</a><a href="/acceptable-use">Acceptable Use</a><a href="/refund-policy">Refunds & Cancellation</a>
+      </nav>
+    </section>
   </section>
 </BaseLayout>
+
 <script>
-  const form = document.querySelector<HTMLFormElement>('#auth-form');
+  const loading = document.querySelector<HTMLElement>('#account-loading');
+  const authView = document.querySelector<HTMLElement>('#auth-view');
+  const dashboard = document.querySelector<HTMLElement>('#dashboard-view');
+  const authForm = document.querySelector<HTMLFormElement>('#auth-form');
   const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
-  const status = document.querySelector<HTMLElement>('#status');
+  const authStatus = document.querySelector<HTMLElement>('#auth-status');
   const submit = document.querySelector<HTMLButtonElement>('.submit');
+  const termsRow = document.querySelector<HTMLElement>('#terms-row');
+  const terms = document.querySelector<HTMLInputElement>('#terms');
+
+  function showAuth(message?: string) {
+    if (loading) loading.hidden = true;
+    if (dashboard) dashboard.hidden = true;
+    if (authView) authView.hidden = false;
+    if (message && authStatus) {
+      authStatus.hidden = false;
+      authStatus.textContent = message;
+    }
+  }
+
+  function showDashboard() {
+    if (loading) loading.hidden = true;
+    if (authView) authView.hidden = true;
+    if (dashboard) dashboard.hidden = false;
+  }
+
+  function formatDate(value: unknown) {
+    if (!value) return '—';
+    const date = new Date(String(value));
+    return Number.isNaN(date.valueOf()) ? '—' : new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+  }
+
+  function label(value: unknown) {
+    return String(value || 'none').replace(/_/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+  }
+
+  function escapeHtml(value: unknown) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+    })[character] || character);
+  }
+
+  async function establishHashSession() {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = hash.get('access_token');
+    if (!accessToken) return;
+    if (hash.get('type') === 'recovery') {
+      window.location.replace(`/account/reset-password${window.location.hash}`);
+      return new Promise(() => {});
+    }
+    const response = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        accessToken,
+        refreshToken: hash.get('refresh_token'),
+        expiresIn: Number(hash.get('expires_in') || 3600),
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'The confirmation link is invalid or expired.');
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+
+  function renderAccount(data: any) {
+    showDashboard();
+    const set = (selector: string, value: unknown) => {
+      const element = document.querySelector(selector);
+      if (element) element.textContent = String(value ?? '—');
+    };
+    set('#account-email', data.account.email);
+    set('#available-credits', data.usage.availableCredits);
+    set('#credits-used', data.usage.creditsUsed);
+    set('#project-count', data.usage.projectCount);
+    set('#generation-count', data.usage.generationCount);
+    set('#generation-detail', `${data.usage.completedGenerations} completed`);
+
+    const legalUpdate = document.querySelector<HTMLElement>('#legal-update');
+    if (legalUpdate) legalUpdate.hidden = Boolean(data.legal?.currentAccepted);
+
+    const subscription = data.subscription;
+    const manageBilling = document.querySelector<HTMLButtonElement>('#manage-billing');
+    const badge = document.querySelector<HTMLElement>('#subscription-badge');
+    const billingCopy = document.querySelector<HTMLElement>('#billing-copy');
+    if (subscription) {
+      set('#plan-name', label(subscription.plan));
+      set('#subscription-status', subscription.cancelAtPeriodEnd ? 'Canceling' : label(subscription.status));
+      set('#renewal-date', formatDate(subscription.renewalDate));
+      if (badge) {
+        badge.textContent = subscription.cancelAtPeriodEnd ? 'Canceling' : label(subscription.status);
+        badge.dataset.tone = subscription.cancelAtPeriodEnd ? 'warning' : subscription.status;
+      }
+      if (billingCopy && subscription.cancelAtPeriodEnd) billingCopy.textContent = `Your subscription is canceled for renewal. Access remains available through ${formatDate(subscription.renewalDate)}. Open billing to reactivate or review invoices.`;
+      if (manageBilling) manageBilling.disabled = !subscription.canManageBilling;
+    } else {
+      set('#plan-name', 'No paid plan');
+      set('#subscription-status', 'Not subscribed');
+      set('#renewal-date', '—');
+      if (badge) { badge.textContent = 'No plan'; badge.dataset.tone = 'inactive'; }
+      if (billingCopy) billingCopy.textContent = data.billingEnabled ? 'No Video Studio subscription is attached to this account yet.' : 'Video Studio billing is not active in this environment.';
+      if (manageBilling) manageBilling.disabled = true;
+    }
+
+    const activity = document.querySelector<HTMLElement>('#credit-activity');
+    if (activity) {
+      if (!data.creditActivity?.length) activity.innerHTML = '<p class="empty-activity">No credit activity yet.</p>';
+      else activity.innerHTML = data.creditActivity.map((item: any) => {
+        const amount = Number(item.amount);
+        return `<div><span><strong>${escapeHtml(label(item.transaction_type))}</strong><small>${escapeHtml(formatDate(item.created_at))}</small></span><b data-tone="${amount >= 0 ? 'positive' : 'negative'}">${amount >= 0 ? '+' : ''}${Number.isFinite(amount) ? amount : 0}</b></div>`;
+      }).join('');
+    }
+
+    const deleteButton = document.querySelector<HTMLButtonElement>('#delete-account-form button');
+    if (deleteButton) deleteButton.disabled = !data.privacy.canDeleteAccount;
+    const deleteStatus = document.querySelector<HTMLElement>('#delete-status');
+    if (!data.privacy.canDeleteAccount && deleteStatus) {
+      deleteStatus.hidden = false;
+      deleteStatus.textContent = `Resolve ${data.privacy.activeSubscriptionCount} active subscription${data.privacy.activeSubscriptionCount === 1 ? '' : 's'} before deleting the account.`;
+    }
+  }
+
+  async function loadAccount() {
+    try {
+      await establishHashSession();
+      const response = await fetch('/api/account/summary', { headers: { accept: 'application/json' } });
+      const data = await response.json();
+      if (response.status === 401) return showAuth();
+      if (!response.ok) throw new Error(data.error || 'Unable to load your account.');
+      renderAccount(data);
+    } catch (error) {
+      showAuth(error instanceof Error ? error.message : 'Unable to load your account.');
+    }
+  }
+
   tabs.forEach((tab) => tab.addEventListener('click', () => {
     tabs.forEach((item) => item.classList.toggle('active', item === tab));
-    if (form) form.dataset.mode = tab.dataset.mode || 'login';
-    if (submit) submit.textContent = tab.dataset.mode === 'register' ? 'Create account' : 'Sign in';
+    const mode = tab.dataset.mode || 'login';
+    if (authForm) authForm.dataset.mode = mode;
+    if (submit) submit.textContent = mode === 'register' ? 'Create account' : 'Sign in';
     const password = document.querySelector<HTMLInputElement>('#password');
-    if (password) password.autocomplete = tab.dataset.mode === 'register' ? 'new-password' : 'current-password';
-    status?.setAttribute('hidden', '');
+    if (password) password.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+    if (termsRow) termsRow.hidden = mode !== 'register';
+    if (terms) terms.required = mode === 'register';
+    authStatus?.setAttribute('hidden', '');
   }));
-  form?.addEventListener('submit', async (event) => {
+
+  authForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const mode = form.dataset.mode || 'login';
+    const mode = authForm.dataset.mode || 'login';
     const email = document.querySelector<HTMLInputElement>('#email')?.value || '';
     const password = document.querySelector<HTMLInputElement>('#password')?.value || '';
     if (submit) submit.disabled = true;
-    if (status) { status.hidden = false; status.textContent = mode === 'register' ? 'Creating account…' : 'Signing in…'; }
+    if (authStatus) { authStatus.hidden = false; authStatus.textContent = mode === 'register' ? 'Creating account…' : 'Signing in…'; }
     try {
-      const response = await fetch(`/api/auth/${mode}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password, next: form.dataset.next || '/' }) });
+      const response = await fetch(`/api/auth/${mode}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password, next: authForm.dataset.next || '/account', acceptedTerms: Boolean(terms?.checked) }),
+      });
       const data = await response.json();
       if (!response.ok && response.status !== 202) throw new Error(data.error || 'Authentication failed.');
       if (data.confirmationRequired) {
-        if (status) status.textContent = 'Check your email to confirm your account, then sign in.';
+        if (authStatus) authStatus.textContent = 'Check your email to confirm your account, then return here.';
         return;
       }
-      window.location.href = form.dataset.next || '/';
+      window.location.href = authForm.dataset.next || '/account';
     } catch (error) {
-      if (status) status.textContent = error instanceof Error ? error.message : 'Authentication failed.';
+      if (authStatus) authStatus.textContent = error instanceof Error ? error.message : 'Authentication failed.';
     } finally {
       if (submit) submit.disabled = false;
     }
   });
+
+  document.querySelector('#forgot-password')?.addEventListener('click', async () => {
+    const emailInput = document.querySelector<HTMLInputElement>('#email');
+    const email = emailInput?.value.trim() || '';
+    if (!email) {
+      if (authStatus) { authStatus.hidden = false; authStatus.textContent = 'Enter your email address first.'; }
+      emailInput?.focus();
+      return;
+    }
+    if (authStatus) { authStatus.hidden = false; authStatus.textContent = 'Sending password reset instructions…'; }
+    try {
+      const response = await fetch('/api/auth/recover', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to send reset instructions.');
+      if (authStatus) authStatus.textContent = 'If that email has an account, a reset link is on the way.';
+    } catch (error) {
+      if (authStatus) authStatus.textContent = error instanceof Error ? error.message : 'Unable to send reset instructions.';
+    }
+  });
+
+  document.querySelector('#manage-billing')?.addEventListener('click', async () => {
+    const button = document.querySelector<HTMLButtonElement>('#manage-billing');
+    const status = document.querySelector<HTMLElement>('#billing-status');
+    if (button) button.disabled = true;
+    if (status) { status.hidden = false; status.textContent = 'Opening secure billing…'; }
+    try {
+      const response = await fetch('/api/video-studio/billing/portal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+      const data = await response.json();
+      if (!response.ok || !data.url) throw new Error(data.error || 'Unable to open billing.');
+      window.location.href = data.url;
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : 'Unable to open billing.';
+      if (button) button.disabled = false;
+    }
+  });
+
+  document.querySelector('#accept-policies')?.addEventListener('click', async () => {
+    const confirmation = document.querySelector<HTMLInputElement>('#legal-confirmation');
+    const button = document.querySelector<HTMLButtonElement>('#accept-policies');
+    const status = document.querySelector<HTMLElement>('#legal-status');
+    if (!confirmation?.checked) {
+      if (status) { status.hidden = false; status.textContent = 'Check the confirmation box to continue.'; }
+      confirmation?.focus();
+      return;
+    }
+    if (button) button.disabled = true;
+    if (status) { status.hidden = false; status.textContent = 'Saving your acceptance…'; }
+    try {
+      const response = await fetch('/api/account/accept-terms', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ accepted: true }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to save your acceptance.');
+      const legalUpdate = document.querySelector<HTMLElement>('#legal-update');
+      const destination = legalUpdate?.dataset.next || '/account';
+      if (destination !== '/account') window.location.href = destination;
+      else if (legalUpdate) legalUpdate.hidden = true;
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : 'Unable to save your acceptance.';
+      if (button) button.disabled = false;
+    }
+  });
+
+  document.querySelector('#sign-out')?.addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    window.location.href = '/account';
+  });
+
+  document.querySelector('#delete-account-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const confirmation = document.querySelector<HTMLInputElement>('#delete-confirmation')?.value || '';
+    const button = document.querySelector<HTMLButtonElement>('#delete-account-form button');
+    const status = document.querySelector<HTMLElement>('#delete-status');
+    if (button) button.disabled = true;
+    if (status) { status.hidden = false; status.textContent = 'Deleting account and Tool Shed SaaS data…'; }
+    try {
+      const response = await fetch('/api/account/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirmation }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to delete the account.');
+      window.location.href = '/?account=deleted';
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : 'Unable to delete the account.';
+      if (button) button.disabled = false;
+    }
+  });
+
+  loadAccount();
 </script>
+
 <style>
-.account-shell{min-height:72vh;display:grid;place-items:center;padding:4rem 1rem}.card{width:min(100%,460px);padding:2rem;border:1px solid var(--color-border);border-radius:1rem;background:#10110f}.eyebrow{font-size:.72rem;letter-spacing:.15em;font-weight:800;color:#c7a76a}.card h1{margin:.5rem 0}.card>p{color:#97928a}.google{display:flex;align-items:center;justify-content:center;gap:.7rem;margin-top:1.4rem;padding:.78rem;border-radius:.5rem;background:#ece6da;color:#111;text-decoration:none;font-weight:850}.google span{display:grid;place-items:center;width:1.35rem;height:1.35rem;border-radius:50%;background:#fff;color:#246ee9;font-weight:900}.divider{display:flex;align-items:center;gap:.7rem;margin:1rem 0;color:#66615a;font-size:.7rem}.divider::before,.divider::after{content:"";height:1px;flex:1;background:#302d28}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin:0 0 1.5rem;background:#090a09;padding:.3rem;border-radius:.6rem}.tab{padding:.65rem;border:0;border-radius:.45rem;background:transparent;color:#99948b;font-weight:800;cursor:pointer}.tab.active{background:#1b1c19;color:#f1eee7}form{display:grid;gap:1rem}label{display:grid;gap:.4rem;font-size:.82rem;font-weight:800;color:#aaa69e}input{padding:.82rem;border:1px solid var(--color-border);border-radius:.5rem;background:#090a09;color:#f1eee7}.submit{padding:.85rem;border:0;border-radius:.5rem;background:#ece6da;color:#111;font-weight:800;cursor:pointer}.status{color:#c7a76a;font-size:.85rem;line-height:1.5}
+  .account-shell{min-height:74vh;padding-top:4rem;padding-bottom:6rem}.loading-card{display:flex;align-items:center;justify-content:center;gap:.8rem;min-height:360px;border:1px solid var(--color-border);border-radius:1rem;background:#10110f;color:#aaa59c}.spinner{width:1rem;height:1rem;border:2px solid #4a4741;border-top-color:#ece6da;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.auth-card{width:min(100%,480px);margin:auto;padding:2rem;border:1px solid var(--color-border);border-radius:1rem;background:#10110f}.eyebrow{font-size:.68rem;letter-spacing:.16em;font-weight:850;color:#c7a76a}.auth-card h1,.account-header h1{margin:.5rem 0}.auth-card>p{color:#97928a;line-height:1.6}.google{display:flex;align-items:center;justify-content:center;gap:.7rem;margin-top:1.4rem;padding:.78rem;border-radius:.5rem;background:#ece6da;color:#111;text-decoration:none;font-weight:850}.google span{display:grid;place-items:center;width:1.35rem;height:1.35rem;border-radius:50%;background:#fff;color:#246ee9;font-weight:900}.oauth-terms{margin:.55rem 0!important;color:#6f6b64!important;font-size:.65rem!important;line-height:1.5!important}.oauth-terms a{color:#9fbbe8}.divider{display:flex;align-items:center;gap:.7rem;margin:1rem 0;color:#66615a;font-size:.7rem}.divider::before,.divider::after{content:"";height:1px;flex:1;background:#302d28}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin:0 0 1.5rem;background:#090a09;padding:.3rem;border-radius:.6rem}.tab{padding:.65rem;border:0;border-radius:.45rem;background:transparent;color:#99948b;font-weight:800;cursor:pointer}.tab.active{background:#1b1c19;color:#f1eee7}#auth-form{display:grid;gap:1rem}#auth-form>label,.danger-zone label{display:grid;gap:.4rem;font-size:.82rem;font-weight:800;color:#aaa69e}#auth-form input,.danger-zone input{box-sizing:border-box;width:100%;padding:.82rem;border:1px solid var(--color-border);border-radius:.5rem;background:#090a09;color:#f1eee7}.submit{padding:.85rem;border:0;border-radius:.5rem;background:#ece6da;color:#111;font-weight:800;cursor:pointer}.text-button{width:max-content;margin:auto;border:0;background:none;color:#c9dcff;font:inherit;font-size:.74rem;cursor:pointer}.status,.inline-status{color:#c7a76a;font-size:.78rem;line-height:1.5}.terms-row{grid-template-columns:auto 1fr!important;align-items:start}.terms-row input{width:auto!important;margin-top:.15rem}.terms-row span{font-weight:500;line-height:1.5}.terms-row a,.auth-legal a{color:#c9dcff}.auth-legal{margin:.9rem 0 0!important;color:#6f6b64!important;font-size:.68rem!important}
+  .account-header{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--color-border)}.account-header h1{font-size:clamp(2.5rem,6vw,4.5rem);letter-spacing:-.05em}.account-header p{margin:.5rem 0 0;color:#969188}.header-actions{display:flex;gap:.5rem}.header-actions a,.header-actions button{padding:.72rem .85rem;border:1px solid #45413a;border-radius:.4rem;background:#151612;color:#e5dfd5;text-decoration:none;font:inherit;font-size:.72rem;font-weight:800;cursor:pointer}.header-actions a{background:#ece6da;color:#111}.legal-update{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,1fr) auto;align-items:center;gap:1rem;margin:1.2rem 0;padding:1rem 1.1rem;border:1px solid #765d2c;border-radius:.65rem;background:#1c180f}.legal-update>div>span{color:#d3ad5d;font-size:.56rem;font-weight:850;letter-spacing:.13em}.legal-update h2{margin:.25rem 0;font-size:1.05rem}.legal-update p{margin:.2rem 0;color:#a79a7c;font-size:.68rem;line-height:1.5}.legal-update label{display:grid;grid-template-columns:auto 1fr;gap:.55rem;color:#c8bdab;font-size:.68rem;line-height:1.5}.legal-update label input{margin-top:.15rem}.legal-update a{color:#c9dcff}.legal-update button{padding:.75rem .85rem;border:0;border-radius:.4rem;background:#ece6da;color:#111;font:inherit;font-size:.7rem;font-weight:850;cursor:pointer}.legal-update button:disabled{opacity:.55}.legal-update>#legal-status{grid-column:1/-1;color:#d3ad5d}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:1.2rem 0}.metric-grid article{display:grid;gap:.25rem;padding:1rem;border:1px solid var(--color-border);border-radius:.55rem;background:#10110f}.metric-grid span,.panel-heading span{color:#747068;font-size:.56rem;font-weight:800;letter-spacing:.13em}.metric-grid strong{font-size:2rem;letter-spacing:-.04em}.metric-grid small{color:#767169;font-size:.64rem}.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}.panel{padding:1.25rem;border:1px solid var(--color-border);border-radius:.65rem;background:#10110f}.panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}.panel-heading h2{margin:.3rem 0 0;font-size:1.1rem}.badge{padding:.3rem .45rem;border-radius:99px;background:#242520;color:#aaa69e;font-size:.6rem;font-weight:800}.badge[data-tone="active"],.badge[data-tone="trialing"]{background:#183323;color:#93d9aa}.badge[data-tone="warning"],.badge[data-tone="past_due"]{background:#3a2e17;color:#e3bc6b}.billing-panel dl{display:grid;margin:0}.billing-panel dl div{display:flex;justify-content:space-between;gap:1rem;padding:.65rem 0;border-top:1px solid #2b2925}.billing-panel dt{color:#858079;font-size:.7rem}.billing-panel dd{margin:0;font-size:.72rem;font-weight:800}.billing-panel>p,.data-panel>p{color:#969188;font-size:.75rem;line-height:1.6}.primary-action,.secondary-action{display:inline-flex;justify-content:center;padding:.75rem .85rem;border:0;border-radius:.4rem;background:#ece6da;color:#111;text-decoration:none;font:inherit;font-size:.72rem;font-weight:850;cursor:pointer}.primary-action:disabled,.danger-zone button:disabled{opacity:.45;cursor:not-allowed}.billing-panel>small{display:block;margin-top:.75rem;color:#6f6b64;font-size:.62rem;line-height:1.5}.activity-list{display:grid}.activity-list>div{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem 0;border-top:1px solid #2b2925}.activity-list span{display:grid;gap:.14rem}.activity-list strong{font-size:.7rem}.activity-list small{color:#746f68;font-size:.6rem}.activity-list b{font-size:.75rem}.activity-list b[data-tone="positive"]{color:#91d7a8}.activity-list b[data-tone="negative"]{color:#d5a093}.empty-activity{color:#77726a;font-size:.74rem}.action-list{display:grid}.action-list a{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0;border-top:1px solid #2b2925;color:#e7e1d8;text-decoration:none}.action-list span{display:grid;gap:.2rem}.action-list strong{font-size:.74rem}.action-list small{color:#78736b;font-size:.62rem}.action-list b{color:#9fbbe8}.data-actions{display:flex;gap:.5rem;flex-wrap:wrap}.secondary-action{border:1px solid #45413a;background:#171814;color:#ddd8cf}.danger-zone{margin-top:1.2rem;padding-top:1rem;border-top:1px solid #3c2926}.danger-zone summary{color:#d09a8f;font-size:.72rem;font-weight:800;cursor:pointer}.danger-zone p{color:#8d7772;font-size:.68rem;line-height:1.55}.danger-zone form{display:grid;gap:.65rem;margin-top:.8rem}.danger-zone button{padding:.7rem;border:1px solid #7e4238;border-radius:.4rem;background:#321b18;color:#f0c3ba;font-weight:800;cursor:pointer}.policy-links{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--color-border)}.policy-links a{color:#7f7a72;font-size:.65rem}
+  @media(max-width:980px){.legal-update{grid-template-columns:1fr}.legal-update>#legal-status{grid-column:auto}}@media(max-width:900px){.metric-grid{grid-template-columns:1fr 1fr}.account-grid{grid-template-columns:1fr}}@media(max-width:620px){.account-shell{padding-top:2rem}.account-header{align-items:flex-start;flex-direction:column}.header-actions{width:100%}.header-actions a,.header-actions button{flex:1;text-align:center}.metric-grid{grid-template-columns:1fr 1fr}.metric-grid strong{font-size:1.6rem}.auth-card{padding:1.25rem}}
 </style>

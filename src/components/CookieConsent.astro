@@ -1,0 +1,59 @@
+<aside id="cookie-consent" class="cookie-consent" hidden aria-labelledby="cookie-title" aria-live="polite">
+  <div>
+    <strong id="cookie-title">Analytics preferences</strong>
+    <p>We use necessary storage for account sessions. Optional Google Analytics helps us improve the site and only loads with your permission.</p>
+    <a href="/privacy-policy#cookies">Learn about cookies</a>
+  </div>
+  <div class="cookie-actions">
+    <button type="button" data-consent="necessary">Necessary only</button>
+    <button type="button" class="accept" data-consent="analytics">Allow analytics</button>
+  </div>
+</aside>
+
+<script is:inline>
+  (() => {
+    const key = 'ts_cookie_consent';
+    const measurementId = 'G-3CCH0VWGCF';
+    const banner = document.getElementById('cookie-consent');
+    let analyticsLoaded = false;
+
+    const loadAnalytics = () => {
+      if (analyticsLoaded) return;
+      analyticsLoaded = true;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function(){ window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', measurementId, { anonymize_ip: true });
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+      document.head.appendChild(script);
+    };
+
+    const apply = (choice) => {
+      if (choice === 'analytics') loadAnalytics();
+      if (banner) banner.hidden = true;
+    };
+
+    const choose = (choice) => {
+      localStorage.setItem(key, choice);
+      apply(choice);
+    };
+
+    const current = localStorage.getItem(key);
+    const globalPrivacyControl = navigator.globalPrivacyControl === true;
+    if (current === 'analytics' || current === 'necessary') apply(current);
+    else if (globalPrivacyControl) choose('necessary');
+    else if (banner) banner.hidden = false;
+
+    banner?.querySelectorAll('[data-consent]').forEach((button) => button.addEventListener('click', () => choose(button.dataset.consent)));
+    document.querySelectorAll('[data-cookie-settings]').forEach((button) => button.addEventListener('click', () => {
+      if (banner) banner.hidden = false;
+      banner?.querySelector('button')?.focus();
+    }));
+  })();
+</script>
+
+<style>
+  .cookie-consent{position:fixed;z-index:1000;left:1rem;right:1rem;bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;max-width:920px;margin:auto;padding:1rem 1.1rem;border:1px solid #4b463c;border-radius:.7rem;background:#11120f;color:#eee9e0;box-shadow:0 18px 70px rgba(0,0,0,.5)}.cookie-consent[hidden]{display:none}.cookie-consent>div:first-child{max-width:650px}.cookie-consent strong{font-size:.82rem}.cookie-consent p{margin:.28rem 0;color:#aaa59c;font-size:.72rem;line-height:1.5}.cookie-consent a{color:#c9dcff;font-size:.68rem}.cookie-actions{display:flex;gap:.45rem;flex:none}.cookie-actions button{padding:.65rem .75rem;border:1px solid #514d45;border-radius:.35rem;background:#1b1c18;color:#ddd8ce;font:inherit;font-size:.68rem;font-weight:800;cursor:pointer}.cookie-actions .accept{border-color:#ece6da;background:#ece6da;color:#10110f}@media(max-width:720px){.cookie-consent{align-items:stretch;flex-direction:column}.cookie-actions{display:grid;grid-template-columns:1fr 1fr}.cookie-actions button{width:100%}}
+</style>

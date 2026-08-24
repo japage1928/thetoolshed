@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Support" description="Get help with a Tool Shed account, subscription, credits, or Video Studio project." path="/support">
+  <section class="support wrapper">
+    <span class="eyebrow">THE TOOL SHED · SUPPORT</span>
+    <h1>How can we help?</h1>
+    <p class="lead">Use the account tools for the fastest resolution, or email us from the address connected to your account.</p>
+
+    <div class="support-grid">
+      <article>
+        <span>01</span><h2>Account & billing</h2>
+        <p>View subscription status, update a payment method, download invoices, cancel, export data, or delete an eligible account.</p>
+        <a href="/account">Open Account</a>
+      </article>
+      <article>
+        <span>02</span><h2>Video Studio help</h2>
+        <p>Include the project name, approximate time, and what you expected. Do not send passwords, API keys, or full card details.</p>
+        <a href="mailto:hello@thetoolshed.work?subject=Video%20Studio%20support">Email Video Studio support</a>
+      </article>
+      <article>
+        <span>03</span><h2>Privacy & legal</h2>
+        <p>Request access, correction, export, or deletion, or review the policies that apply to Tool Shed SaaS tools.</p>
+        <a href="/privacy-choices">Open Privacy Choices</a>
+      </article>
+    </div>
+
+    <div class="contact">
+      <div><span>MONITORED SUPPORT EMAIL</span><strong>hello@thetoolshed.work</strong></div>
+      <a href="mailto:hello@thetoolshed.work?subject=Tool%20Shed%20support">Contact support</a>
+    </div>
+
+    <h2 class="faq-title">Quick answers</h2>
+    <div class="faq">
+      <details><summary>How do I cancel?</summary><p>Sign in, open Account, choose Manage billing, and cancel in the Stripe portal. The portal shows the date your access ends before you confirm.</p></details>
+      <details><summary>Where are my credits?</summary><p>Your current balance and recent credit activity appear on the Account page and inside Video Studio.</p></details>
+      <details><summary>What if a payment fails?</summary><p>Open Manage billing to update the payment method. Stripe may retry the payment, and we will send a service email when a payment needs attention.</p></details>
+      <details><summary>Can support see my password or card number?</summary><p>No. Never email either one. Stripe handles full card details, and passwords are managed through Supabase authentication.</p></details>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .support{padding-top:5rem;padding-bottom:7rem}.eyebrow{color:#c7a76a;font-size:.68rem;font-weight:850;letter-spacing:.16em}.support>h1{margin:.55rem 0 1rem;font-size:clamp(3rem,7vw,6rem);letter-spacing:-.055em}.lead{max-width:680px;color:#aaa59c;font-size:1.05rem;line-height:1.7}.support-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:3rem 0}.support-grid article{display:flex;flex-direction:column;min-height:260px;padding:1.35rem;border:1px solid var(--color-border);border-radius:.65rem;background:#10110f}.support-grid article>span{color:#6f6a62;font-size:.65rem;letter-spacing:.14em}.support-grid h2{margin:1.4rem 0 .5rem}.support-grid p{color:#969188;line-height:1.65}.support-grid a{margin-top:auto;color:#c9dcff;font-weight:750}.contact{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.4rem;border:1px solid #3b4856;border-radius:.65rem;background:#101820}.contact div{display:grid;gap:.3rem}.contact span{color:#8497aa;font-size:.6rem;letter-spacing:.13em}.contact strong{font-size:1.1rem}.contact a{padding:.75rem .9rem;border-radius:.4rem;background:#ece6da;color:#111;text-decoration:none;font-weight:850}.faq-title{margin-top:3.5rem}.faq{display:grid;gap:.6rem;max-width:780px}.faq details{padding:1rem;border:1px solid var(--color-border);border-radius:.45rem;background:#10110f}.faq summary{font-weight:800;cursor:pointer}.faq p{color:#969188;line-height:1.65}@media(max-width:850px){.support-grid{grid-template-columns:1fr}.support-grid article{min-height:210px}}@media(max-width:600px){.contact{align-items:stretch;flex-direction:column}.contact a{text-align:center}}
+</style>

@@ -25,6 +25,17 @@
     window_size = 60
     aggregate_by = ["ip", "domain"]
 
+# Account export, deletion, and summary endpoints are authenticated but still rate-limited.
+[[redirects]]
+  from = "/api/account/*"
+  to = "/api/account/:splat"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 30
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
+
 # Generation is expensive even in a future enabled state. Keep the narrow rule
 # before the wider Video Studio API rule because Netlify uses the first match.
 [[redirects]]
@@ -100,6 +111,33 @@
   to = "/saas-tools"
   status = 301
   force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.stripe.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.stripe.com https://*.link.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.stripe.com https://*.link.com; frame-src 'self' https://*.stripe.com https://*.link.com; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+
+[[headers]]
+  for = "/account*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/api/account/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
 
 [[headers]]
   for = "/admin/*"

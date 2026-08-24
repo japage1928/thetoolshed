@@ -31,7 +31,13 @@ test('Stripe wiring rejects live keys and non-test mode', () => {
     VIDEO_STRIPE_MODE: 'test',
     VIDEO_STRIPE_SECRET_KEY: 'sk_live_never_allowed',
     VIDEO_STRIPE_PRICE_IDS_JSON: prices,
-  }), /test secret key/i);
+  }), /test secret/i);
+  assert.equal(getStripeTestConfig({
+    VIDEO_BILLING_ENABLED: 'true',
+    VIDEO_STRIPE_MODE: 'test',
+    VIDEO_STRIPE_SECRET_KEY: 'rk_test_restricted_example',
+    VIDEO_STRIPE_PRICE_IDS_JSON: prices,
+  }).secretKey, 'rk_test_restricted_example');
 });
 
 test('generation requires the kill switch and both n8n connector values', () => {
