@@ -2,10 +2,9 @@ import type { APIRoute } from 'astro';
 import {
   assertSameOrigin,
   getAuthenticatedUser,
-  getServiceDb,
   getStripeClient,
+  getUserDb,
   json,
-  publicSiteUrl,
   safeError,
 } from '../../../../lib/video-studio/server';
 
@@ -15,7 +14,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { stripe } = getStripeClient();
     const user = await getAuthenticatedUser(request);
     if (!user) return json({ error: 'Sign in before opening billing.' }, 401);
-    const { data, error } = await getServiceDb()
+    const { data, error } = await getUserDb(user.token)
       .from('video_studio_subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
@@ -26,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!data?.stripe_customer_id) return json({ error: 'No Stripe customer is attached to this account.' }, 404);
     const session = await stripe.billingPortal.sessions.create({
       customer: data.stripe_customer_id,
-      return_url: `${publicSiteUrl()}/app/video-studio`,
+      return_url: `${new URL(request.url).origin}/app/video-studio`,
     });
     return json({ url: session.url });
   } catch (error) {
