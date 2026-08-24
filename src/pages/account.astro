@@ -43,7 +43,7 @@ const oauthError = Astro.url.searchParams.get('oauth_error');
     if (submit) submit.disabled = true;
     if (status) { status.hidden = false; status.textContent = mode === 'register' ? 'Creating account…' : 'Signing in…'; }
     try {
-      const response = await fetch(`/api/auth/${mode}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const response = await fetch(`/api/auth/${mode}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password, next: form.dataset.next || '/' }) });
       const data = await response.json();
       if (!response.ok && response.status !== 202) throw new Error(data.error || 'Authentication failed.');
       if (data.confirmationRequired) {
