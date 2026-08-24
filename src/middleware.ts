@@ -4,6 +4,7 @@ const ADMIN_COOKIE = 'ts_admin_access_token';
 const SAAS_COOKIE = 'ts_saas_access_token';
 const SAAS_REFRESH_COOKIE = 'ts_saas_refresh_token';
 const LEGAL_VERSION = '2026-08-24';
+const CONTENT_SECURITY_POLICY = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.stripe.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.stripe.com https://*.link.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.stripe.com https://*.link.com; frame-src 'self' https://*.stripe.com https://*.link.com; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests";
 
 function getCookie(request: Request, name: string) {
   return request.headers.get('cookie')?.match(new RegExp(`${name}=([^;]+)`))?.[1];
@@ -99,11 +100,27 @@ function sessionCookie(name: string, value: string, maxAge: number) {
   return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; Secure; SameSite=Lax; HttpOnly`;
 }
 
+function securityHeaders(response: Response) {
+  const values = {
+    'Content-Security-Policy': CONTENT_SECURITY_POLICY,
+    'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self)',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+  };
+  for (const [name, value] of Object.entries(values)) {
+    if (!response.headers.has(name)) response.headers.set(name, value);
+  }
+  return response;
+}
+
 function noStore(response: Response) {
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   response.headers.set('Netlify-CDN-Cache-Control', 'no-store');
   response.headers.set('Pragma', 'no-cache');
-  return response;
+  return securityHeaders(response);
 }
 
 export const onRequest = defineMiddleware(async ({ request, redirect }, next) => {
@@ -116,7 +133,7 @@ export const onRequest = defineMiddleware(async ({ request, redirect }, next) =>
   const isAccountPage = url.pathname === '/account' || url.pathname.startsWith('/account/');
   const evergreenLaunched = process.env.EVERGREEN_X_LAUNCH_ENABLED === 'true';
 
-  if (!isAdmin && !isSaasApp && !isAccountPage) return next();
+  if (!isAdmin && !isSaasApp && !isAccountPage) return securityHeaders(await next());
 
   if (isAdmin) {
     if (!await isAdminToken(getCookie(request, ADMIN_COOKIE))) return noStore(redirect('/admin/login', 302));
