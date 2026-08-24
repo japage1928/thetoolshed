@@ -8,6 +8,7 @@ import {
   json,
   safeError,
   validateProjectInput,
+  videoStripeMode,
 } from '../../../lib/video-studio/server';
 
 async function context(request: Request) {
@@ -22,20 +23,30 @@ async function context(request: Request) {
 export const GET: APIRoute = async ({ request }) => {
   try {
     const { db } = await context(request);
-    const [projectsResult, balanceResult] = await Promise.all([
+    const [projectsResult, balanceResult, subscriptionResult] = await Promise.all([
       db
         .from('video_studio_projects')
         .select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,created_at,updated_at')
         .order('updated_at', { ascending: false })
         .limit(20),
       db.rpc('video_studio_credit_balance'),
+      db
+        .from('video_studio_subscriptions')
+        .select('plan,status,renewal_date,cancel_at_period_end,updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
     if (projectsResult.error) throw projectsResult.error;
     if (balanceResult.error) throw balanceResult.error;
+    if (subscriptionResult.error) throw subscriptionResult.error;
+    const billingIsEnabled = billingEnabled();
     return json({
       projects: projectsResult.data || [],
       credits: Number(balanceResult.data || 0),
-      billingEnabled: billingEnabled(),
+      billingEnabled: billingIsEnabled,
+      billingMode: billingIsEnabled ? videoStripeMode() : null,
+      subscription: subscriptionResult.data || null,
       generationEnabled: generationEnabled(),
       internalBeta: true,
     });

@@ -124,6 +124,14 @@ export function billingEnabled(env: Environment = process.env) {
   return env.VIDEO_BILLING_ENABLED === 'true';
 }
 
+export type VideoStripeMode = 'test' | 'live';
+
+export function videoStripeMode(env: Environment = process.env): VideoStripeMode | null {
+  return env.VIDEO_STRIPE_MODE === 'test' || env.VIDEO_STRIPE_MODE === 'live'
+    ? env.VIDEO_STRIPE_MODE
+    : null;
+}
+
 export function generationEnabled(env: Environment = process.env) {
   return env.VIDEO_GENERATION_ENABLED === 'true'
     && Boolean(env.VIDEO_N8N_WEBHOOK_URL)
@@ -133,21 +141,24 @@ export function generationEnabled(env: Environment = process.env) {
 export type VideoStripePrices = {
   trial: string;
   starter: string;
-  creator: string;
-  topup: string;
 };
 
-export function getStripeTestConfig(env: Environment = process.env) {
+export function getStripeConfig(env: Environment = process.env) {
   if (!billingEnabled(env)) {
     throw Object.assign(new Error('Video Studio billing is disabled.'), { status: 503, code: 'billing_disabled' });
   }
-  if (env.VIDEO_STRIPE_MODE !== 'test') {
-    throw Object.assign(new Error('Video Studio billing is restricted to Stripe test mode.'), { status: 503, code: 'test_mode_required' });
+  const mode = videoStripeMode(env);
+  if (!mode) {
+    throw Object.assign(new Error('VIDEO_STRIPE_MODE must be either test or live.'), { status: 503, code: 'stripe_mode_invalid' });
   }
   const secretKey = env.VIDEO_STRIPE_SECRET_KEY?.trim() || '';
   const webhookSecret = env.VIDEO_STRIPE_WEBHOOK_SECRET?.trim() || '';
-  if (!secretKey.startsWith('sk_test_')) {
-    throw Object.assign(new Error('A Stripe test secret key is required.'), { status: 503, code: 'stripe_test_key_required' });
+  const validKeyPrefixes = mode === 'test' ? ['sk_test_', 'rk_test_'] : ['sk_live_', 'rk_live_'];
+  if (!validKeyPrefixes.some((prefix) => secretKey.startsWith(prefix))) {
+    throw Object.assign(new Error(`A Stripe ${mode}-mode API credential is required.`), {
+      status: 503,
+      code: 'stripe_key_mode_mismatch',
+    });
   }
   if (webhookSecret && !webhookSecret.startsWith('whsec_')) {
     throw Object.assign(new Error('The Stripe webhook secret is invalid.'), { status: 503, code: 'stripe_webhook_invalid' });
@@ -158,16 +169,20 @@ export function getStripeTestConfig(env: Environment = process.env) {
   } catch {
     throw Object.assign(new Error('VIDEO_STRIPE_PRICE_IDS_JSON must be valid JSON.'), { status: 503, code: 'stripe_prices_invalid' });
   }
-  for (const name of ['trial', 'starter', 'creator', 'topup'] as const) {
+  for (const name of ['trial', 'starter'] as const) {
     if (!prices[name]?.startsWith('price_')) {
-      throw Object.assign(new Error(`Missing Stripe test Price ID: ${name}.`), { status: 503, code: 'stripe_price_missing' });
+      throw Object.assign(new Error(`Missing Stripe Price ID: ${name}.`), { status: 503, code: 'stripe_price_missing' });
     }
   }
-  return { secretKey, webhookSecret, prices };
+  return { mode, secretKey, webhookSecret, prices };
 }
 
+// Kept as a compatibility export for existing imports while the integration
+// moves from a test-only scaffold to an explicit test/live mode boundary.
+export const getStripeTestConfig = getStripeConfig;
+
 export function getStripeClient(env: Environment = process.env) {
-  const config = getStripeTestConfig(env);
+  const config = getStripeConfig(env);
   return { stripe: new Stripe(config.secretKey), ...config };
 }
 

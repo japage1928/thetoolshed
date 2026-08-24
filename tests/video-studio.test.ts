@@ -5,7 +5,7 @@ import {
   estimateApiCost,
   estimateCredits,
   generationEnabled,
-  getStripeTestConfig,
+  getStripeConfig,
   maxDailyVideoSpend,
   safeRelativePath,
   validateProjectInput,
@@ -17,20 +17,41 @@ test('billing stays off unless the exact feature flag is true', () => {
   assert.equal(billingEnabled({ VIDEO_BILLING_ENABLED: 'true' }), true);
 });
 
-test('Stripe wiring rejects live keys and non-test mode', () => {
-  const prices = JSON.stringify({ trial: 'price_trial', starter: 'price_starter', creator: 'price_creator', topup: 'price_topup' });
-  assert.throws(() => getStripeTestConfig({
+test('Stripe wiring enforces matching test and live credentials', () => {
+  const prices = JSON.stringify({ trial: 'price_trial', starter: 'price_starter' });
+  assert.throws(() => getStripeConfig({
     VIDEO_BILLING_ENABLED: 'true',
     VIDEO_STRIPE_MODE: 'live',
     VIDEO_STRIPE_SECRET_KEY: 'sk_test_example',
     VIDEO_STRIPE_PRICE_IDS_JSON: prices,
-  }), /test mode/i);
-  assert.throws(() => getStripeTestConfig({
+  }), /live-mode API credential/i);
+  assert.throws(() => getStripeConfig({
     VIDEO_BILLING_ENABLED: 'true',
     VIDEO_STRIPE_MODE: 'test',
     VIDEO_STRIPE_SECRET_KEY: 'sk_live_never_allowed',
     VIDEO_STRIPE_PRICE_IDS_JSON: prices,
-  }), /test secret key/i);
+  }), /test-mode API credential/i);
+  assert.equal(getStripeConfig({
+    VIDEO_BILLING_ENABLED: 'true',
+    VIDEO_STRIPE_MODE: 'test',
+    VIDEO_STRIPE_SECRET_KEY: 'rk_test_restricted',
+    VIDEO_STRIPE_PRICE_IDS_JSON: prices,
+  }).mode, 'test');
+  assert.equal(getStripeConfig({
+    VIDEO_BILLING_ENABLED: 'true',
+    VIDEO_STRIPE_MODE: 'live',
+    VIDEO_STRIPE_SECRET_KEY: 'sk_live_example',
+    VIDEO_STRIPE_PRICE_IDS_JSON: prices,
+  }).mode, 'live');
+});
+
+test('Stripe wiring requires only the single-plan intro and monthly prices', () => {
+  assert.throws(() => getStripeConfig({
+    VIDEO_BILLING_ENABLED: 'true',
+    VIDEO_STRIPE_MODE: 'test',
+    VIDEO_STRIPE_SECRET_KEY: 'sk_test_example',
+    VIDEO_STRIPE_PRICE_IDS_JSON: JSON.stringify({ trial: 'price_trial' }),
+  }), /starter/i);
 });
 
 test('generation requires the kill switch and both n8n connector values', () => {
