@@ -88,7 +88,8 @@ export const onRequest = defineMiddleware(async ({ request, redirect }, next) =>
   const isAdmin = url.pathname.startsWith('/admin') && url.pathname !== '/admin/login';
   const isEvergreenApp = url.pathname.startsWith('/app/evergreen-x');
   const isStoryStudioApp = url.pathname.startsWith('/app/story-studio');
-  const isSaasApp = isEvergreenApp || isStoryStudioApp;
+  const isVideoStudioApp = url.pathname.startsWith('/app/video-studio');
+  const isSaasApp = isEvergreenApp || isStoryStudioApp || isVideoStudioApp;
   const evergreenLaunched = process.env.EVERGREEN_X_LAUNCH_ENABLED === 'true';
 
   if (!isAdmin && !isSaasApp) return next();

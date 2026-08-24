@@ -25,6 +25,28 @@
     window_size = 60
     aggregate_by = ["ip", "domain"]
 
+# Generation is expensive even in a future enabled state. Keep the narrow rule
+# before the wider Video Studio API rule because Netlify uses the first match.
+[[redirects]]
+  from = "/api/video-studio/generate"
+  to = "/api/video-studio/generate"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 6
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
+
+[[redirects]]
+  from = "/api/video-studio/*"
+  to = "/api/video-studio/:splat"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 60
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
+
 # The scheduler calls this once per reserved publish; aggressive client bursts are never legitimate.
 [[redirects]]
   from = "/api/internal/evergreen-x/*"
@@ -88,6 +110,22 @@
 
 [[headers]]
   for = "/api/internal/evergreen-x/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/app/video-studio/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Netlify-CDN-Cache-Control = "no-store"
+    Pragma = "no-cache"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/api/video-studio/*"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
     Netlify-CDN-Cache-Control = "no-store"

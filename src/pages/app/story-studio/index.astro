@@ -36,11 +36,12 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
   const paid = () => dashboard?.plan?.id && dashboard.plan.id !== 'free';
 
   async function loadDashboard() {
-    dashboard = await api('dashboard');
-    $('#plan')!.textContent = dashboard.plan.name;
-    $('#word-usage')!.textContent = `${Number(dashboard.usage.words).toLocaleString()} / ${Number(dashboard.plan.monthly_word_limit).toLocaleString()}`;
-    $('#image-usage')!.textContent = `${dashboard.usage.images} / ${dashboard.plan.monthly_image_limit}`;
-    $('#project-usage')!.textContent = `${dashboard.projects.length} / ${dashboard.plan.active_project_limit}`;
+    const nextDashboard: AnyObj = await api('dashboard');
+    dashboard = nextDashboard;
+    $('#plan')!.textContent = nextDashboard.plan.name;
+    $('#word-usage')!.textContent = `${Number(nextDashboard.usage.words).toLocaleString()} / ${Number(nextDashboard.plan.monthly_word_limit).toLocaleString()}`;
+    $('#image-usage')!.textContent = `${nextDashboard.usage.images} / ${nextDashboard.plan.monthly_image_limit}`;
+    $('#project-usage')!.textContent = `${nextDashboard.projects.length} / ${nextDashboard.plan.active_project_limit}`;
     renderProjects();
   }
   function renderProjects() {

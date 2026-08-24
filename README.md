@@ -8,6 +8,32 @@ file committed to this repo, built by Astro, and deployed by Netlify.
 > site existed), so the site itself — homepage, blog, design, SEO — was
 > created from scratch alongside the publishing pipeline described below.
 
+## Video Studio internal beta
+
+Video Studio lives inside the existing Tool Shed application at
+`/tools/video-studio`, with its signed-in workspace at `/app/video-studio`.
+It is intentionally an internal-beta shell rather than a separately deployed
+application.
+
+- Email/password and Google OAuth use the existing Supabase Auth project.
+  Configure Google in Supabase and allow
+  `https://thetoolshed.work/api/auth/callback` as the application callback.
+- The existing n8n video workflow is treated as an isolated production engine,
+  not part of the Marketing Department workflow.
+- Stripe Checkout, webhook reconciliation, subscription records, and the
+  billing portal are wired for Stripe **test mode only**.
+- `VIDEO_BILLING_ENABLED=false` and `VIDEO_GENERATION_ENABLED=false` are hard
+  kill switches. Keep both false until test credentials, webhook delivery,
+  credit reconciliation, and generation cost controls have been verified.
+- The Video Studio schema uses prefixed tables, row-level security, an
+  append-only credit ledger, atomic credit reservations, idempotency keys,
+  per-route rate limits, and a database-level daily-spend circuit breaker.
+
+Apply `supabase/migrations/20260824_video_studio_foundation.sql` to the existing
+Tool Shed Supabase project before opening the authenticated workspace. Server
+operations that allocate credits require `SUPABASE_SERVICE_ROLE_KEY`; never
+expose it through a `PUBLIC_` variable.
+
 ## How it fits together
 
 ```
