@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  updated?: string;
+}
+
+const { title, description, path, updated = 'August 24, 2026' } = Astro.props;
+---
+
+<BaseLayout {title} {description} {path}>
+  <article class="legal-page wrapper">
+    <header class="legal-header">
+      <span>THE TOOL SHED · LEGAL</span>
+      <h1>{title}</h1>
+      <p>{description}</p>
+      <small>Effective and last updated: {updated}</small>
+    </header>
+    <nav class="legal-nav" aria-label="Legal policies">
+      <a href="/terms">Terms</a>
+      <a href="/privacy-policy">Privacy</a>
+      <a href="/acceptable-use">Acceptable Use</a>
+      <a href="/refund-policy">Refunds & Cancellation</a>
+      <a href="/privacy-choices">Privacy Choices</a>
+    </nav>
+    <div class="legal-content"><slot /></div>
+  </article>
+</BaseLayout>
+
+<style>
+  .legal-page{max-width:58rem;padding-top:4rem;padding-bottom:6rem}.legal-header{padding-bottom:2rem;border-bottom:1px solid var(--color-border)}.legal-header span{color:#c7a76a;font-size:.68rem;font-weight:850;letter-spacing:.16em}.legal-header h1{margin:.55rem 0 .8rem;font-size:clamp(2.5rem,6vw,4.8rem);letter-spacing:-.05em}.legal-header p{max-width:46rem;margin:0;color:#aaa59c;font-size:1.05rem;line-height:1.7}.legal-header small{display:block;margin-top:1rem;color:#716d66}.legal-nav{display:flex;gap:.5rem;flex-wrap:wrap;padding:1.1rem 0;border-bottom:1px solid var(--color-border)}.legal-nav a{padding:.48rem .65rem;border:1px solid #302e29;border-radius:.35rem;color:#b8b3aa;text-decoration:none;font-size:.72rem;font-weight:750}.legal-nav a:hover{border-color:#777168;color:#f0ece4}.legal-content{padding-top:1.25rem}.legal-content :global(h2){margin:2.2rem 0 .75rem;font-size:1.5rem}.legal-content :global(h3){margin:1.5rem 0 .55rem;font-size:1.05rem}.legal-content :global(p),.legal-content :global(li){color:#aaa59c;line-height:1.75}.legal-content :global(ul){padding-left:1.25rem}.legal-content :global(a){color:#c9dcff}.legal-content :global(.notice){padding:1rem 1.1rem;border-left:3px solid #c7a76a;background:#12130f}.legal-content :global(table){width:100%;border-collapse:collapse;margin:1rem 0}.legal-content :global(th),.legal-content :global(td){padding:.75rem;border:1px solid #302e29;text-align:left;vertical-align:top;color:#aaa59c;font-size:.86rem;line-height:1.55}.legal-content :global(th){color:#eee9e0;background:#12130f}@media(max-width:620px){.legal-page{padding-top:2.5rem}.legal-content :global(table){display:block;overflow-x:auto}}
+</style>

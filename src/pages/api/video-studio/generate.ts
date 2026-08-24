@@ -10,6 +10,7 @@ import {
   getUserDb,
   json,
   maxDailyVideoSpend,
+  requireCurrentLegalAcceptance,
   requireUuid,
   safeError,
 } from '../../../lib/video-studio/server';
@@ -33,6 +34,7 @@ export const POST: APIRoute = async ({ request }) => {
     const dailySpendLimit = maxDailyVideoSpend();
 
     const userDb = getUserDb(user.token);
+    await requireCurrentLegalAcceptance(userDb);
     const { data: project, error: projectError } = await userDb
       .from('video_studio_projects')
       .select('*')

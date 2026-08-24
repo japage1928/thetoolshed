@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { LEGAL_VERSIONS, recordLegalAcceptance } from '../../../lib/legal';
 import { createAstroSupabaseClient } from '../../../lib/supabase-ssr';
 import { dispatchVideoEmailSafely } from '../../../lib/video-studio/email';
 import {
@@ -17,6 +18,22 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const { supabase, responseHeaders } = createAstroSupabaseClient(request, cookies);
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error || !data.session?.access_token) throw error || new Error('No session returned.');
+
+    const existingMetadata = data.user.user_metadata || {};
+    if (!existingMetadata.terms_accepted_at) {
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          ...existingMetadata,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: LEGAL_VERSIONS.terms,
+          privacy_version: LEGAL_VERSIONS.privacy,
+          acceptable_use_version: LEGAL_VERSIONS.acceptableUse,
+        },
+      });
+      if (metadataError) throw metadataError;
+    }
+
+    await recordLegalAcceptance(data.user.id, 'google_oauth');
 
     if (next.startsWith('/app/video-studio') && data.user?.id && data.user.email) {
       const metadata = data.user.user_metadata || {};

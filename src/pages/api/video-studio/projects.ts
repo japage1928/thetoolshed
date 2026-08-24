@@ -6,6 +6,8 @@ import {
   getAuthenticatedUser,
   getUserDb,
   json,
+  requireCurrentLegalAcceptance,
+  requireUuid,
   safeError,
   validateProjectInput,
 } from '../../../lib/video-studio/server';
@@ -14,6 +16,7 @@ async function context(request: Request) {
   const user = await getAuthenticatedUser(request);
   if (!user) throw Object.assign(new Error('Sign in to use Video Studio.'), { status: 401, code: 'authentication_required' });
   const db = getUserDb(user.token);
+  await requireCurrentLegalAcceptance(db);
   const { error } = await db.rpc('video_studio_bootstrap_profile');
   if (error) throw Object.assign(new Error('Video Studio database setup is incomplete.'), { status: 503, code: 'video_database_unavailable' });
   return { user, db };
@@ -68,6 +71,38 @@ export const POST: APIRoute = async ({ request }) => {
       .single();
     if (error) throw error;
     return json({ project: data }, 201);
+  } catch (error) {
+    return safeError(error);
+  }
+};
+
+export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    assertSameOrigin(request);
+    const { db } = await context(request);
+    const body = await request.json().catch(() => ({}));
+    const projectId = requireUuid(body.projectId, 'project');
+    const { count: activeGenerationCount, error: generationError } = await db
+      .from('video_studio_generations')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .in('status', ['reserved', 'queued', 'planning', 'generating', 'qa', 'repairing']);
+    if (generationError) throw generationError;
+    if (activeGenerationCount) {
+      return json({
+        error: 'Wait for the active generation to finish before deleting this project.',
+        code: 'generation_in_progress',
+      }, 409);
+    }
+    const { data, error } = await db
+      .from('video_studio_projects')
+      .delete()
+      .eq('id', projectId)
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return json({ error: 'Project not found.' }, 404);
+    return json({ ok: true, projectId });
   } catch (error) {
     return safeError(error);
   }

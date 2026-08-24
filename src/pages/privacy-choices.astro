@@ -1,0 +1,30 @@
+---
+import LegalPage from '../components/LegalPage.astro';
+---
+
+<LegalPage
+  title="Privacy Choices"
+  description="Access, export, correct, or delete your information and manage optional analytics."
+  path="/privacy-choices"
+>
+  <h2>Account data</h2>
+  <p>Signed-in users can view usage, export Video Studio data, and request eligible account deletion from the <a href="/account">Account</a> page. Deleting a Tool Shed account removes account-linked SaaS project data, subject to limited legal and operational retention described in the Privacy Policy.</p>
+
+  <h2>Submit a privacy request</h2>
+  <p>Email <a href="mailto:hello@thetoolshed.work?subject=Privacy%20request">hello@thetoolshed.work</a> with the subject “Privacy request.” Tell us whether you want to access, correct, export, or delete information. Use the email associated with your account when possible. We may ask for reasonable verification and will respond within the period required by applicable law.</p>
+
+  <h2>Sale, sharing, and targeted advertising</h2>
+  <p>The Tool Shed does not sell personal information or share it for cross-context behavioral advertising. We therefore do not currently need to offer a separate sale or sharing opt-out. If these practices change, this page and the Privacy Policy will be updated before the change takes effect.</p>
+
+  <h2>Optional analytics</h2>
+  <p>Necessary account storage cannot be disabled while using signed-in services. Google Analytics is optional.</p>
+  <button class="preference-button" type="button" data-cookie-settings>Open Cookie Settings</button>
+
+  <h2>Appeals and questions</h2>
+  <p>If we deny a privacy request, you may reply to the decision and ask us to review it. Include “Privacy appeal” in the subject. You may also contact the privacy or consumer-protection authority where you live.</p>
+</LegalPage>
+
+<style>
+  .preference-button{padding:.7rem .85rem;border:1px solid #716a5e;border-radius:.4rem;background:#ece6da;color:#111;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer}
+</style>
+

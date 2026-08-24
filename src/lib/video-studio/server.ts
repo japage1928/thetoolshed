@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { LEGAL_VERSIONS } from '../legal-versions';
 
 export const VIDEO_ACCESS_COOKIE = 'ts_saas_access_token';
 export const VIDEO_REFRESH_COOKIE = 'ts_saas_refresh_token';
@@ -120,6 +121,24 @@ export function getServiceDb(): SupabaseClient {
   });
 }
 
+export async function requireCurrentLegalAcceptance(db: SupabaseClient) {
+  const { data, error } = await db
+    .from('tool_shed_legal_acceptances')
+    .select('id')
+    .eq('terms_version', LEGAL_VERSIONS.terms)
+    .eq('privacy_version', LEGAL_VERSIONS.privacy)
+    .eq('acceptable_use_version', LEGAL_VERSIONS.acceptableUse)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    throw Object.assign(new Error('Accept the current Tool Shed policies from your Account page before using Video Studio.'), {
+      status: 403,
+      code: 'legal_acceptance_required',
+    });
+  }
+}
+
 export function billingEnabled(env: Environment = process.env) {
   return env.VIDEO_BILLING_ENABLED === 'true';
 }
@@ -146,8 +165,8 @@ export function getStripeTestConfig(env: Environment = process.env) {
   }
   const secretKey = env.VIDEO_STRIPE_SECRET_KEY?.trim() || '';
   const webhookSecret = env.VIDEO_STRIPE_WEBHOOK_SECRET?.trim() || '';
-  if (!secretKey.startsWith('sk_test_')) {
-    throw Object.assign(new Error('A Stripe test secret key is required.'), { status: 503, code: 'stripe_test_key_required' });
+  if (!secretKey.startsWith('sk_test_') && !secretKey.startsWith('rk_test_')) {
+    throw Object.assign(new Error('A Stripe test secret or restricted key is required.'), { status: 503, code: 'stripe_test_key_required' });
   }
   if (webhookSecret && !webhookSecret.startsWith('whsec_')) {
     throw Object.assign(new Error('The Stripe webhook secret is invalid.'), { status: 503, code: 'stripe_webhook_invalid' });
