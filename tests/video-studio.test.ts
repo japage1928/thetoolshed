@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { dispatchVideoEmail } from '../src/lib/video-studio/email';
 import {
   billingEnabled,
   estimateApiCost,
@@ -74,4 +75,22 @@ test('post-auth redirects remain local to The Tool Shed', () => {
   assert.equal(safeRelativePath('/app/video-studio?tab=projects'), '/app/video-studio?tab=projects');
   assert.equal(safeRelativePath('//evil.example'), '/app/video-studio');
   assert.equal(safeRelativePath('https://evil.example'), '/app/video-studio');
+});
+
+
+test('transactional email dispatch is a safe no-op until the gateway is configured', async () => {
+  const previous = process.env.VIDEO_EMAIL_WEBHOOK_URL;
+  delete process.env.VIDEO_EMAIL_WEBHOOK_URL;
+  try {
+    const result = await dispatchVideoEmail({
+      event_id: 'test:welcome',
+      event_type: 'welcome',
+      user_id: 'test-user',
+      email: 'customer@example.com',
+    });
+    assert.deepEqual(result, { configured: false, accepted: false, duplicate: false });
+  } finally {
+    if (previous === undefined) delete process.env.VIDEO_EMAIL_WEBHOOK_URL;
+    else process.env.VIDEO_EMAIL_WEBHOOK_URL = previous;
+  }
 });
