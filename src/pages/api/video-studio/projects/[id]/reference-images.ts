@@ -58,7 +58,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
     if (error) throw error;
     if (!row) return json({ error: 'Reference image not found.' }, 404);
     const service = getServiceDb();
-    await service.storage.from('video-studio-references').remove([row.storage_path]);
+    if (row.storage_path) await service.storage.from('video-studio-references').remove([row.storage_path]);
     const { error: deleteError } = await service.from('video_studio_reference_images').delete().eq('id', imageId).eq('user_id', user.id);
     if (deleteError) throw deleteError;
     return json({ ok: true });
