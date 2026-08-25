@@ -13,6 +13,7 @@ import {
   requireUuid,
   safeError,
 } from '../../../lib/video-studio/server';
+import { buildProductIdentityLock, signedReferenceUrls, type ProductIdentity } from '../../../lib/video-studio/grounding';
 
 async function dispatchAuthorizedBetaWorkflow(payload: Record<string, unknown>) {
   if (!generationEnabled()) {
@@ -53,9 +54,6 @@ export const POST: APIRoute = async ({ request }) => {
     if (!/^[a-zA-Z0-9:_-]{8,128}$/.test(requestKey)) return json({ error: 'A valid idempotency key is required.' }, 400);
     const durationSeconds = [15, 30, 45, 60].includes(Number(body.durationSeconds)) ? Number(body.durationSeconds) : 30;
     const resolution = ['480p', '720p', '1080p'].includes(String(body.resolution)) ? body.resolution : '480p';
-    const credits = estimateCredits({ durationSeconds, resolution, premiumModel: Boolean(body.premiumModel) });
-    const estimatedApiCost = estimateApiCost(credits);
-    const dailySpendLimit = maxDailyVideoSpend();
 
     const userDb = getUserDb(user.token);
     await requireCurrentLegalAcceptance(userDb);
@@ -79,10 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const hasGenerationAccess = Boolean(profile?.internal_beta || subscription?.status === 'active');
     if (!hasGenerationAccess) {
-      return json({
-        error: 'An active Video Studio subscription is required to generate videos.',
-        code: 'paid_access_required',
-      }, 403);
+      return json({ error: 'An active Video Studio subscription is required to generate videos.', code: 'paid_access_required' }, 403);
     }
 
     const { data: project, error: projectError } = await userDb
@@ -92,7 +87,45 @@ export const POST: APIRoute = async ({ request }) => {
       .single();
     if (projectError || !project) return json({ error: 'Project not found.' }, 404);
 
+    const identity = (project.product_identity || {}) as ProductIdentity;
+    const identityConfidence = Number(project.product_identity_confidence || 0);
+    if (project.product_identity_status !== 'verified' || identityConfidence < 0.8 || !identity?.name) {
+      return json({
+        error: 'Product identity is not verified strongly enough to generate. Confirm the exact product and add clear reference images first.',
+        code: 'product_identity_unverified',
+        groundingRequired: true,
+        identityConfidence,
+      }, 409);
+    }
+
     const serviceDb = getServiceDb();
+    const { data: referenceRows, error: referenceError } = await serviceDb
+      .from('video_studio_reference_images')
+      .select('storage_path')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+      .limit(6);
+    if (referenceError) throw referenceError;
+    const uploadedReferenceUrls = await signedReferenceUrls(serviceDb, referenceRows || []);
+    const referenceImageUrls = [identity.primaryImageUrl, ...uploadedReferenceUrls].filter((value): value is string => Boolean(value)).slice(0, 7);
+
+    if (project.product_identity_source !== 'url_extraction' && referenceImageUrls.length === 0) {
+      return json({
+        error: 'A user-confirmed product requires at least one reference image before generation.',
+        code: 'product_reference_required',
+        groundingRequired: true,
+      }, 409);
+    }
+
+    const identityLock = buildProductIdentityLock(identity, referenceImageUrls);
+    const creativeDirection = project.creative_brief || `Create a ${durationSeconds}-second ${project.objective || 'product-focused'} video for ${project.platform || 'social media'}.`;
+    const finalPrompt = `${identityLock}\n\nCREATIVE DIRECTION — SECONDARY TO PRODUCT ACCURACY\n${creativeDirection}`;
+
+    // Identity QA happens before this point. Only now can paid credits and spend be reserved.
+    const credits = estimateCredits({ durationSeconds, resolution, premiumModel: Boolean(body.premiumModel) });
+    const estimatedApiCost = estimateApiCost(credits);
+    const dailySpendLimit = maxDailyVideoSpend();
     const { data: reservation, error: reservationError } = await serviceDb.rpc('video_studio_reserve_generation', {
       p_user_id: user.id,
       p_project_id: projectId,
@@ -106,22 +139,34 @@ export const POST: APIRoute = async ({ request }) => {
     if (reservationError) throw Object.assign(new Error(reservationError.message), { status: 409, code: 'credit_reservation_failed' });
     const row = Array.isArray(reservation) ? reservation[0] : reservation;
     if (row?.reason === 'daily_spend_paused' || row?.reason === 'daily_spend_limit') {
-      return json({
-        error: 'Video generation is paused by the daily API spending circuit breaker.',
-        code: row.reason,
-      }, 503);
+      return json({ error: 'Video generation is paused by the daily API spending circuit breaker.', code: row.reason }, 503);
     }
     generationId = row?.generation_id || null;
     if (!generationId) throw new Error('Generation reservation did not return an id.');
 
-    const betaAccess = Boolean(profile?.internal_beta || subscription?.status === 'active');
     const workflow = await dispatchAuthorizedBetaWorkflow({
       generation_id: generationId,
       project_id: projectId,
       user_id: user.id,
-      beta_access: betaAccess,
+      beta_access: true,
       billing_bypass: profile?.plan_id === 'internal_beta',
-      prompt: project.creative_brief || project.source_url || project.title,
+      prompt: finalPrompt,
+      scene_prompt_prefix: identityLock,
+      product_identity_lock: identityLock,
+      product_identity: identity,
+      product_identity_confidence: identityConfidence,
+      product_identity_source: project.product_identity_source,
+      product_identity_qa_passed: true,
+      prompt_policy_version: 'product-lock-v1',
+      negative_constraints: [
+        'no generic lookalikes', 'no alternate models', 'no competitor products', 'no changed logo',
+        'no changed colorway', 'no changed proportions', 'no extra controls', 'no invented accessories',
+        'no product form-factor substitution',
+      ],
+      reference_to_video_required: referenceImageUrls.length > 0,
+      reference_images: referenceImageUrls.map((url) => ({ url })),
+      reference_image_urls: referenceImageUrls,
+      preferred_video_model: referenceImageUrls.length > 0 ? 'grok-imagine-video-1.5' : 'grok-imagine-video',
       source_url: project.source_url,
       objective: project.objective,
       platform: project.platform,
@@ -134,9 +179,9 @@ export const POST: APIRoute = async ({ request }) => {
     });
     await serviceDb
       .from('video_studio_generations')
-      .update({ status: 'queued', workflow_payload: workflow, updated_at: new Date().toISOString() })
+      .update({ status: 'queued', workflow_payload: { ...workflow, product_identity: identity, identity_confidence: identityConfidence, reference_count: referenceImageUrls.length, prompt_policy_version: 'product-lock-v1' }, updated_at: new Date().toISOString() })
       .eq('id', generationId);
-    return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost, betaAccess }, 202);
+    return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost, identityConfidence, referenceCount: referenceImageUrls.length }, 202);
   } catch (error) {
     if (generationId) {
       try {
