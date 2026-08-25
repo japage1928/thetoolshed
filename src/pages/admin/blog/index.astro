@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { hasAdminSession } from '../../../lib/admin-auth';
+
+if (!(await hasAdminSession(Astro.request))) {
+  return Astro.redirect('/admin/login', 302);
+}
+---
+<BaseLayout title="Blog Manager | The Tool Shed" description="Manage Tool Shed blog posts." path="/admin/blog" noindex>
+  <main class="admin-shell">
+    <aside class="sidebar">
+      <div class="brand"><strong>THE TOOL SHED</strong><span>ADMIN</span></div>
+      <nav aria-label="Admin navigation">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/tools">AI Tools</a>
+        <a href="/admin/workflows">Workflows</a>
+        <a class="active" href="/admin/blog">Blog</a>
+        <a href="/admin/analytics">Analytics</a>
+        <a href="/admin/settings">Settings</a>
+      </nav>
+      <button id="sign-out" type="button">Sign out</button>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div><span class="eyebrow">CONTENT CONTROL</span><h1>Blog</h1><p>Create, edit, publish, and unpublish posts stored in Supabase.</p></div>
+        <button id="new-post" class="primary" type="button">New post</button>
+      </header>
+
+      <div id="notice" class="notice" hidden></div>
+
+      <div class="workspace">
+        <section class="post-list-panel">
+          <div class="panel-heading"><h2>Posts</h2><span id="post-count">0</span></div>
+          <div id="post-list" class="post-list"><p class="muted">Loading posts…</p></div>
+        </section>
+
+        <section class="editor-panel">
+          <div class="panel-heading"><h2 id="editor-title">New post</h2><span id="editor-state">Draft</span></div>
+          <form id="post-form">
+            <input id="post-id" type="hidden" />
+            <div class="grid two">
+              <label>Title<input id="title" required maxlength="240" /></label>
+              <label>Slug<input id="slug" required maxlength="240" placeholder="my-post-slug" /></label>
+            </div>
+            <label>Excerpt<textarea id="excerpt" rows="3" maxlength="1000"></textarea></label>
+            <div class="grid two">
+              <label>Category<input id="category" maxlength="120" placeholder="Build Notes" /></label>
+              <label>Tags<input id="tags" placeholder="video, ai, saas" /></label>
+            </div>
+            <label>Featured image URL<input id="featured-image" type="url" maxlength="2000" placeholder="https://…" /></label>
+            <label>Article HTML<textarea id="content" rows="20" spellcheck="true" placeholder="<p>Write the article here…</p>"></textarea></label>
+            <details>
+              <summary>SEO</summary>
+              <div class="seo-fields">
+                <label>SEO title<input id="seo-title" maxlength="240" /></label>
+                <label>SEO description<textarea id="seo-description" rows="3" maxlength="500"></textarea></label>
+              </div>
+            </details>
+            <label class="publish-toggle"><input id="is-draft" type="checkbox" checked /> Keep as draft</label>
+            <div class="actions">
+              <button class="primary" type="submit">Save post</button>
+              <a id="view-post" class="outline" href="/blog" target="_blank" rel="noreferrer">View public page ↗</a>
+              <button id="delete-post" class="danger" type="button" hidden>Delete</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  type Post = {
+    id:string; title:string; slug:string; excerpt:string; content:string; featured_image_url:string|null;
+    category:string|null; tags:string[]; seo_title:string|null; seo_description:string|null;
+    is_draft:boolean; published_at:string|null; created_at:string; updated_at:string;
+  };
+
+  const $ = <T extends HTMLElement>(selector:string) => document.querySelector(selector) as T;
+  const list = $('#post-list');
+  const form = $('#post-form') as HTMLFormElement;
+  const notice = $('#notice');
+  let posts: Post[] = [];
+
+  function showNotice(message:string, error=false){
+    notice.textContent = message;
+    notice.classList.toggle('error', error);
+    notice.hidden = false;
+    window.setTimeout(() => { notice.hidden = true; }, 4000);
+  }
+
+  function slugify(value:string){
+    return value.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+
+  function resetEditor(){
+    form.reset();
+    $('#post-id').setAttribute('value','');
+    ($('#is-draft') as HTMLInputElement).checked = true;
+    $('#editor-title').textContent = 'New post';
+    $('#editor-state').textContent = 'Draft';
+    ($('#delete-post') as HTMLButtonElement).hidden = true;
+    ($('#view-post') as HTMLAnchorElement).href = '/blog';
+  }
+
+  function editPost(post:Post){
+    ($('#post-id') as HTMLInputElement).value = post.id;
+    ($('#title') as HTMLInputElement).value = post.title;
+    ($('#slug') as HTMLInputElement).value = post.slug;
+    ($('#excerpt') as HTMLTextAreaElement).value = post.excerpt || '';
+    ($('#category') as HTMLInputElement).value = post.category || '';
+    ($('#tags') as HTMLInputElement).value = (post.tags || []).join(', ');
+    ($('#featured-image') as HTMLInputElement).value = post.featured_image_url || '';
+    ($('#content') as HTMLTextAreaElement).value = post.content || '';
+    ($('#seo-title') as HTMLInputElement).value = post.seo_title || '';
+    ($('#seo-description') as HTMLTextAreaElement).value = post.seo_description || '';
+    ($('#is-draft') as HTMLInputElement).checked = post.is_draft;
+    $('#editor-title').textContent = 'Edit post';
+    $('#editor-state').textContent = post.is_draft ? 'Draft' : 'Published';
+    ($('#delete-post') as HTMLButtonElement).hidden = false;
+    ($('#view-post') as HTMLAnchorElement).href = `/blog/${post.slug}`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function renderPosts(){
+    $('#post-count').textContent = String(posts.length);
+    if (!posts.length){ list.innerHTML = '<p class="muted">No posts yet.</p>'; return; }
+    list.innerHTML = posts.map(post => `
+      <button class="post-row" type="button" data-id="${post.id}">
+        <span class="post-row-main"><strong>${escapeHtml(post.title)}</strong><small>/${escapeHtml(post.slug)}</small></span>
+        <span class="status ${post.is_draft ? 'draft' : 'published'}">${post.is_draft ? 'Draft' : 'Published'}</span>
+      </button>`).join('');
+    list.querySelectorAll<HTMLButtonElement>('.post-row').forEach(btn => btn.addEventListener('click', () => {
+      const post = posts.find(p => p.id === btn.dataset.id); if (post) editPost(post);
+    }));
+  }
+
+  function escapeHtml(value:string){
+    return value.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c] || c));
+  }
+
+  async function loadPosts(){
+    const res = await fetch('/api/admin/blog', { credentials:'same-origin' });
+    if (res.status === 401){ window.location.href='/admin/login'; return; }
+    const data = await res.json();
+    if (!res.ok){ showNotice(data.error || 'Unable to load posts.', true); return; }
+    posts = Array.isArray(data.items) ? data.items : [];
+    renderPosts();
+  }
+
+  $('#new-post').addEventListener('click', resetEditor);
+  $('#title').addEventListener('input', () => {
+    const id = ($('#post-id') as HTMLInputElement).value;
+    const slug = $('#slug') as HTMLInputElement;
+    if (!id || !slug.value) slug.value = slugify(($('#title') as HTMLInputElement).value);
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const body = {
+      id: ($('#post-id') as HTMLInputElement).value || null,
+      title: ($('#title') as HTMLInputElement).value,
+      slug: ($('#slug') as HTMLInputElement).value,
+      excerpt: ($('#excerpt') as HTMLTextAreaElement).value,
+      category: ($('#category') as HTMLInputElement).value,
+      tags: ($('#tags') as HTMLInputElement).value.split(',').map(x => x.trim()).filter(Boolean),
+      featured_image_url: ($('#featured-image') as HTMLInputElement).value,
+      content: ($('#content') as HTMLTextAreaElement).value,
+      seo_title: ($('#seo-title') as HTMLInputElement).value,
+      seo_description: ($('#seo-description') as HTMLTextAreaElement).value,
+      is_draft: ($('#is-draft') as HTMLInputElement).checked,
+    };
+    const res = await fetch('/api/admin/blog', { method:'POST', headers:{'content-type':'application/json'}, credentials:'same-origin', body:JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok){ showNotice(data.error || data.detail || 'Unable to save post.', true); return; }
+    showNotice(body.is_draft ? 'Draft saved.' : 'Post published.');
+    await loadPosts();
+    if (data.item) editPost(data.item);
+  });
+
+  $('#delete-post').addEventListener('click', async () => {
+    const id = ($('#post-id') as HTMLInputElement).value;
+    if (!id || !confirm('Delete this post permanently?')) return;
+    const res = await fetch('/api/admin/blog', { method:'DELETE', headers:{'content-type':'application/json'}, credentials:'same-origin', body:JSON.stringify({id}) });
+    const data = await res.json();
+    if (!res.ok){ showNotice(data.error || 'Unable to delete post.', true); return; }
+    showNotice('Post deleted.'); resetEditor(); await loadPosts();
+  });
+
+  $('#sign-out').addEventListener('click', async () => { await fetch('/api/admin/logout',{method:'POST'}); window.location.href='/admin/login'; });
+  resetEditor();
+  loadPosts();
+</script>
+
+<style>
+  .admin-shell{min-height:78vh;display:grid;grid-template-columns:220px 1fr}.sidebar{border-right:1px solid var(--color-border);padding:1.5rem;display:flex;flex-direction:column;gap:2rem;background:#0b0c0b}.brand{display:grid;gap:.25rem}.brand strong{font-size:.9rem;letter-spacing:.08em}.brand span{font-size:.62rem;color:#77736d;letter-spacing:.15em}.sidebar nav{display:grid;gap:.25rem}.sidebar nav a{padding:.7rem .75rem;border-radius:.45rem;color:#96928b;text-decoration:none;font-size:.82rem}.sidebar nav a:hover,.sidebar nav a.active{background:#171815;color:#f1eee7}.sidebar button{margin-top:auto;border:1px solid var(--color-border);background:transparent;color:#aaa69e;border-radius:.45rem;padding:.65rem;cursor:pointer}.content{padding:2.5rem;max-width:1450px;width:100%;box-sizing:border-box}.topbar{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:1.5rem}.topbar h1{margin:.3rem 0}.topbar p{color:#8f8b84;margin:.2rem 0}.workspace{display:grid;grid-template-columns:minmax(260px,.65fr) minmax(0,1.5fr);gap:1rem}.post-list-panel,.editor-panel{border:1px solid var(--color-border);border-radius:.7rem;background:#10110f;padding:1rem;min-width:0}.panel-heading{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--color-border);padding-bottom:.8rem;margin-bottom:.8rem}.panel-heading h2{font-size:1rem;margin:0}.panel-heading span{color:#77736d;font-size:.75rem}.post-list{display:grid;gap:.45rem;max-height:75vh;overflow:auto}.post-row{display:flex;justify-content:space-between;gap:.8rem;align-items:center;width:100%;text-align:left;border:1px solid #242522;background:#141512;color:#e7e3db;border-radius:.5rem;padding:.8rem;cursor:pointer}.post-row:hover{border-color:#4b4d48}.post-row-main{display:grid;gap:.2rem;min-width:0}.post-row-main strong{font-size:.82rem}.post-row-main small{color:#77736d;overflow:hidden;text-overflow:ellipsis}.status{font-size:.64rem;border-radius:999px;padding:.25rem .45rem;white-space:nowrap}.status.published{background:#16331f;color:#9ee4b1}.status.draft{background:#302c1d;color:#e7d895}form{display:grid;gap:1rem}label{display:grid;gap:.4rem;color:#9d9992;font-size:.72rem;font-weight:700}.grid{display:grid;gap:.8rem}.grid.two{grid-template-columns:1fr 1fr}input,textarea{width:100%;box-sizing:border-box;border:1px solid #2b2c29;border-radius:.45rem;background:#0b0c0b;color:#eeeae2;padding:.7rem;font:inherit}textarea{resize:vertical;line-height:1.55}input:focus,textarea:focus{outline:1px solid #59636d;border-color:#59636d}.publish-toggle{display:flex;grid-auto-flow:column;justify-content:start;align-items:center;gap:.55rem}.publish-toggle input{width:auto}.actions{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}.primary,.outline,.danger{border-radius:.45rem;padding:.68rem .9rem;font-size:.78rem;font-weight:700;cursor:pointer;text-decoration:none}.primary{border:1px solid #d8d4ca;background:#e8e4da;color:#111}.outline{border:1px solid #343532;background:transparent;color:#d6d1c8}.danger{margin-left:auto;border:1px solid #5b2828;background:#271313;color:#ffb5b5}.notice{margin-bottom:1rem;border:1px solid #245c36;background:#12291a;color:#b8efc5;padding:.75rem;border-radius:.5rem;font-size:.8rem}.notice.error{border-color:#673333;background:#2a1515;color:#ffc0c0}.muted{color:#77736d;font-size:.8rem}.seo-fields{display:grid;gap:.8rem;margin-top:.8rem}details{border:1px solid #242522;border-radius:.5rem;padding:.75rem}summary{cursor:pointer;color:#aaa69e;font-size:.78rem}@media(max-width:1000px){.workspace{grid-template-columns:1fr}.post-list{max-height:24rem}}@media(max-width:850px){.admin-shell{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--color-border)}.sidebar nav{display:flex;overflow:auto}.sidebar button{margin-top:0}.content{padding:1.25rem}}@media(max-width:640px){.topbar{display:grid}.grid.two{grid-template-columns:1fr}.danger{margin-left:0}}
+</style>
