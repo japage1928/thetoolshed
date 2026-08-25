@@ -145,9 +145,14 @@ export function mergeUserConfirmation(extracted: ProductIdentity, input: Record<
   return { identity, confidence };
 }
 
-export async function signedReferenceUrls(serviceDb: SupabaseClient, rows: Array<{ storage_path: string }>, expiresIn = 3600) {
+export async function signedReferenceUrls(serviceDb: SupabaseClient, rows: Array<{ storage_path?: string | null; inline_data_uri?: string | null }>, expiresIn = 3600) {
   const urls: string[] = [];
   for (const row of rows) {
+    if (row.inline_data_uri?.startsWith('data:image/')) {
+      urls.push(row.inline_data_uri);
+      continue;
+    }
+    if (!row.storage_path) continue;
     const { data, error } = await serviceDb.storage.from('video-studio-references').createSignedUrl(row.storage_path, expiresIn);
     if (!error && data?.signedUrl) urls.push(data.signedUrl);
   }
@@ -165,6 +170,6 @@ export function buildProductIdentityLock(identity: ProductIdentity, referenceUrl
     identity.description ? `Verified description: ${identity.description}` : '',
     identity.userNotes ? `User-confirmed identity notes: ${identity.userNotes}` : '',
   ].filter(Boolean).join('\n');
-  const refs = referenceUrls.length ? referenceUrls.map((url, i) => `Reference ${i + 1}: ${url}`).join('\n') : 'No separate user reference image supplied.';
+  const refs = referenceUrls.length ? referenceUrls.map((url, i) => `Reference ${i + 1}: ${url.startsWith('data:') ? '[private image data supplied]' : url}`).join('\n') : 'No separate user reference image supplied.';
   return `STRICT PRODUCT IDENTITY LOCK — HIGHEST PRIORITY\n${exact}\n\nVISUAL REFERENCES — THESE DEFINE THE PRODUCT\n${refs}\n\nMANDATORY RULES:\n- Preserve the exact submitted product identity in every frame where the product appears.\n- Match silhouette, proportions, materials, controls, logos/markings, ear-cup/headband geometry, color, finish, and accessory layout to the verified identity and references.\n- Do not redesign, beautify, simplify, substitute, or hallucinate the product.\n- Do not convert the product into a generic product from the same category.\n- Do not add features, buttons, microphones, stems, displays, lights, ports, packaging, branding, or accessories that are not visible or verified.\n- If a requested shot cannot preserve the product exactly, use a safer angle or product-free contextual shot instead of inventing details.\n\nNEGATIVE PRODUCT CONSTRAINTS:\nNo generic lookalikes. No alternate models. No competitor products. No changed logo. No changed colorway. No changed proportions. No extra controls. No invented accessories. No category substitution. No headset/headphone/earbud form-factor substitution.\n\nThe product identity lock overrides cinematic style, creativity, composition, and motion. Accuracy is more important than spectacle.`;
 }
