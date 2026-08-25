@@ -25,31 +25,27 @@ async function context(request: Request) {
 export const GET: APIRoute = async ({ request }) => {
   try {
     const { user, db } = await context(request);
-    const [projectsResult, balanceResult, profileResult] = await Promise.all([
-      db
-        .from('video_studio_projects')
-        .select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,created_at,updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(20),
+    const [projectsResult, balanceResult, profileResult, subscriptionResult] = await Promise.all([
+      db.from('video_studio_projects').select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,created_at,updated_at').order('updated_at', { ascending: false }),
       db.rpc('video_studio_credit_balance'),
       db.from('video_studio_profiles').select('internal_beta,plan_id').eq('user_id', user.id).maybeSingle(),
+      db.from('video_studio_subscriptions').select('plan,status').eq('user_id', user.id).maybeSingle(),
     ]);
-    if (projectsResult.error) throw projectsResult.error;
-    if (balanceResult.error) throw balanceResult.error;
-    if (profileResult.error) throw profileResult.error;
+    for (const result of [projectsResult, balanceResult, profileResult, subscriptionResult]) if (result.error) throw result.error;
     const betaApproved = Boolean(profileResult.data?.internal_beta);
-    const canGenerate = generationEnabled() && betaApproved;
+    const paidActive = subscriptionResult.data?.status === 'active';
+    const canGenerate = generationEnabled() && (betaApproved || paidActive);
     return json({
       projects: projectsResult.data || [],
       credits: Number(balanceResult.data || 0),
       billingEnabled: billingEnabled(),
       generationEnabled: canGenerate,
       internalBeta: betaApproved,
+      subscriptionActive: paidActive,
+      plan: subscriptionResult.data?.plan || profileResult.data?.plan_id || null,
       billingBypass: profileResult.data?.plan_id === 'internal_beta',
     });
-  } catch (error) {
-    return safeError(error);
-  }
+  } catch (error) { return safeError(error); }
 };
 
 export const POST: APIRoute = async ({ request }) => {
@@ -57,28 +53,10 @@ export const POST: APIRoute = async ({ request }) => {
     assertSameOrigin(request);
     const { user, db } = await context(request);
     const input = validateProjectInput(await request.json().catch(() => ({})));
-    const { data, error } = await db
-      .from('video_studio_projects')
-      .insert({
-        user_id: user.id,
-        title: input.title,
-        source_type: input.sourceType,
-        source_url: input.sourceUrl,
-        creative_brief: input.brief,
-        status: 'draft',
-        objective: input.objective,
-        platform: input.platform,
-        aspect_ratio: input.aspectRatio,
-        duration_seconds: input.durationSeconds,
-        resolution: input.resolution,
-      })
-      .select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,created_at,updated_at')
-      .single();
+    const { data, error } = await db.from('video_studio_projects').insert({ user_id: user.id, title: input.title, source_type: input.sourceType, source_url: input.sourceUrl, creative_brief: input.brief, status: 'draft', objective: input.objective, platform: input.platform, aspect_ratio: input.aspectRatio, duration_seconds: input.durationSeconds, resolution: input.resolution }).select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,created_at,updated_at').single();
     if (error) throw error;
     return json({ project: data }, 201);
-  } catch (error) {
-    return safeError(error);
-  }
+  } catch (error) { return safeError(error); }
 };
 
 export const DELETE: APIRoute = async ({ request }) => {
@@ -87,28 +65,12 @@ export const DELETE: APIRoute = async ({ request }) => {
     const { db } = await context(request);
     const body = await request.json().catch(() => ({}));
     const projectId = requireUuid(body.projectId, 'project');
-    const { count: activeGenerationCount, error: generationError } = await db
-      .from('video_studio_generations')
-      .select('id', { count: 'exact', head: true })
-      .eq('project_id', projectId)
-      .in('status', ['reserved', 'queued', 'planning', 'generating', 'qa', 'repairing']);
+    const { count: activeGenerationCount, error: generationError } = await db.from('video_studio_generations').select('id', { count: 'exact', head: true }).eq('project_id', projectId).in('status', ['reserved','queued','planning','generating','qa','repairing']);
     if (generationError) throw generationError;
-    if (activeGenerationCount) {
-      return json({
-        error: 'Wait for the active generation to finish before deleting this project.',
-        code: 'generation_in_progress',
-      }, 409);
-    }
-    const { data, error } = await db
-      .from('video_studio_projects')
-      .delete()
-      .eq('id', projectId)
-      .select('id')
-      .maybeSingle();
+    if (activeGenerationCount) return json({ error: 'Wait for the active generation to finish before deleting this project.', code: 'generation_in_progress' }, 409);
+    const { data, error } = await db.from('video_studio_projects').delete().eq('id', projectId).select('id').maybeSingle();
     if (error) throw error;
     if (!data) return json({ error: 'Project not found.' }, 404);
     return json({ ok: true, projectId });
-  } catch (error) {
-    return safeError(error);
-  }
+  } catch (error) { return safeError(error); }
 };
