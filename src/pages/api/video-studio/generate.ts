@@ -66,8 +66,23 @@ export const POST: APIRoute = async ({ request }) => {
       .eq('user_id', user.id)
       .maybeSingle();
     if (profileError) throw profileError;
-    if (!profile?.internal_beta) {
-      return json({ error: 'Video generation is currently limited to approved beta accounts.', code: 'beta_access_required' }, 403);
+
+    const { data: subscription, error: subscriptionError } = await userDb
+      .from('video_studio_subscriptions')
+      .select('plan,status')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (subscriptionError) throw subscriptionError;
+
+    const hasGenerationAccess = Boolean(profile?.internal_beta || subscription?.status === 'active');
+    if (!hasGenerationAccess) {
+      return json({
+        error: 'An active Video Studio subscription is required to generate videos.',
+        code: 'paid_access_required',
+      }, 403);
     }
 
     const { data: project, error: projectError } = await userDb
@@ -99,12 +114,13 @@ export const POST: APIRoute = async ({ request }) => {
     generationId = row?.generation_id || null;
     if (!generationId) throw new Error('Generation reservation did not return an id.');
 
+    const betaAccess = Boolean(profile?.internal_beta || subscription?.status === 'active');
     const workflow = await dispatchAuthorizedBetaWorkflow({
       generation_id: generationId,
       project_id: projectId,
       user_id: user.id,
-      beta_access: true,
-      billing_bypass: profile.plan_id === 'internal_beta',
+      beta_access: betaAccess,
+      billing_bypass: profile?.plan_id === 'internal_beta',
       prompt: project.creative_brief || project.source_url || project.title,
       source_url: project.source_url,
       objective: project.objective,
@@ -120,7 +136,7 @@ export const POST: APIRoute = async ({ request }) => {
       .from('video_studio_generations')
       .update({ status: 'queued', workflow_payload: workflow, updated_at: new Date().toISOString() })
       .eq('id', generationId);
-    return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost, betaAccess: true }, 202);
+    return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost, betaAccess }, 202);
   } catch (error) {
     if (generationId) {
       try {
