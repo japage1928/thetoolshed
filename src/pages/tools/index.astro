@@ -1,0 +1,71 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getToolCategories, getTools } from '../../lib/supabase';
+
+const tools = await getTools();
+const categories = await getToolCategories();
+const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const description = 'Browse The Tool Shed AI directory by category and compare practical tools for writing, research, automation, media, development, and more.';
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'The Tool Shed AI Directory',
+  description,
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: tools.length,
+    itemListElement: tools.map((tool, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: tool.name,
+      url: new URL(`/tools/${tool.slug}`, Astro.site).toString(),
+    })),
+  },
+};
+---
+
+<BaseLayout title="AI Directory" description={description} path="/tools" {jsonLd}>
+  <div class="wrapper directory-page">
+    <header class="directory-hero">
+      <span class="eyebrow">THE TOOL SHED AI DIRECTORY</span>
+      <h1 class="page-title">AI tools worth knowing about.</h1>
+      <p>Browse {tools.length} active tools, grouped by what they actually help you do.</p>
+    </header>
+
+    <nav class="category-links" aria-label="AI tool categories">
+      {categories.map((category) => <a href={`/tools/category/${slugify(category)}`}>{category}</a>)}
+    </nav>
+
+    <section class="tool-grid" aria-label="AI tools">
+      {tools.map((tool) => {
+        const domain = new URL(tool.website_url).hostname.replace(/^www\./, '');
+        const iconUrl = tool.icon_url || `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+        return (
+          <article class="tool-card">
+            <div class="tool-card__topline"><span class="tool-card__category">{tool.category}</span>{tool.is_affiliate && <span class="tool-card__badge">Partner</span>}</div>
+            <h2 class="tool-name"><img src={iconUrl} alt="" width="32" height="32" loading="lazy" />{tool.name}</h2>
+            <p>{tool.description}</p>
+            <div class="tool-card__best"><strong>Best for:</strong> {tool.best_for}</div>
+            <div class="tool-card__tags">{tool.tags.slice(0, 4).map((tag) => <span>{tag}</span>)}</div>
+            <a class="tool-card__link" href={`/tools/${tool.slug}`}>{tool.name} <span aria-hidden="true">→</span></a>
+          </article>
+        );
+      })}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .directory-page{padding-top:3rem;padding-bottom:5rem}
+  .directory-hero{max-width:54rem;margin-bottom:2rem}
+  .directory-hero p{max-width:42rem;color:var(--color-text-muted);font-size:1.05rem;line-height:1.7}
+  .category-links{display:flex;gap:.55rem;flex-wrap:wrap;margin:0 0 2rem}
+  .category-links a{padding:.45rem .65rem;border:1px solid var(--color-border);border-radius:999px;color:#d8d3cb;text-decoration:none;font-size:.72rem;font-weight:700}
+  .category-links a:hover,.category-links a:focus-visible{border-color:#5b6f8d;color:#fff}
+  .tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+  .tool-card{display:flex;flex-direction:column;min-height:17rem;padding:1.15rem;border:1px solid var(--color-border);border-radius:.6rem;background:linear-gradient(145deg,#11110f,#0b0c0c)}
+  .tool-card__topline{display:flex;justify-content:space-between;align-items:center;gap:.5rem}.tool-card__category{color:var(--shed-blue);font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700}.tool-card__badge{color:#d9b27b;border:1px solid rgba(200,139,75,.35);background:rgba(154,93,47,.12);border-radius:999px;padding:.2rem .45rem;font-size:.62rem;text-transform:uppercase}
+  .tool-name{display:flex;align-items:center;gap:.65rem;margin:.7rem 0 .45rem;color:#f1eee7;font-size:1.25rem}.tool-name img{width:32px;height:32px;border-radius:7px;background:#fff;padding:3px;box-sizing:border-box}.tool-card p{color:#aaa69e;line-height:1.55;font-size:.9rem;margin:0}.tool-card__best{margin-top:.8rem;color:#c7c2ba;font-size:.78rem;line-height:1.45}.tool-card__tags{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:auto;padding-top:1rem}.tool-card__tags span{color:#77736d;background:#151412;border:1px solid #29251f;border-radius:.25rem;padding:.18rem .38rem;font-size:.65rem}.tool-card__link{display:flex;justify-content:space-between;margin-top:.85rem;padding-top:.75rem;border-top:1px solid #25221e;color:#e9eef2;text-decoration:none;font-size:.82rem;font-weight:700}
+  @media(max-width:980px){.tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:640px){.tool-grid{grid-template-columns:1fr}}
+</style>
