@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import {
   assertSameOrigin,
-  dispatchVideoWorkflow,
   estimateApiCost,
   estimateCredits,
   generationEnabled,
@@ -15,11 +14,36 @@ import {
   safeError,
 } from '../../../lib/video-studio/server';
 
+async function dispatchAuthorizedBetaWorkflow(payload: Record<string, unknown>) {
+  if (!generationEnabled()) {
+    throw Object.assign(new Error('Video generation is globally paused.'), { status: 503, code: 'generation_paused' });
+  }
+  const webhookUrl = process.env.VIDEO_N8N_WEBHOOK_URL!;
+  const secret = process.env.VIDEO_N8N_SERVICE_SECRET!;
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${secret}`,
+      'content-type': 'application/json',
+      'x-tool-shed-source': 'video-studio',
+    },
+    body: JSON.stringify({ ...payload, source: 'video_studio', live_generation_authorized: true }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw Object.assign(new Error(data?.error || `The video workflow returned HTTP ${response.status}.`), {
+      status: 502,
+      code: 'workflow_dispatch_failed',
+    });
+  }
+  return data;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   let generationId: string | null = null;
   try {
     assertSameOrigin(request);
-    if (!generationEnabled()) return json({ error: 'Video generation is paused for the internal beta.', code: 'generation_paused' }, 503);
+    if (!generationEnabled()) return json({ error: 'Video generation is globally paused.', code: 'generation_paused' }, 503);
     const user = await getAuthenticatedUser(request);
     if (!user) return json({ error: 'Sign in to generate a video.', code: 'authentication_required' }, 401);
 
@@ -35,6 +59,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     const userDb = getUserDb(user.token);
     await requireCurrentLegalAcceptance(userDb);
+
+    const { data: profile, error: profileError } = await userDb
+      .from('video_studio_profiles')
+      .select('internal_beta,plan_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile?.internal_beta) {
+      return json({ error: 'Video generation is currently limited to approved beta accounts.', code: 'beta_access_required' }, 403);
+    }
+
     const { data: project, error: projectError } = await userDb
       .from('video_studio_projects')
       .select('*')
@@ -64,9 +99,12 @@ export const POST: APIRoute = async ({ request }) => {
     generationId = row?.generation_id || null;
     if (!generationId) throw new Error('Generation reservation did not return an id.');
 
-    const workflow = await dispatchVideoWorkflow({
+    const workflow = await dispatchAuthorizedBetaWorkflow({
       generation_id: generationId,
       project_id: projectId,
+      user_id: user.id,
+      beta_access: true,
+      billing_bypass: profile.plan_id === 'internal_beta',
       prompt: project.creative_brief || project.source_url || project.title,
       source_url: project.source_url,
       objective: project.objective,
@@ -77,13 +115,12 @@ export const POST: APIRoute = async ({ request }) => {
       resolution,
       estimated_credits: credits,
       estimated_api_cost: estimatedApiCost,
-      live_generation_authorized: false,
     });
     await serviceDb
       .from('video_studio_generations')
       .update({ status: 'queued', workflow_payload: workflow, updated_at: new Date().toISOString() })
       .eq('id', generationId);
-    return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost }, 202);
+    return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost, betaAccess: true }, 202);
   } catch (error) {
     if (generationId) {
       try {
