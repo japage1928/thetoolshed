@@ -1,0 +1,12 @@
+---
+import StudioShell from '../../../../components/video-studio/StudioShell.astro';
+---
+<StudioShell title="Projects" section="projects">
+  <div class="page-head"><div><h1>Projects</h1><p>Every project in your Video Studio workspace.</p></div><a class="btn" href="/app/video-studio">New project</a></div>
+  <div id="projects" class="table"><div class="empty">Loading projects…</div></div>
+</StudioShell>
+<script>
+  const esc=(v)=>{const s=document.createElement('span');s.textContent=String(v??'');return s.innerHTML};
+  async function load(){const r=await fetch('/api/video-studio/projects');const d=await r.json();const el=document.querySelector('#projects');if(!r.ok){el.innerHTML=`<div class="empty">${esc(d.error||'Unable to load projects.')}</div>`;return;}const rows=d.projects||[];el.innerHTML=rows.length?rows.map(x=>`<a class="row" href="/app/video-studio/projects/${x.id}"><div><strong>${esc(x.title)}</strong><br><small>${esc(x.source_type==='url'?x.source_url:'Creative brief')}</small></div><small class="hide-mobile">${esc(x.platform)} · ${x.duration_seconds}s · ${esc(x.resolution)}</small><span class="status">${esc(x.status)}</span><small>${new Date(x.updated_at).toLocaleDateString()}</small></a>`).join(''):'<div class="empty">No projects yet.</div>';}
+  load();
+</script>
