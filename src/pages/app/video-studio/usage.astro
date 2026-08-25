@@ -1,4 +1,67 @@
 ---
 import StudioShell from '../../../components/video-studio/StudioShell.astro';
 ---
-<StudioShell title="Usage & Credits" section="usage"><div class="page-head"><div><h1>Usage & Credits</h1><p>Your real credit balance and generation usage.</p></div></div><div class="grid stats"><div class="card stat"><span class="muted">Available credits</span><strong id="credits">—</strong></div><div class="card stat"><span class="muted">Credits used</span><strong id="used">—</strong></div><div class="card stat"><span class="muted">Completed generations</span><strong id="done">—</strong></div></div><div class="card" style="margin-top:18px"><p class="muted">Credits are reserved before generation and reconciled after completion or failure. Spend caps remain enforced server-side.</p></div></StudioShell><script>fetch('/api/video-studio/account').then(r=>r.json()).then(d=>{document.querySelector('#credits').textContent=d.credits??0;document.querySelector('#used').textContent=d.usage?.credits_used??0;document.querySelector('#done').textContent=d.usage?.completed_generations??0;});</script>
+
+<StudioShell title="Usage & Credits" section="usage">
+  <div class="vs-page-head">
+    <div>
+      <h1 class="vs-h1">Usage &amp; Credits</h1>
+      <p class="vs-subtitle">Your real credit balance and generation usage.</p>
+    </div>
+  </div>
+
+  <section class="vs-metrics" aria-label="Credit usage">
+    <div class="vs-metric">
+      <span class="vs-metric__label">Available credits</span>
+      <strong class="vs-metric__value" id="credits">—</strong>
+    </div>
+    <div class="vs-metric">
+      <span class="vs-metric__label">Credits used</span>
+      <strong class="vs-metric__value" id="used">—</strong>
+    </div>
+    <div class="vs-metric">
+      <span class="vs-metric__label">Completed generations</span>
+      <strong class="vs-metric__value" id="done">—</strong>
+    </div>
+    <div class="vs-metric">
+      <span class="vs-metric__label">Projects</span>
+      <strong class="vs-metric__value" id="projects">—</strong>
+    </div>
+  </section>
+
+  <section class="vs-card usage-note">
+    <h2 class="vs-h2">How credits work</h2>
+    <p class="vs-help">
+      Credits are reserved before generation and reconciled after completion or failure.
+      Spend caps remain enforced server-side, so a failed generation never silently
+      consumes your balance.
+    </p>
+    <a class="vs-btn vs-btn--secondary vs-btn--block usage-note__cta" href="/app/video-studio/billing">Go to Billing</a>
+  </section>
+</StudioShell>
+
+<script>
+  fetch('/api/video-studio/account', { headers: { accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d) return;
+      const set = (id: string, value: unknown) => {
+        const node = document.querySelector(`#${id}`);
+        if (node) node.textContent = String(value ?? 0);
+      };
+      set('credits', d.credits);
+      set('used', d.usage?.credits_used);
+      set('done', d.usage?.completed_generations);
+      set('projects', d.projectCount);
+    })
+    .catch(() => {});
+</script>
+
+<style>
+  .usage-note { margin-top: 1rem; }
+  .usage-note .vs-help { margin: 0.6rem 0 0; }
+  .usage-note__cta { margin-top: 1rem; }
+  @media (min-width: 768px) {
+    .usage-note__cta { width: auto; }
+  }
+</style>

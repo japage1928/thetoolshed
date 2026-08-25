@@ -2,100 +2,862 @@
 import StudioShell from '../../../../components/video-studio/StudioShell.astro';
 const projectId = Astro.params.id;
 ---
-<StudioShell title="Project" section="projects">
-  <div class="page-head">
-    <div><a class="muted" href="/app/video-studio/projects" style="text-decoration:none">← Projects</a><h1 id="title" style="margin-top:10px">Project</h1><p id="meta">Loading project…</p></div>
+
+<StudioShell title="Project" section="projects" stickyAction>
+  <a class="vs-backlink" href="/app/video-studio/projects">
+    <span class="vs-ico" data-ico="chevron" aria-hidden="true"></span>
+    Projects
+  </a>
+
+  <!-- Header -->
+  <div class="vs-page-head project-head">
+    <div class="project-head__main">
+      <h1 class="vs-h1" id="title">Project</h1>
+      <div class="project-head__meta" id="meta-badges">
+        <span class="vs-badge" id="meta-status"><i class="vs-badge__dot"></i>Loading…</span>
+      </div>
+    </div>
+    <div class="vs-page-head__actions project-head__actions">
+      <button class="vs-btn vs-btn--primary js-generate" type="button" disabled>Generate Video</button>
+    </div>
   </div>
 
-  <nav class="workflow-steps" aria-label="Video generation steps">
-    <span data-step="details">1 <b>Product details</b></span><span data-step="identity">2 <b>Verify identity</b></span><span data-step="references">3 <b>References</b></span><span data-step="creative">4 <b>Creative</b></span><span data-step="generate">5 <b>Generate</b></span><span data-step="progress">6 <b>Progress</b></span><span data-step="results">7 <b>Results</b></span>
+  <!-- Workflow progress. Phones get a compact "step N of 5" readout so the
+       indicator always fits; tablets and up get the full pill stepper. -->
+  <nav class="stepper" aria-label="Project workflow">
+    <div class="stepper__compact">
+      <div class="stepper__compact-row">
+        <span class="vs-eyebrow" id="step-counter">Step 1 of 5</span>
+        <strong class="stepper__compact-label" id="step-label">Setup</strong>
+      </div>
+      <div class="vs-confidence__track">
+        <span class="vs-confidence__fill" id="step-progress" style="width:20%"></span>
+      </div>
+    </div>
+    <ol class="stepper__list">
+      <li class="stepper__item" data-step="setup"><span class="stepper__num">1</span><span class="stepper__label">Setup</span></li>
+      <li class="stepper__item" data-step="identity"><span class="stepper__num">2</span><span class="stepper__label">Verification</span></li>
+      <li class="stepper__item" data-step="creative"><span class="stepper__num">3</span><span class="stepper__label">Creative Plan</span></li>
+      <li class="stepper__item" data-step="generate"><span class="stepper__num">4</span><span class="stepper__label">Generate</span></li>
+      <li class="stepper__item" data-step="review"><span class="stepper__num">5</span><span class="stepper__label">Review</span></li>
+    </ol>
   </nav>
 
-  <div class="grid top-grid" id="product-details">
-    <section class="card"><div id="video-area"><div class="empty">Loading video…</div></div></section>
-    <aside class="card"><h3 style="margin-top:0">Product details</h3><div id="details" class="muted">Loading…</div></aside>
+  <div class="project-layout">
+    <div class="project-main vs-stack">
+      <!-- Product identity -->
+      <section class="vs-card" id="product-identity" aria-labelledby="identity-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <span class="vs-eyebrow">Step 2 · Product accuracy gate</span>
+            <h2 class="vs-h2" id="identity-heading">Product Identity</h2>
+          </div>
+          <span class="vs-badge vs-badge--wrap" id="identity-badge">Checking…</span>
+        </div>
+
+        <div class="identity-summary" id="identity-summary">
+          <div class="identity-summary__media" id="identity-media" aria-hidden="true">
+            <span class="identity-summary__placeholder">No image</span>
+          </div>
+          <dl class="vs-deflist identity-summary__facts" id="identity-facts">
+            <div class="vs-defrow"><dt class="vs-defrow__label">Loading</dt><dd class="vs-defrow__value">—</dd></div>
+          </dl>
+        </div>
+
+        <div class="vs-confidence identity-confidence">
+          <div class="vs-confidence__row">
+            <span class="vs-metric__label">Identity confidence</span>
+            <span class="vs-confidence__value" id="confidence-value">—</span>
+          </div>
+          <div class="vs-confidence__track">
+            <span class="vs-confidence__fill" id="confidence-fill"></span>
+          </div>
+        </div>
+
+        <p class="vs-status-msg identity-blocked" id="identity-blocked" hidden aria-live="polite"></p>
+
+        <!-- Editable fields stay collapsed so the card reads as a summary. -->
+        <details class="identity-edit" id="identity-edit">
+          <summary class="vs-btn vs-btn--secondary vs-btn--block">Edit Identity</summary>
+          <form id="identity-form" class="identity-form">
+            <div class="vs-form-grid vs-form-grid--2">
+              <div class="vs-field">
+                <label class="vs-label" for="f-productName">Exact product name</label>
+                <input class="vs-input" id="f-productName" name="productName" type="text" maxlength="300" placeholder="Exact product name" />
+              </div>
+              <div class="vs-field">
+                <label class="vs-label" for="f-brand">Brand</label>
+                <input class="vs-input" id="f-brand" name="brand" type="text" maxlength="120" placeholder="Brand" />
+              </div>
+              <div class="vs-field">
+                <label class="vs-label" for="f-model">Model</label>
+                <input class="vs-input" id="f-model" name="model" type="text" maxlength="160" placeholder="Model" />
+              </div>
+              <div class="vs-field">
+                <label class="vs-label" for="f-variant">Variant / form factor</label>
+                <input class="vs-input" id="f-variant" name="variant" type="text" maxlength="160" placeholder="Form factor or variant" />
+              </div>
+              <div class="vs-field">
+                <label class="vs-label" for="f-color">Color / finish</label>
+                <input class="vs-input" id="f-color" name="color" type="text" maxlength="120" placeholder="Color or finish" />
+              </div>
+              <div class="vs-field vs-field--full">
+                <label class="vs-label" for="f-identityNotes">Details the generator must preserve</label>
+                <textarea class="vs-textarea" id="f-identityNotes" name="identityNotes" rows="4" maxlength="1000" placeholder="Distinctive shape, materials, controls, markings, accessories, and anything the model must not change."></textarea>
+              </div>
+            </div>
+            <div class="identity-form__foot">
+              <p class="vs-help" id="identity-status" aria-live="polite">Product verification has not run yet.</p>
+              <button class="vs-btn vs-btn--secondary vs-btn--block" id="verify" type="submit">Verify product identity</button>
+            </div>
+          </form>
+        </details>
+
+        <p class="vs-help accuracy-rule">
+          <strong>Accuracy rule.</strong> Generic lookalikes, alternate models, changed proportions,
+          changed logos, invented controls, accessories, or form-factor substitutions are forbidden.
+        </p>
+      </section>
+
+      <!-- Reference images -->
+      <section class="vs-card" id="reference-images" aria-labelledby="references-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <span class="vs-eyebrow">Step 2 · Evidence</span>
+            <h2 class="vs-h2" id="references-heading">Reference Images</h2>
+          </div>
+          <span class="vs-badge" id="reference-count">0 of 6</span>
+        </div>
+        <p class="vs-help">
+          When URL evidence is insufficient, upload clear current-product photos.
+          Adding or removing an image invalidates verification until you verify again.
+        </p>
+
+        <form id="reference-form" class="uploader">
+          <label class="uploader__drop" for="reference-files">
+            <strong>Add product references</strong>
+            <span class="vs-help">Drop images here or browse</span>
+            <span class="vs-faint uploader__formats">PNG, JPG, WEBP · up to 6 images · 10 MB each</span>
+            <input id="reference-files" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple class="uploader__input" />
+          </label>
+          <p class="vs-help uploader__selected" id="reference-selected" hidden></p>
+          <button class="vs-btn vs-btn--secondary vs-btn--block" type="submit">Upload references</button>
+        </form>
+
+        <div id="references" class="reference-grid">
+          <div class="vs-empty"><p class="vs-empty__body">No reference images yet.</p></div>
+        </div>
+      </section>
+
+      <!-- Creative setup -->
+      <section class="vs-card" id="creative-settings" aria-labelledby="creative-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <span class="vs-eyebrow">Step 3</span>
+            <h2 class="vs-h2" id="creative-heading">Creative Setup</h2>
+          </div>
+        </div>
+        <dl class="vs-deflist" id="creative-summary">
+          <div class="vs-defrow"><dt class="vs-defrow__label">Loading</dt><dd class="vs-defrow__value">—</dd></div>
+        </dl>
+        <p class="vs-help creative-note">These saved settings will be used for the next generation.</p>
+      </section>
+
+      <!-- Production plan -->
+      <section class="vs-card" id="production-plan" aria-labelledby="plan-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <span class="vs-eyebrow">Step 3</span>
+            <h2 class="vs-h2" id="plan-heading">Production Plan</h2>
+          </div>
+        </div>
+        <div id="plan-body">
+          <div class="vs-empty">
+            <p class="vs-empty__body">
+              The shot plan is produced by the pipeline when a generation starts.
+              It will appear here once the first generation runs.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Generation progress -->
+      <section class="vs-card progress-card" id="generation-progress" hidden aria-labelledby="progress-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <span class="vs-eyebrow">Step 5 · Progress</span>
+            <h2 class="vs-h2" id="progress-heading"><span id="progress-title">Starting generation…</span></h2>
+          </div>
+        </div>
+        <p class="vs-help" id="progress-copy" aria-live="polite">Credits are reserved once while the production pipeline starts.</p>
+        <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+      </section>
+
+      <!-- Generations -->
+      <section class="vs-card" id="generation-results" aria-labelledby="generations-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <span class="vs-eyebrow">Step 5</span>
+            <h2 class="vs-h2" id="generations-heading">Generations</h2>
+          </div>
+        </div>
+        <div id="video-area" class="video-area">
+          <div class="vs-empty"><p class="vs-empty__body">Loading video…</p></div>
+        </div>
+        <div id="generations" class="generation-list">
+          <div class="vs-empty"><p class="vs-empty__body">Loading…</p></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Readiness sidebar (desktop) / inline card (mobile) -->
+    <aside class="project-aside">
+      <section class="vs-card readiness" id="readiness" aria-labelledby="readiness-heading">
+        <div class="vs-card__head">
+          <div class="vs-card__title-group">
+            <h2 class="vs-h2" id="readiness-heading">Project Readiness</h2>
+          </div>
+        </div>
+        <dl class="vs-deflist" id="readiness-list">
+          <div class="vs-defrow"><dt class="vs-defrow__label">Loading</dt><dd class="vs-defrow__value">—</dd></div>
+        </dl>
+        <div class="readiness__action">
+          <button class="vs-btn vs-btn--primary vs-btn--block js-generate" type="button" disabled>Generate Video</button>
+          <p class="vs-help js-generate-reason" aria-live="polite">Checking product identity…</p>
+        </div>
+      </section>
+    </aside>
   </div>
 
-  <section class="card grounding-card" id="product-identity">
-    <div class="grounding-head">
-      <div><span class="eyebrow">STEP 2 · PRODUCT ACCURACY GATE</span><h2>Verify the exact product</h2><p class="muted">Only this project’s URL, extracted product data, and uploaded references are used. Credits cannot be spent until the identity is current and reliable.</p></div>
-      <div id="identity-badge" class="identity-badge pending">Checking…</div>
+  <!-- Sticky mobile generate bar -->
+  <div class="sticky-action" id="sticky-action" hidden>
+    <div class="sticky-action__inner">
+      <p class="sticky-action__reason js-generate-reason">Checking product identity…</p>
+      <button class="vs-btn vs-btn--primary vs-btn--block js-generate" type="button" disabled>Generate Video</button>
     </div>
-    <form id="identity-form" class="identity-form">
-      <div class="field-grid">
-        <label>Exact product name<input name="productName" type="text" maxlength="300" placeholder="Exact product name" /></label><label>Brand<input name="brand" type="text" maxlength="120" placeholder="Brand" /></label><label>Model<input name="model" type="text" maxlength="160" placeholder="Model" /></label><label>Variant / form factor<input name="variant" type="text" maxlength="160" placeholder="Form factor or variant" /></label><label>Color / finish<input name="color" type="text" maxlength="120" placeholder="Color or finish" /></label>
-      </div>
-      <label class="notes-label">Identity details the generator must preserve<textarea name="identityNotes" rows="4" maxlength="1000" placeholder="Distinctive shape, materials, controls, markings, accessories, and anything the model must not change."></textarea></label>
-      <div class="verify-row"><div id="identity-status" class="muted" aria-live="polite">Product verification has not run yet.</div><button id="verify" class="btn secondary" type="submit">Verify product identity</button></div>
-    </form>
-    <div class="reference-section" id="reference-images">
-      <div><span class="eyebrow">STEP 3</span><h3>Reference images</h3><p class="muted">When URL evidence is insufficient, upload clear current-product photos. Adding or removing an image invalidates verification until you verify again.</p></div>
-      <form id="reference-form" class="reference-upload"><input id="reference-files" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /><button class="btn secondary" type="submit">Upload references</button></form>
-      <div id="references" class="references"><div class="empty">No reference images yet.</div></div>
-    </div>
-    <div class="accuracy-rule"><strong>Accuracy rule</strong><span>Generic lookalikes, alternate models, changed proportions, changed logos, invented controls, accessories, or form-factor substitutions are forbidden.</span></div>
-  </section>
-
-  <section class="card creative-card" id="creative-settings"><div><span class="eyebrow">STEP 4</span><h2>Creative settings</h2><p class="muted">These saved settings will be used for the next generation.</p></div><div id="creative-summary" class="creative-summary"><div class="empty">Loading settings…</div></div></section>
-
-  <section class="generation-action" id="generation-action" aria-labelledby="generate-heading"><div><span class="eyebrow">STEP 5</span><h2 id="generate-heading">Generate video</h2><p id="generate-reason" aria-live="polite">Checking product identity…</p></div><button id="generate" class="btn primary-generate" type="button" disabled>Generate video</button></section>
-
-  <section class="card progress-card" id="generation-progress" hidden><div><span class="eyebrow">STEP 6 · GENERATION PROGRESS</span><h2 id="progress-title">Starting generation…</h2><p id="progress-copy" class="muted" aria-live="polite">Credits are reserved once while the production pipeline starts.</p></div><div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div></section>
-
-  <section class="generations-section" id="generation-results"><div class="section-heading"><div><span class="eyebrow">STEP 7</span><h2>Preview and results</h2></div></div><div id="generations" class="table"><div class="empty">Loading…</div></div></section>
+  </div>
 </StudioShell>
 
 <script define:vars={{ projectId }}>
-  const esc=(v)=>{const s=document.createElement('span');s.textContent=String(v??'');return s.innerHTML};
-  let project=null,references=[],generations=[];
-  let gate={canGenerate:false,blockedReason:'Product identity must be verified first.',estimatedCredits:0};
-  let submitting=false,pollTimer=0,formDirty=false;
-  const form=document.querySelector('#identity-form'),generate=document.querySelector('#generate');
-  const field=(name)=>form?.elements.namedItem(name);
-  const activeStatuses=new Set(['reserved','queued','planning','generating','qa','repairing']);
-  const terminalStatuses=new Set(['ready','failed','canceled']);
-  const keyName=()=>`video-generation-key:${projectId}`;
-  const confidenceText=(value)=>`${Math.round(Number(value||0)*100)}% confidence`;
-  function setStep(name){document.querySelectorAll('.workflow-steps span').forEach((step)=>step.classList.toggle('current',step.dataset.step===name));}
+  const esc = (v) => { const s = document.createElement('span'); s.textContent = String(v ?? ''); return s.innerHTML; };
 
-  function updateGate(){
-    if(!project)return;
-    const confidence=Number(project.product_identity_confidence||0),verified=project.product_identity_status==='verified'&&confidence>=0.8&&!formDirty,active=generations.find((item)=>activeStatuses.has(item.status));
-    const canGenerate=Boolean(gate.canGenerate)&&verified&&!active&&!submitting;
-    const badge=document.querySelector('#identity-badge');badge.textContent=verified?`Verified · ${confidenceText(confidence)}`:formDirty?'Changes need verification':`Needs verification · ${confidenceText(confidence)}`;badge.className=`identity-badge ${verified?'verified':'pending'}`;
-    document.querySelector('#generate-reason').textContent=active?'A generation is already in progress.':formDirty?'Verify the changed product identity before generating.':canGenerate?'Identity verified. Ready to start one generation.':(gate.blockedReason||'Product identity must be verified first.');
-    generate.disabled=!canGenerate;generate.textContent=`Generate video · ${Number(gate.estimatedCredits||0)} credits`;
-    if(active)setStep('progress');else if(canGenerate)setStep('generate');else if(!verified)setStep('identity');
-  }
-  function renderReferences(){const node=document.querySelector('#references');if(!references.length){node.innerHTML='<div class="empty">No uploaded references yet.</div>';return;}node.innerHTML=references.map((image)=>`<article class="ref-card">${image.previewUrl?`<img src="${image.previewUrl}" alt="${esc(image.name)}" />`:'<div class="ref-placeholder">IMAGE</div>'}<div><strong>${esc(image.name)}</strong><small>${Math.max(1,Math.round(Number(image.sizeBytes||0)/1024))} KB</small></div><button class="delete-ref" data-id="${image.id}" type="button">Remove</button></article>`).join('');}
-  function renderProgress(){
-    const active=generations.find((item)=>activeStatuses.has(item.status)),latest=generations[0],panel=document.querySelector('#generation-progress');if(!active&&!latest){panel.hidden=true;return;}const item=active||latest;
-    const labels={reserved:'Reserving credits…',queued:'Queued for production',planning:'Planning the video',generating:'Generating video',qa:'Checking video quality',repairing:'Repairing the generation',ready:'Video complete',failed:'Generation failed',canceled:'Generation canceled'},progress={reserved:12,queued:22,planning:35,generating:62,qa:82,repairing:88,ready:100,failed:100,canceled:100};
-    panel.hidden=false;document.querySelector('#progress-title').textContent=labels[item.status]||'Generation update';document.querySelector('#progress-copy').textContent=item.status==='ready'?'The completed video is attached to this project.':item.status==='failed'?(item.error||'Reserved credits were reconciled after the failure.'):`Generation ${String(item.id).slice(0,8)} · ${item.credits_reserved||0} credits reserved once.`;document.querySelector('#progress-bar').style.width=`${progress[item.status]||8}%`;panel.classList.toggle('failed',item.status==='failed');panel.classList.toggle('complete',item.status==='ready');
-  }
-  function schedulePoll(){window.clearTimeout(pollTimer);const active=generations.some((item)=>activeStatuses.has(item.status));if(active)pollTimer=window.setTimeout(()=>load({quiet:true}),3000);else if(generations[0]&&terminalStatuses.has(generations[0].status))sessionStorage.removeItem(keyName());}
+  let project = null, references = [], generations = [];
+  let gate = { canGenerate: false, blockedReason: 'Product identity must be verified first.', estimatedCredits: 0 };
+  let submitting = false, pollTimer = 0, formDirty = false;
 
-  async function load({quiet=false}={}){
-    const r=await fetch(`/api/video-studio/projects/${projectId}`,{headers:{accept:'application/json'}}),d=await r.json();if(!r.ok){document.querySelector('#video-area').innerHTML=`<div class="empty">${esc(d.error||'Project unavailable.')}</div>`;return;}
-    project=d.project;references=d.referenceImages||[];generations=d.generations||[];gate=d.generationGate||gate;const p=project;
-    document.querySelector('#title').textContent=p.title;document.querySelector('#meta').textContent=`${p.platform} · ${p.duration_seconds}s · ${p.resolution} · ${p.status}`;document.querySelector('#details').innerHTML=`<p><strong>Source</strong><br>${esc(p.source_type==='url'?p.source_url:'Creative brief')}</p><p><strong>Goal</strong><br>${esc(p.objective)}</p><p><strong>Format</strong><br>${esc(p.aspect_ratio)} · ${esc(p.resolution)}</p><p><strong>Project state</strong><br><span class="status">${esc(p.status)}</span></p>`;document.querySelector('#creative-summary').innerHTML=`<div><span>Goal</span><strong>${esc(p.objective)}</strong></div><div><span>Platform</span><strong>${esc(p.platform)}</strong></div><div><span>Duration</span><strong>${esc(p.duration_seconds)} seconds</strong></div><div><span>Output</span><strong>${esc(p.aspect_ratio)} · ${esc(p.resolution)}</strong></div>`;
-    const identity=p.product_identity||{};if(!formDirty){if(field('productName'))field('productName').value=identity.name||'';if(field('brand'))field('brand').value=identity.brand||'';if(field('model'))field('model').value=identity.model||'';if(field('variant'))field('variant').value=identity.variant||'';if(field('color'))field('color').value=identity.color||'';if(field('identityNotes'))field('identityNotes').value=identity.userNotes||'';}
-    const ready=generations.find(g=>g.status==='ready'&&g.videoPath),area=document.querySelector('#video-area');area.innerHTML=ready?`<div class="video-wrap"><video controls playsinline preload="metadata" src="${ready.videoPath}"></video></div><p class="muted" style="margin-bottom:0">Latest completed generation · ${ready.duration_seconds}s · ${esc(ready.resolution)}</p>`:'<div class="empty">No completed video yet. Verify the product, then use Generate video below.</div>';
-    const gens=document.querySelector('#generations');gens.innerHTML=generations.length?generations.map(g=>`<div class="row"><strong>${new Date(g.created_at).toLocaleString()}</strong><small class="hide-mobile">${esc(g.provider)} · ${esc(g.model)}</small><span class="status">${esc(g.status)}</span><small>${g.credits_used||g.credits_reserved} credits</small></div>`).join(''):'<div class="empty">No generations yet.</div>';
-    renderReferences();renderProgress();updateGate();schedulePoll();if(!quiet&&ready)setStep('results');
+  const MAX_REFERENCES = 6;
+  const form = document.querySelector('#identity-form');
+  const generateButtons = () => document.querySelectorAll('.js-generate');
+  const reasonNodes = () => document.querySelectorAll('.js-generate-reason');
+  const field = (name) => form?.elements.namedItem(name);
+
+  const activeStatuses = new Set(['reserved', 'queued', 'planning', 'generating', 'qa', 'repairing']);
+  const terminalStatuses = new Set(['ready', 'failed', 'canceled']);
+  const keyName = () => `video-generation-key:${projectId}`;
+  const confidenceText = (value) => `${Math.round(Number(value || 0) * 100)}% confidence`;
+
+  const STEP_ORDER = ['setup', 'identity', 'creative', 'generate', 'review'];
+  const STEP_LABELS = {
+    setup: 'Setup', identity: 'Product Verification', creative: 'Creative Plan',
+    generate: 'Generate', review: 'Review',
+  };
+
+  function setStep(name) {
+    const activeIndex = STEP_ORDER.indexOf(name);
+    document.querySelectorAll('.stepper__item').forEach((step) => {
+      const index = STEP_ORDER.indexOf(step.dataset.step);
+      step.classList.toggle('is-current', index === activeIndex);
+      step.classList.toggle('is-done', activeIndex > -1 && index < activeIndex);
+    });
+    if (activeIndex < 0) return;
+    const counter = document.querySelector('#step-counter');
+    const label = document.querySelector('#step-label');
+    const progress = document.querySelector('#step-progress');
+    if (counter) counter.textContent = `Step ${activeIndex + 1} of ${STEP_ORDER.length}`;
+    if (label) label.textContent = STEP_LABELS[name] || name;
+    if (progress) progress.style.width = `${((activeIndex + 1) / STEP_ORDER.length) * 100}%`;
   }
 
-  form?.addEventListener('input',()=>{formDirty=true;gate.canGenerate=false;updateGate();});
-  form?.addEventListener('submit',async(event)=>{event.preventDefault();const button=document.querySelector('#verify');button.disabled=true;button.textContent='Verifying…';const body=Object.fromEntries(new FormData(form).entries());try{const r=await fetch(`/api/video-studio/projects/${projectId}/grounding`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to verify product.');formDirty=false;document.querySelector('#identity-status').textContent=d.message;await load({quiet:true});}catch(error){document.querySelector('#identity-status').textContent=error instanceof Error?error.message:'Unable to verify product.';}finally{button.disabled=false;button.textContent='Verify product identity';}});
-  document.querySelector('#reference-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const input=document.querySelector('#reference-files');if(!input.files?.length)return;const button=event.currentTarget.querySelector('button');button.disabled=true;button.textContent='Uploading…';const data=new FormData();[...input.files].forEach(file=>data.append('images',file));try{const r=await fetch(`/api/video-studio/projects/${projectId}/reference-images`,{method:'POST',body:data}),d=await r.json();if(!r.ok)throw new Error(d.error||'Upload failed.');input.value='';formDirty=false;await load({quiet:true});document.querySelector('#identity-status').textContent='Reference changed. Verify the product identity again.';}catch(error){document.querySelector('#identity-status').textContent=error instanceof Error?error.message:'Reference upload failed.';}finally{button.disabled=false;button.textContent='Upload references';}});
-  document.querySelector('#references')?.addEventListener('click',async(event)=>{const button=event.target.closest('.delete-ref');if(!button)return;button.disabled=true;const r=await fetch(`/api/video-studio/projects/${projectId}/reference-images`,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({imageId:button.dataset.id})});if(r.ok){formDirty=false;await load({quiet:true});document.querySelector('#identity-status').textContent='Reference changed. Verify the product identity again.';}else button.disabled=false;});
-  generate?.addEventListener('click',async()=>{if(!gate.canGenerate||!project||submitting)return;submitting=true;updateGate();generate.textContent='Starting generation…';const requestKey=sessionStorage.getItem(keyName())||crypto.randomUUID();sessionStorage.setItem(keyName(),requestKey);try{document.querySelector('#generation-progress').hidden=false;document.querySelector('#progress-title').textContent='Starting generation…';document.querySelector('#progress-copy').textContent='Validating access, product identity, credits, and project ownership.';const r=await fetch('/api/video-studio/generate',{method:'POST',headers:{'content-type':'application/json','idempotency-key':requestKey},body:JSON.stringify({projectId:project.id,durationSeconds:project.duration_seconds,resolution:project.resolution})}),d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to start generation.');document.querySelector('#identity-status').textContent=d.duplicate?'The existing generation is already in progress.':'One generation started. Credits were reserved once.';await load({quiet:true});}catch(error){sessionStorage.removeItem(keyName());document.querySelector('#identity-status').textContent=error instanceof Error?error.message:'Generation could not start.';}finally{submitting=false;updateGate();}});
+  function setText(nodes, text) { nodes.forEach((node) => { node.textContent = text; }); }
+
+  /* The reason line can wrap to two lines, so a fixed CSS reserve is not
+     enough — measure the bar and pad the scroll area by its real height. */
+  function reserveStickySpace(sticky) {
+    const content = document.querySelector('.vs-content');
+    if (!content) return;
+    const height = sticky.hidden ? 0 : sticky.getBoundingClientRect().height;
+    content.style.setProperty('--vs-sticky-reserve', `${Math.ceil(height)}px`);
+  }
+
+  /* ---- Gate: preserves the original conditions exactly ---- */
+  function updateGate() {
+    if (!project) return;
+    const confidence = Number(project.product_identity_confidence || 0);
+    const verified = project.product_identity_status === 'verified' && confidence >= 0.8 && !formDirty;
+    const active = generations.find((item) => activeStatuses.has(item.status));
+    const canGenerate = Boolean(gate.canGenerate) && verified && !active && !submitting;
+
+    const badge = document.querySelector('#identity-badge');
+    if (badge) {
+      badge.textContent = verified
+        ? `Verified · ${confidenceText(confidence)}`
+        : formDirty
+          ? 'Changes need verification'
+          : confidence > 0
+            ? `Needs attention · ${confidenceText(confidence)}`
+            : 'Verification required';
+      badge.className = `vs-badge vs-badge--wrap ${verified ? 'vs-badge--success' : 'vs-badge--warning'}`;
+    }
+
+    const reason = active
+      ? 'A generation is already in progress.'
+      : formDirty
+        ? 'Verify the changed product identity before generating.'
+        : canGenerate
+          ? 'Identity verified. Ready to start one generation.'
+          : (gate.blockedReason || 'Product identity must be verified first.');
+    setText(reasonNodes(), reason);
+
+    /* When blocked, restate the reason inside the identity card too. */
+    const blocked = document.querySelector('#identity-blocked');
+    if (blocked) {
+      if (canGenerate) {
+        blocked.hidden = true;
+      } else {
+        blocked.hidden = false;
+        blocked.dataset.tone = 'error';
+        blocked.textContent = reason;
+      }
+    }
+
+    const label = `Generate Video · ${Number(gate.estimatedCredits || 0)} credits`;
+    generateButtons().forEach((button) => {
+      button.disabled = !canGenerate;
+      button.textContent = submitting ? 'Starting generation…' : label;
+    });
+
+    /* Sticky bar only when generating is the next logical action. */
+    const sticky = document.querySelector('#sticky-action');
+    if (sticky) {
+      sticky.hidden = Boolean(active) || !canGenerate;
+      reserveStickySpace(sticky);
+    }
+
+    renderReadiness(verified, confidence);
+
+    if (active) setStep('review');
+    else if (canGenerate) setStep('generate');
+    else if (!verified) setStep('identity');
+  }
+
+  /* ---- Readiness: only fields the API actually returns ---- */
+  function renderReadiness(verified, confidence) {
+    const node = document.querySelector('#readiness-list');
+    if (!node || !project) return;
+    const identityValue = verified
+      ? `Verified · ${confidenceText(confidence)}`
+      : confidence > 0 ? `Needs attention · ${confidenceText(confidence)}` : 'Not verified';
+    const creativeReady = Boolean(project.objective && project.platform && project.duration_seconds);
+    node.innerHTML = `
+      <div class="vs-defrow"><dt class="vs-defrow__label">Product identity</dt><dd class="vs-defrow__value">${esc(identityValue)}</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Reference coverage</dt><dd class="vs-defrow__value">${references.length} of ${MAX_REFERENCES} images</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Creative setup</dt><dd class="vs-defrow__value">${creativeReady ? 'Ready' : 'Incomplete'}</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Estimated credits</dt><dd class="vs-defrow__value">${Number(gate.estimatedCredits || 0)}</dd></div>`;
+  }
+
+  function renderIdentity() {
+    if (!project) return;
+    const identity = project.product_identity || {};
+    const confidence = Number(project.product_identity_confidence || 0);
+
+    const media = document.querySelector('#identity-media');
+    const imageUrl = identity.primaryImageUrl || references[0]?.previewUrl || null;
+    if (media) {
+      media.innerHTML = imageUrl
+        ? `<img src="${esc(imageUrl)}" alt="${esc(identity.name || project.title)}" />`
+        : '<span class="identity-summary__placeholder">No image</span>';
+    }
+
+    const rows = [
+      ['Product', identity.name],
+      ['Brand', identity.brand],
+      ['Model', identity.model],
+      ['Form factor', identity.variant],
+      ['Color', identity.color],
+    ].filter(([, value]) => Boolean(value));
+
+    const facts = document.querySelector('#identity-facts');
+    if (facts) {
+      facts.innerHTML = rows.length
+        ? rows.map(([label, value]) => `<div class="vs-defrow"><dt class="vs-defrow__label">${esc(label)}</dt><dd class="vs-defrow__value">${esc(value)}</dd></div>`).join('')
+        : '<div class="vs-defrow"><dt class="vs-defrow__label">Product</dt><dd class="vs-defrow__value">Not identified yet</dd></div>';
+    }
+
+    const value = document.querySelector('#confidence-value');
+    const fill = document.querySelector('#confidence-fill');
+    if (value) value.textContent = confidenceText(confidence);
+    if (fill) {
+      fill.style.width = `${Math.max(0, Math.min(100, Math.round(confidence * 100)))}%`;
+      fill.dataset.tone = confidence >= 0.8 ? 'success' : confidence >= 0.5 ? 'warning' : 'danger';
+    }
+  }
+
+  function renderReferences() {
+    const node = document.querySelector('#references');
+    const count = document.querySelector('#reference-count');
+    if (count) count.textContent = `${references.length} of ${MAX_REFERENCES}`;
+    if (!node) return;
+    if (!references.length) {
+      node.innerHTML = '<div class="vs-empty"><p class="vs-empty__body">No reference images yet.</p></div>';
+      return;
+    }
+    node.innerHTML = references.map((image) => `
+      <figure class="reference-card">
+        ${image.previewUrl
+          ? `<img src="${esc(image.previewUrl)}" alt="${esc(image.name)}" />`
+          : '<div class="reference-card__placeholder">Image</div>'}
+        <figcaption>
+          <span class="reference-card__name">${esc(image.name)}</span>
+          <span class="vs-faint">${Math.max(1, Math.round(Number(image.sizeBytes || 0) / 1024))} KB</span>
+        </figcaption>
+        <button class="vs-btn vs-btn--danger vs-btn--sm delete-ref" data-id="${esc(image.id)}" type="button">Remove</button>
+      </figure>`).join('');
+  }
+
+  function renderProgress() {
+    const active = generations.find((item) => activeStatuses.has(item.status));
+    const latest = generations[0];
+    const panel = document.querySelector('#generation-progress');
+    if (!panel) return;
+    if (!active && !latest) { panel.hidden = true; return; }
+    const item = active || latest;
+    const labels = {
+      reserved: 'Reserving credits…', queued: 'Queued for production', planning: 'Planning the video',
+      generating: 'Generating video', qa: 'Checking video quality', repairing: 'Repairing the generation',
+      ready: 'Video complete', failed: 'Generation failed', canceled: 'Generation canceled',
+    };
+    const progress = { reserved: 12, queued: 22, planning: 35, generating: 62, qa: 82, repairing: 88, ready: 100, failed: 100, canceled: 100 };
+    panel.hidden = false;
+    document.querySelector('#progress-title').textContent = labels[item.status] || 'Generation update';
+    document.querySelector('#progress-copy').textContent = item.status === 'ready'
+      ? 'The completed video is attached to this project.'
+      : item.status === 'failed'
+        ? (item.error || 'Reserved credits were reconciled after the failure.')
+        : `Generation ${String(item.id).slice(0, 8)} · ${item.credits_reserved || 0} credits reserved once.`;
+    document.querySelector('#progress-bar').style.width = `${progress[item.status] || 8}%`;
+    panel.classList.toggle('is-failed', item.status === 'failed');
+    panel.classList.toggle('is-complete', item.status === 'ready');
+  }
+
+  function generationTone(status) {
+    if (status === 'ready') return 'vs-badge--success';
+    if (status === 'failed' || status === 'canceled') return 'vs-badge--danger';
+    if (activeStatuses.has(status)) return 'vs-badge--info';
+    return '';
+  }
+
+  function renderGenerations() {
+    const node = document.querySelector('#generations');
+    if (!node) return;
+    if (!generations.length) {
+      node.innerHTML = `
+        <div class="vs-empty">
+          <p class="vs-empty__title">No videos generated yet</p>
+          <p class="vs-empty__body">Completed generations will appear here.</p>
+        </div>`;
+      return;
+    }
+    node.innerHTML = generations.map((g) => `
+      <article class="generation-card">
+        <div class="generation-card__top">
+          <span class="vs-badge ${generationTone(g.status)}"><i class="vs-badge__dot"></i>${esc(g.status)}</span>
+          <span class="vs-faint generation-card__time">${new Date(g.created_at).toLocaleString()}</span>
+        </div>
+        <dl class="vs-deflist">
+          <div class="vs-defrow"><dt class="vs-defrow__label">Model</dt><dd class="vs-defrow__value">${esc(g.provider)} · ${esc(g.model)}</dd></div>
+          <div class="vs-defrow"><dt class="vs-defrow__label">Duration</dt><dd class="vs-defrow__value">${esc(g.duration_seconds)}s · ${esc(g.resolution)}</dd></div>
+          <div class="vs-defrow"><dt class="vs-defrow__label">Credits used</dt><dd class="vs-defrow__value">${esc(g.credits_used ?? g.credits_reserved ?? 0)}</dd></div>
+        </dl>
+        ${g.videoPath ? `<a class="vs-btn vs-btn--secondary vs-btn--sm generation-card__view" href="${esc(g.videoPath)}" target="_blank" rel="noopener">View video</a>` : ''}
+      </article>`).join('');
+  }
+
+  function schedulePoll() {
+    window.clearTimeout(pollTimer);
+    const active = generations.some((item) => activeStatuses.has(item.status));
+    if (active) pollTimer = window.setTimeout(() => load({ quiet: true }), 3000);
+    else if (generations[0] && terminalStatuses.has(generations[0].status)) sessionStorage.removeItem(keyName());
+  }
+
+  async function load({ quiet = false } = {}) {
+    const r = await fetch(`/api/video-studio/projects/${projectId}`, { headers: { accept: 'application/json' } });
+    const d = await r.json();
+    if (!r.ok) {
+      document.querySelector('#video-area').innerHTML = `<div class="vs-empty vs-empty--error"><p class="vs-empty__title">Project unavailable</p><p class="vs-empty__body">${esc(d.error || 'Project unavailable.')}</p></div>`;
+      return;
+    }
+    project = d.project;
+    references = d.referenceImages || [];
+    generations = d.generations || [];
+    gate = d.generationGate || gate;
+    const p = project;
+
+    document.querySelector('#title').textContent = p.title;
+    document.querySelector('#meta-badges').innerHTML = `
+      <span class="vs-badge"><i class="vs-badge__dot"></i>${esc(String(p.status || '').replace(/_/g, ' '))}</span>
+      <span class="vs-badge">${esc(p.platform)}</span>
+      <span class="vs-badge">${esc(p.duration_seconds)}s</span>
+      <span class="vs-badge">${esc(p.aspect_ratio)} · ${esc(p.resolution)}</span>`;
+
+    document.querySelector('#creative-summary').innerHTML = `
+      <div class="vs-defrow"><dt class="vs-defrow__label">Goal</dt><dd class="vs-defrow__value">${esc(p.objective)}</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Platform</dt><dd class="vs-defrow__value">${esc(p.platform)}</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Duration</dt><dd class="vs-defrow__value">${esc(p.duration_seconds)} seconds</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Format</dt><dd class="vs-defrow__value">${esc(p.aspect_ratio)} · ${esc(p.resolution)}</dd></div>
+      <div class="vs-defrow"><dt class="vs-defrow__label">Source</dt><dd class="vs-defrow__value">${esc(p.source_type === 'url' ? p.source_url : 'Creative brief')}</dd></div>`;
+
+    const identity = p.product_identity || {};
+    if (!formDirty) {
+      if (field('productName')) field('productName').value = identity.name || '';
+      if (field('brand')) field('brand').value = identity.brand || '';
+      if (field('model')) field('model').value = identity.model || '';
+      if (field('variant')) field('variant').value = identity.variant || '';
+      if (field('color')) field('color').value = identity.color || '';
+      if (field('identityNotes')) field('identityNotes').value = identity.userNotes || '';
+    }
+
+    /* Only one empty state in this section: when there are no generations at
+       all the list below already says so, so the player area stays silent. */
+    const ready = generations.find((g) => g.status === 'ready' && g.videoPath);
+    const area = document.querySelector('#video-area');
+    area.hidden = !ready && generations.length === 0;
+    area.innerHTML = ready
+      ? `<div class="video-wrap"><video controls playsinline preload="metadata" src="${esc(ready.videoPath)}"></video></div>
+         <p class="vs-help">Latest completed generation · ${esc(ready.duration_seconds)}s · ${esc(ready.resolution)}</p>`
+      : generations.length
+        ? '<div class="vs-empty"><p class="vs-empty__body">No playable video yet. It will appear here once a generation completes.</p></div>'
+        : '';
+
+    renderIdentity();
+    renderReferences();
+    renderGenerations();
+    renderProgress();
+    updateGate();
+    schedulePoll();
+    if (!quiet && ready) setStep('review');
+  }
+
+  /* ---- Identity editing ---- */
+  form?.addEventListener('input', () => { formDirty = true; gate.canGenerate = false; updateGate(); });
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = document.querySelector('#verify');
+    button.disabled = true;
+    button.textContent = 'Verifying…';
+    const body = Object.fromEntries(new FormData(form).entries());
+    try {
+      const r = await fetch(`/api/video-studio/projects/${projectId}/grounding`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Unable to verify product.');
+      formDirty = false;
+      document.querySelector('#identity-status').textContent = d.message;
+      await load({ quiet: true });
+    } catch (error) {
+      document.querySelector('#identity-status').textContent = error instanceof Error ? error.message : 'Unable to verify product.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Verify product identity';
+    }
+  });
+
+  /* ---- Reference uploads ---- */
+  document.querySelector('#reference-files')?.addEventListener('change', (event) => {
+    const input = event.currentTarget;
+    const note = document.querySelector('#reference-selected');
+    if (!note) return;
+    const files = [...(input.files || [])];
+    note.hidden = files.length === 0;
+    note.textContent = files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected` : '';
+  });
+
+  document.querySelector('#reference-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = document.querySelector('#reference-files');
+    if (!input.files?.length) return;
+    const button = event.currentTarget.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = 'Uploading…';
+    const data = new FormData();
+    [...input.files].forEach((file) => data.append('images', file));
+    try {
+      const r = await fetch(`/api/video-studio/projects/${projectId}/reference-images`, { method: 'POST', body: data });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Upload failed.');
+      input.value = '';
+      const note = document.querySelector('#reference-selected');
+      if (note) { note.hidden = true; note.textContent = ''; }
+      formDirty = false;
+      await load({ quiet: true });
+      document.querySelector('#identity-status').textContent = 'Reference changed. Verify the product identity again.';
+    } catch (error) {
+      document.querySelector('#identity-status').textContent = error instanceof Error ? error.message : 'Reference upload failed.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Upload references';
+    }
+  });
+
+  document.querySelector('#references')?.addEventListener('click', async (event) => {
+    const button = event.target.closest('.delete-ref');
+    if (!button) return;
+    button.disabled = true;
+    const r = await fetch(`/api/video-studio/projects/${projectId}/reference-images`, {
+      method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ imageId: button.dataset.id }),
+    });
+    if (r.ok) {
+      formDirty = false;
+      await load({ quiet: true });
+      document.querySelector('#identity-status').textContent = 'Reference changed. Verify the product identity again.';
+    } else button.disabled = false;
+  });
+
+  /* ---- Generation ---- */
+  async function startGeneration() {
+    if (!gate.canGenerate || !project || submitting) return;
+    submitting = true;
+    updateGate();
+    const requestKey = sessionStorage.getItem(keyName()) || crypto.randomUUID();
+    sessionStorage.setItem(keyName(), requestKey);
+    try {
+      const panel = document.querySelector('#generation-progress');
+      panel.hidden = false;
+      document.querySelector('#progress-title').textContent = 'Starting generation…';
+      document.querySelector('#progress-copy').textContent = 'Validating access, product identity, credits, and project ownership.';
+      const r = await fetch('/api/video-studio/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'idempotency-key': requestKey },
+        body: JSON.stringify({ projectId: project.id, durationSeconds: project.duration_seconds, resolution: project.resolution }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Unable to start generation.');
+      document.querySelector('#identity-status').textContent = d.duplicate
+        ? 'The existing generation is already in progress.'
+        : 'One generation started. Credits were reserved once.';
+      await load({ quiet: true });
+    } catch (error) {
+      sessionStorage.removeItem(keyName());
+      document.querySelector('#identity-status').textContent = error instanceof Error ? error.message : 'Generation could not start.';
+    } finally {
+      submitting = false;
+      updateGate();
+    }
+  }
+
+  generateButtons().forEach((button) => button.addEventListener('click', startGeneration));
+
+  setStep('setup');
   load();
 </script>
 
 <style>
-  .workflow-steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:0 0 22px}.workflow-steps span{display:flex;align-items:center;gap:7px;border:1px solid #dedede;border-radius:10px;padding:9px;font-size:.72rem;color:#777}.workflow-steps span.current{border-color:#111;background:#111;color:#fff}.workflow-steps b{font-weight:700}.top-grid{grid-template-columns:minmax(0,1fr) 330px;align-items:start}.grounding-card,.creative-card{margin-top:22px}.grounding-head{display:flex;gap:24px;align-items:flex-start;justify-content:space-between}.grounding-head h2,.creative-card h2,.generation-action h2,.progress-card h2{margin:5px 0 8px}.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.12em}.identity-badge{white-space:nowrap;border-radius:999px;padding:8px 12px;font-size:.78rem;font-weight:800}.identity-badge.pending{border:1px solid #d8c79d;background:#fff8e8}.identity-badge.verified{border:1px solid #acd6b9;background:#eefaf2}.identity-form{margin-top:24px}.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.identity-form label{display:grid;gap:7px;font-size:.82rem;font-weight:700}.identity-form input,.identity-form textarea,.reference-upload input{width:100%;box-sizing:border-box;border:1px solid #d8d8d8;border-radius:10px;padding:11px 12px;background:#fff;color:#111;font:inherit}.notes-label{margin-top:14px}.verify-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px}.reference-section{border-top:1px solid #e8e8e8;margin-top:26px;padding-top:22px}.reference-section h3{margin:5px 0 4px}.reference-upload{display:flex;gap:10px;align-items:center;margin:14px 0}.references{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ref-card{border:1px solid #e2e2e2;border-radius:12px;padding:9px;display:grid;gap:8px}.ref-card img,.ref-placeholder{width:100%;aspect-ratio:4/3;object-fit:contain;background:#f5f5f5;border-radius:8px}.ref-placeholder{display:grid;place-items:center;font-size:.72rem;font-weight:800}.ref-card div{display:grid;gap:2px}.ref-card small{color:#777}.delete-ref{border:0;background:transparent;text-align:left;padding:5px 0;color:#8b2c2c;cursor:pointer;min-height:36px}.accuracy-rule{display:grid;grid-template-columns:130px 1fr;gap:12px;border-top:1px solid #e8e8e8;margin-top:22px;padding-top:18px;font-size:.84rem}.btn.secondary{background:transparent;color:inherit;border:1px solid #ccc}.creative-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}.creative-summary div{display:grid;gap:6px;border:1px solid #e4e4e4;border-radius:12px;padding:14px}.creative-summary span{font-size:.75rem;color:#777}.generation-action{position:sticky;bottom:12px;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:24px;margin:22px 0;padding:18px 20px;border:1px solid #202020;border-radius:16px;background:#111;color:#fff;box-shadow:0 12px 35px rgba(0,0,0,.22)}.generation-action p{margin:4px 0 0;color:#c9c9c9}.primary-generate{min-width:260px;min-height:54px;background:#f4eee2!important;color:#111!important;font-weight:850;font-size:1rem}.primary-generate:disabled{opacity:.48;cursor:not-allowed}.progress-card{margin-top:22px}.progress-track{height:9px;margin-top:18px;border-radius:999px;background:#e5e5e5;overflow:hidden}.progress-track span{display:block;height:100%;width:8%;background:#111;transition:width .35s ease}.progress-card.complete .progress-track span{background:#218847}.progress-card.failed .progress-track span{background:#a13a30}.generations-section{margin-top:26px;padding-bottom:90px}.section-heading h2{margin:5px 0 12px}
-  @media(max-width:900px){.workflow-steps{grid-template-columns:repeat(4,minmax(0,1fr))}.creative-summary{grid-template-columns:1fr 1fr}}
-  @media(max-width:800px){.top-grid{grid-template-columns:1fr}.grounding-head,.verify-row,.reference-upload{align-items:stretch;flex-direction:column}.field-grid{grid-template-columns:1fr}.references{grid-template-columns:1fr 1fr}.accuracy-rule{grid-template-columns:1fr}.identity-badge{white-space:normal}.workflow-steps{display:flex;overflow-x:auto;padding-bottom:4px}.workflow-steps span{min-width:118px}.identity-form input,.identity-form textarea,.reference-upload input{font-size:16px;min-height:48px}.btn{min-height:48px}.generation-action{bottom:8px;display:grid;gap:12px;padding:14px}.generation-action h2{font-size:1.18rem}.generation-action p{font-size:.82rem}.primary-generate{width:100%;min-width:0;min-height:56px}.creative-summary{grid-template-columns:1fr 1fr}}
-  @media(max-width:480px){.references,.creative-summary{grid-template-columns:1fr}}
+  .vs-backlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: var(--vs-tap);
+    margin-bottom: 0.25rem;
+    color: var(--vs-text-muted);
+    font-size: 0.8125rem;
+    text-decoration: none;
+  }
+  .vs-backlink:hover { color: var(--vs-text); }
+  .vs-backlink .vs-ico { transform: rotate(90deg); }
+
+  .project-head__main { min-width: 0; }
+  .project-head__meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem; }
+  /* On phones the header CTA is redundant with the sticky bar. */
+  .project-head__actions { display: none; }
+
+  /* ---------- Stepper ---------- */
+  .stepper { margin-bottom: 1.25rem; }
+
+  .stepper__compact {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--vs-border);
+    border-radius: var(--vs-radius);
+    background: var(--vs-surface);
+  }
+  .stepper__compact-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  .stepper__compact-label { font-size: 0.875rem; font-weight: 650; }
+
+  /* Full pill stepper is tablet-and-up only; phones use the compact readout. */
+  .stepper__list { display: none; }
+
+  .stepper__item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--vs-border);
+    border-radius: 999px;
+    background: var(--vs-surface);
+    color: var(--vs-text-faint);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .stepper__num {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--vs-surface-3);
+    color: var(--vs-text-muted);
+    font-size: 0.625rem;
+    font-weight: 700;
+  }
+  .stepper__item.is-done { color: var(--vs-text-muted); border-color: var(--vs-border-strong); }
+  .stepper__item.is-done .stepper__num { background: var(--vs-green-soft); color: var(--vs-green); }
+  .stepper__item.is-current {
+    border-color: var(--vs-accent);
+    background: var(--vs-accent-soft);
+    color: var(--vs-accent-hover);
+  }
+  .stepper__item.is-current .stepper__num { background: var(--vs-accent); color: #fff; }
+
+  /* ---------- Layout ---------- */
+  .project-layout { display: grid; gap: 1rem; }
+  .project-main { min-width: 0; }
+  .project-aside { min-width: 0; }
+
+  /* Mobile order: readiness sits right after identity, per the spec. */
+  .project-layout { grid-template-areas: 'aside' 'main'; }
+  .project-aside { grid-area: aside; }
+  .project-main { grid-area: main; }
+
+  /* ---------- Identity ---------- */
+  .identity-summary { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 0.9rem; align-items: start; }
+  .identity-summary__media {
+    width: 76px;
+    height: 76px;
+    border-radius: var(--vs-radius-sm);
+    background: var(--vs-surface-3);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  /* .identity-summary__media img and __placeholder are injected at runtime,
+     so their rules live in styles/video-studio.css. */
+  .identity-confidence { margin-top: 1rem; }
+  .identity-blocked { margin-top: 0.9rem; }
+
+  .identity-edit { margin-top: 1rem; }
+  .identity-edit > summary { list-style: none; }
+  .identity-edit > summary::-webkit-details-marker { display: none; }
+  .identity-edit[open] > summary { margin-bottom: 0.9rem; }
+  .identity-form__foot { display: grid; gap: 0.6rem; margin-top: 1rem; }
+  .accuracy-rule { margin: 1rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--vs-border); }
+  .accuracy-rule strong { color: var(--vs-text); }
+
+  /* ---------- Uploader ---------- */
+  .uploader { display: grid; gap: 0.6rem; margin: 0.9rem 0 1rem; }
+  .uploader__drop {
+    display: grid;
+    gap: 0.2rem;
+    justify-items: center;
+    padding: 1.25rem 1rem;
+    border: 1px dashed var(--vs-border-strong);
+    border-radius: var(--vs-radius);
+    background: var(--vs-surface-2);
+    text-align: center;
+    cursor: pointer;
+  }
+  .uploader__drop:hover { border-color: var(--vs-accent); background: var(--vs-accent-soft); }
+  .uploader__drop:focus-within { border-color: var(--vs-accent); box-shadow: 0 0 0 3px var(--vs-accent-soft); }
+  .uploader__drop strong { font-size: 0.9375rem; }
+  .uploader__formats { font-size: 0.6875rem; }
+  .uploader__input {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+  }
+
+  /* Reference thumbnails are injected at runtime — see video-studio.css. */
+
+  /* ---------- Creative / plan ---------- */
+  .creative-note { margin: 0.9rem 0 0; }
+
+  /* ---------- Progress ---------- */
+  .progress-track { height: 6px; margin-top: 0.9rem; border-radius: 999px; background: var(--vs-surface-3); overflow: hidden; }
+  .progress-track span { display: block; height: 100%; width: 8%; border-radius: 999px; background: var(--vs-accent); transition: width 0.35s ease; }
+  .progress-card.is-complete .progress-track span { background: var(--vs-green); }
+  .progress-card.is-failed .progress-track span { background: var(--vs-red); }
+
+  /* ---------- Generations ---------- */
+  /* .video-wrap and .generation-card* are injected at runtime — their
+     rules live in styles/video-studio.css. */
+  .video-area { margin-bottom: 1rem; }
+
+  /* ---------- Readiness ---------- */
+  .readiness__action { display: grid; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--vs-border); }
+  /* The sticky bar owns this CTA on phones. */
+  .readiness__action .js-generate { display: none; }
+
+  /* ---------- Sticky action (mobile) ---------- */
+  .sticky-action {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--vs-bottomnav-h) + env(safe-area-inset-bottom, 0px));
+    z-index: 35;
+    padding: 0.6rem 1rem 0.7rem;
+    border-top: 1px solid var(--vs-border);
+    background: rgba(13, 16, 22, 0.97);
+    backdrop-filter: blur(10px);
+  }
+  .sticky-action__inner { display: grid; gap: 0.4rem; max-width: 1180px; margin: 0 auto; }
+  .sticky-action__reason { margin: 0; font-size: 0.75rem; }
+
+  /* ---------- Tablet ---------- */
+  @media (min-width: 768px) {
+    .stepper__compact { display: none; }
+    .stepper__list {
+      display: flex;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0 0 0.3rem;
+      list-style: none;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .stepper__list::-webkit-scrollbar { display: none; }
+    .identity-edit > summary { display: inline-flex; width: auto; }
+    .identity-form__foot { display: flex; align-items: center; justify-content: space-between; }
+    .identity-form__foot .vs-btn { width: auto; flex-shrink: 0; }
+  }
+
+  /* ---------- Desktop: two columns, no sticky bar ---------- */
+  @media (min-width: 1024px) {
+    .project-head__actions { display: flex; }
+    .project-layout {
+      grid-template-columns: minmax(0, 1fr) 320px;
+      grid-template-areas: 'main aside';
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .project-aside { position: sticky; top: 76px; }
+    .readiness__action .js-generate { display: inline-flex; }
+    .sticky-action { display: none; }
+    .stepper__list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; }
+    .stepper__item { justify-content: center; }
+  }
 </style>

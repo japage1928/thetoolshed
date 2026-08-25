@@ -1,0 +1,810 @@
+/*
+ * Video Studio design system.
+ *
+ * Single source of truth for the logged-in workspace at /app/video-studio/*.
+ * Loaded once by StudioShell.astro; every studio page inherits from here so
+ * the shell, dashboard, and project workspace stay visually consistent.
+ *
+ * Mobile-first: base rules target ~375px, media queries add desktop.
+ */
+
+.vs-scope {
+  /* Surfaces — near-black with a deep navy cast */
+  --vs-bg: #0a0c11;
+  --vs-surface: #11141b;
+  --vs-surface-2: #161a23;
+  --vs-surface-3: #1c212c;
+
+  /* Lines */
+  --vs-border: #232936;
+  --vs-border-strong: #313a4c;
+
+  /* Text */
+  --vs-text: #eef1f6;
+  --vs-text-muted: #99a3b5;
+  --vs-text-faint: #6c7688;
+
+  /* Restrained blue accent */
+  --vs-accent: #3b7cf6;
+  --vs-accent-hover: #5590f8;
+  --vs-accent-soft: rgba(59, 124, 246, 0.14);
+  --vs-accent-text: #ffffff;
+
+  /* Status */
+  --vs-green: #3fb96b;
+  --vs-green-soft: rgba(63, 185, 107, 0.13);
+  --vs-amber: #d99a2b;
+  --vs-amber-soft: rgba(217, 154, 43, 0.14);
+  --vs-red: #e5645a;
+  --vs-red-soft: rgba(229, 100, 90, 0.14);
+
+  /* Metrics */
+  --vs-radius: 10px;
+  --vs-radius-sm: 8px;
+  --vs-radius-lg: 14px;
+  --vs-tap: 44px;
+  --vs-sidebar-w: 232px;
+  --vs-bottomnav-h: 60px;
+
+  --vs-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---------- Reset within the studio ---------- */
+
+.vs-scope *,
+.vs-scope *::before,
+.vs-scope *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * Several component classes set an explicit `display`, which outranks the
+ * user-agent `[hidden] { display: none }` rule and leaves elements that JS
+ * hid via `el.hidden = true` still on screen. Restore the expected meaning
+ * of the attribute for everything inside the studio.
+ */
+.vs-scope [hidden] { display: none !important; }
+
+/* ---------- Typography ---------- */
+
+.vs-h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.vs-h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 650;
+}
+
+.vs-h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  font-weight: 650;
+}
+
+.vs-muted {
+  color: var(--vs-text-muted);
+}
+
+.vs-faint {
+  color: var(--vs-text-faint);
+}
+
+.vs-eyebrow {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--vs-text-faint);
+}
+
+.vs-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--vs-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .vs-h1 { font-size: 1.75rem; }
+  .vs-h2 { font-size: 1.125rem; }
+}
+
+/* ---------- Page header ---------- */
+
+.vs-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.vs-page-head__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .vs-page-head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+  }
+  .vs-page-head__actions {
+    flex-direction: row;
+    flex-shrink: 0;
+  }
+}
+
+/* ---------- Cards ---------- */
+
+.vs-card {
+  background: var(--vs-surface);
+  border: 1px solid var(--vs-border);
+  border-radius: var(--vs-radius-lg);
+  padding: 1.1rem;
+}
+
+.vs-card--flush { padding: 0; }
+
+.vs-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.vs-card__title-group { display: grid; gap: 0.3rem; min-width: 0; }
+
+@media (min-width: 768px) {
+  .vs-card { padding: 1.35rem; }
+}
+
+/* ---------- Section spacing ---------- */
+
+.vs-stack { display: grid; gap: 1rem; }
+
+@media (min-width: 768px) {
+  .vs-stack { gap: 1.25rem; }
+}
+
+/* ---------- Metric cards ---------- */
+
+.vs-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.vs-metric {
+  background: var(--vs-surface);
+  border: 1px solid var(--vs-border);
+  border-radius: var(--vs-radius);
+  padding: 0.85rem 0.9rem;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.vs-metric__label {
+  color: var(--vs-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.vs-metric__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.vs-metric__hint {
+  color: var(--vs-text-faint);
+  font-size: 0.6875rem;
+}
+
+@media (min-width: 768px) {
+  .vs-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.85rem; }
+  .vs-metric__value { font-size: 1.5rem; }
+}
+
+/* ---------- Buttons ---------- */
+
+.vs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: var(--vs-tap);
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--vs-radius-sm);
+  font: inherit;
+  font-family: var(--vs-font);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Mobile: primary actions go full width */
+.vs-btn--block { width: 100%; }
+
+.vs-btn:focus-visible {
+  outline: 2px solid var(--vs-accent);
+  outline-offset: 2px;
+}
+
+.vs-btn--primary {
+  background: var(--vs-accent);
+  border-color: var(--vs-accent);
+  color: var(--vs-accent-text);
+}
+.vs-btn--primary:hover:not(:disabled) {
+  background: var(--vs-accent-hover);
+  border-color: var(--vs-accent-hover);
+}
+
+.vs-btn--secondary {
+  background: var(--vs-surface-2);
+  border-color: var(--vs-border-strong);
+  color: var(--vs-text);
+}
+.vs-btn--secondary:hover:not(:disabled) {
+  background: var(--vs-surface-3);
+  border-color: var(--vs-text-faint);
+}
+
+.vs-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--vs-text-muted);
+}
+.vs-btn--ghost:hover:not(:disabled) {
+  background: var(--vs-surface-2);
+  color: var(--vs-text);
+}
+
+.vs-btn--danger {
+  background: transparent;
+  border-color: var(--vs-border-strong);
+  color: var(--vs-red);
+}
+.vs-btn--danger:hover:not(:disabled) {
+  background: var(--vs-red-soft);
+  border-color: var(--vs-red);
+}
+
+/* Compact only in visual weight — the touch target stays 44px on phones
+   and tightens to 36px on pointer-precise viewports. */
+.vs-btn--sm {
+  min-height: var(--vs-tap);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8125rem;
+}
+
+@media (min-width: 768px) {
+  .vs-btn--sm { min-height: 36px; }
+}
+
+.vs-btn:disabled,
+.vs-btn[disabled] {
+  background: var(--vs-surface-2);
+  border-color: var(--vs-border);
+  color: var(--vs-text-faint);
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .vs-btn--block { width: auto; }
+}
+
+/* ---------- Form controls ---------- */
+
+.vs-field { display: grid; gap: 0.4rem; min-width: 0; }
+
+.vs-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--vs-text);
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.vs-label__optional {
+  color: var(--vs-text-faint);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.vs-help {
+  color: var(--vs-text-faint);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+/*
+ * 16px font-size on inputs is deliberate: iOS Safari zooms the viewport
+ * when a focused input renders below 16px, which reads as a layout bug.
+ */
+.vs-input,
+.vs-select,
+.vs-textarea {
+  width: 100%;
+  min-height: var(--vs-tap);
+  padding: 0.65rem 0.75rem;
+  background: var(--vs-surface-2);
+  border: 1px solid var(--vs-border-strong);
+  border-radius: var(--vs-radius-sm);
+  color: var(--vs-text);
+  font-family: var(--vs-font);
+  font-size: 16px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.vs-textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.vs-input::placeholder,
+.vs-textarea::placeholder {
+  color: var(--vs-text-faint);
+}
+
+.vs-input:focus,
+.vs-select:focus,
+.vs-textarea:focus {
+  border-color: var(--vs-accent);
+  box-shadow: 0 0 0 3px var(--vs-accent-soft);
+}
+
+.vs-input:disabled,
+.vs-select:disabled,
+.vs-textarea:disabled {
+  background: var(--vs-surface);
+  color: var(--vs-text-faint);
+  cursor: not-allowed;
+}
+
+/* Custom chevron so selects don't fall back to the OS widget */
+.vs-select {
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2399a3b5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+}
+
+.vs-select option {
+  background: var(--vs-surface-2);
+  color: var(--vs-text);
+}
+
+/* Prefixed input (e.g. https://) */
+.vs-input-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--vs-border-strong);
+  border-radius: var(--vs-radius-sm);
+  background: var(--vs-surface-2);
+  overflow: hidden;
+}
+.vs-input-group:focus-within {
+  border-color: var(--vs-accent);
+  box-shadow: 0 0 0 3px var(--vs-accent-soft);
+}
+.vs-input-group__prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.2rem 0 0.75rem;
+  color: var(--vs-text-faint);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.vs-input-group .vs-input {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding-left: 0.25rem;
+}
+.vs-input-group .vs-input:focus { box-shadow: none; }
+
+.vs-form-grid { display: grid; gap: 0.9rem; }
+
+@media (min-width: 768px) {
+  .vs-form-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vs-form-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .vs-field--full { grid-column: 1 / -1; }
+}
+
+/* ---------- Segmented control ---------- */
+
+.vs-segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.3rem;
+  background: var(--vs-surface-2);
+  border: 1px solid var(--vs-border);
+  border-radius: var(--vs-radius);
+}
+
+.vs-segmented__option {
+  display: grid;
+  gap: 0.15rem;
+  min-height: var(--vs-tap);
+  padding: 0.55rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--vs-radius-sm);
+  background: transparent;
+  color: var(--vs-text-muted);
+  font-family: var(--vs-font);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.vs-segmented__option:hover { color: var(--vs-text); }
+
+.vs-segmented__option[aria-pressed='true'] {
+  background: var(--vs-accent);
+  border-color: var(--vs-accent);
+  color: var(--vs-accent-text);
+}
+
+.vs-segmented__option small {
+  display: none;
+  font-weight: 400;
+  font-size: 0.6875rem;
+  opacity: 0.85;
+}
+
+.vs-segmented__option:focus-visible {
+  outline: 2px solid var(--vs-accent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .vs-segmented__option { padding: 0.6rem 0.75rem; }
+  .vs-segmented__option small { display: block; }
+}
+
+/* ---------- Status badges ---------- */
+
+.vs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--vs-border-strong);
+  border-radius: 999px;
+  background: var(--vs-surface-2);
+  color: var(--vs-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.vs-badge__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.vs-badge--success {
+  background: var(--vs-green-soft);
+  border-color: transparent;
+  color: var(--vs-green);
+}
+.vs-badge--warning {
+  background: var(--vs-amber-soft);
+  border-color: transparent;
+  color: var(--vs-amber);
+}
+.vs-badge--danger {
+  background: var(--vs-red-soft);
+  border-color: transparent;
+  color: var(--vs-red);
+}
+.vs-badge--info {
+  background: var(--vs-accent-soft);
+  border-color: transparent;
+  color: var(--vs-accent-hover);
+}
+
+/* Long verification labels need to wrap on narrow screens */
+.vs-badge--wrap { white-space: normal; text-align: left; }
+
+/* ---------- Confidence meter ---------- */
+
+.vs-confidence { display: grid; gap: 0.4rem; }
+
+.vs-confidence__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.vs-confidence__value { font-size: 0.875rem; font-weight: 700; }
+
+.vs-confidence__track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--vs-surface-3);
+  overflow: hidden;
+}
+
+.vs-confidence__fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--vs-accent);
+  transition: width 0.35s ease, background-color 0.2s ease;
+}
+
+.vs-confidence__fill[data-tone='success'] { background: var(--vs-green); }
+.vs-confidence__fill[data-tone='warning'] { background: var(--vs-amber); }
+.vs-confidence__fill[data-tone='danger'] { background: var(--vs-red); }
+
+/* ---------- Definition rows (summary views) ---------- */
+
+.vs-deflist { display: grid; gap: 0; margin: 0; }
+
+.vs-defrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--vs-border);
+}
+.vs-defrow:last-child { border-bottom: 0; }
+.vs-defrow:first-child { padding-top: 0; }
+
+.vs-defrow__label {
+  color: var(--vs-text-muted);
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+}
+
+.vs-defrow__value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Empty states ---------- */
+
+.vs-empty {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+  border: 1px dashed var(--vs-border-strong);
+  border-radius: var(--vs-radius);
+  text-align: center;
+}
+
+.vs-empty__title { font-size: 0.9375rem; font-weight: 650; }
+.vs-empty__body { color: var(--vs-text-muted); font-size: 0.8125rem; max-width: 32ch; }
+.vs-empty--error .vs-empty__title { color: var(--vs-red); }
+
+/* ---------- Inline status message ---------- */
+
+.vs-status-msg {
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--vs-radius-sm);
+  background: var(--vs-surface-2);
+  color: var(--vs-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.vs-status-msg[data-tone='success'] { background: var(--vs-green-soft); color: var(--vs-green); }
+.vs-status-msg[data-tone='error'] { background: var(--vs-red-soft); color: var(--vs-red); }
+.vs-status-msg[data-tone='progress'] { background: var(--vs-accent-soft); color: var(--vs-accent-hover); }
+
+/* ---------- Dynamically rendered components ----------
+ *
+ * Everything below styles markup injected at runtime via innerHTML.
+ * Astro scopes component <style> blocks to elements present at build
+ * time, so injected nodes never carry the scope attribute — these rules
+ * must live in this global sheet to apply at all.
+ */
+
+/* Project cards — shared by the dashboard and the projects list */
+.project-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--vs-border);
+  border-radius: var(--vs-radius-lg);
+  background: var(--vs-surface);
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  min-width: 0;
+}
+.project-card:hover { border-color: var(--vs-border-strong); }
+.project-card:focus-visible { outline: 2px solid var(--vs-accent); outline-offset: -3px; }
+
+.project-card__open {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+.project-card__open:focus-visible { outline: 2px solid var(--vs-accent); outline-offset: -3px; }
+
+/* The list variant is itself the link, so it carries the padding. */
+a.project-card { flex-direction: row; align-items: flex-start; gap: 0.85rem; padding: 0.9rem; }
+
+.project-card__thumb {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 54px;
+  height: 54px;
+  padding: 0.4rem;
+  border-radius: var(--vs-radius-sm);
+  background: var(--vs-surface-3);
+  flex-shrink: 0;
+}
+.project-card__thumb span { color: var(--vs-text-faint); font-size: 0.5rem; letter-spacing: 0.1em; }
+.project-card__thumb b { font-size: 0.625rem; }
+
+.project-card__body { display: grid; gap: 0.35rem; min-width: 0; }
+.project-card__title {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--vs-text);
+  overflow-wrap: anywhere;
+}
+.project-card__meta { color: var(--vs-text-muted); font-size: 0.8125rem; }
+.project-card__badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.1rem; }
+
+.project-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.9rem 0.7rem;
+  border-top: 1px solid var(--vs-border);
+}
+.project-card__date { font-size: 0.75rem; color: var(--vs-text-faint); }
+
+.project-grid { display: grid; gap: 0.75rem; }
+
+@media (min-width: 768px) {
+  .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Reference image thumbnails */
+.reference-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+
+.reference-card {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--vs-border);
+  border-radius: var(--vs-radius-sm);
+  background: var(--vs-surface-2);
+  min-width: 0;
+}
+.reference-card img,
+.reference-card__placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--vs-surface-3);
+}
+.reference-card__placeholder { display: grid; place-items: center; color: var(--vs-text-faint); font-size: 0.75rem; }
+.reference-card figcaption { display: grid; gap: 0.1rem; font-size: 0.6875rem; min-width: 0; }
+.reference-card__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (min-width: 768px) {
+  .reference-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Generation history */
+.generation-list { display: grid; gap: 0.6rem; }
+
+.generation-card {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--vs-border);
+  border-radius: var(--vs-radius-sm);
+  background: var(--vs-surface-2);
+}
+.generation-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.generation-card__time { font-size: 0.75rem; color: var(--vs-text-faint); }
+.generation-card__view { margin-top: 0.6rem; }
+
+/* Completed video player */
+.video-wrap {
+  background: #000;
+  border-radius: var(--vs-radius);
+  overflow: hidden;
+  aspect-ratio: 9 / 16;
+  max-height: 560px;
+  display: grid;
+  place-items: center;
+}
+.video-wrap video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+
+/* Product identity media */
+.identity-summary__media img { width: 100%; height: 100%; object-fit: cover; }
+.identity-summary__placeholder {
+  color: var(--vs-text-faint);
+  font-size: 0.625rem;
+  text-align: center;
+  padding: 0.25rem;
+}
+
+/* ---------- Utilities ---------- */
+
+.vs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.vs-divider {
+  height: 1px;
+  background: var(--vs-border);
+  border: 0;
+  margin: 1.1rem 0;
+}

@@ -1,8 +1,110 @@
 ---
 import StudioShell from '../../../components/video-studio/StudioShell.astro';
 ---
-<StudioShell title="Billing" section="billing"><div class="page-head"><div><h1>Billing</h1><p>Manage your Video Studio subscription.</p></div></div><div class="card"><h2 id="plan">Loading…</h2><p id="status" class="muted"></p><button id="manage" class="btn" type="button" hidden>Manage Subscription</button><p id="comp" class="muted" hidden>This account has a comped subscription for testing. No card is charged.</p><p id="billing-message" class="muted"></p></div></StudioShell><script>
-  let account;
-  fetch('/api/video-studio/account').then(r=>r.json()).then(d=>{account=d;document.querySelector('#plan').textContent=`${String(d.plan||'Plan').replaceAll('_',' ')} plan`;document.querySelector('#status').textContent=`Status: ${d.subscriptionStatus||'inactive'}${d.renewalDate?` · Renews ${new Date(d.renewalDate).toLocaleDateString()}`:''}`;if(d.manageSubscriptionAvailable)document.querySelector('#manage').hidden=false;else document.querySelector('#comp').hidden=false;});
-  document.querySelector('#manage')?.addEventListener('click',async()=>{const msg=document.querySelector('#billing-message');msg.textContent='Opening secure billing portal…';const r=await fetch('/api/video-studio/billing/portal',{method:'POST'});const d=await r.json();if(!r.ok){msg.textContent=d.error||'Unable to open billing.';return;}location.href=d.url;});
+
+<StudioShell title="Billing" section="billing">
+  <div class="vs-page-head">
+    <div>
+      <h1 class="vs-h1">Billing</h1>
+      <p class="vs-subtitle">Manage your Video Studio subscription.</p>
+    </div>
+  </div>
+
+  <section class="vs-card billing-card">
+    <div class="vs-card__head">
+      <div class="vs-card__title-group">
+        <span class="vs-eyebrow">Current plan</span>
+        <h2 class="vs-h2" id="plan">Loading…</h2>
+      </div>
+      <span class="vs-badge" id="plan-badge" hidden></span>
+    </div>
+
+    <dl class="vs-deflist" id="billing-details">
+      <div class="vs-defrow">
+        <dt class="vs-defrow__label">Status</dt>
+        <dd class="vs-defrow__value" id="status">—</dd>
+      </div>
+    </dl>
+
+    <button id="manage" class="vs-btn vs-btn--primary vs-btn--block billing-card__cta" type="button" hidden>
+      Manage Subscription
+    </button>
+    <p id="comp" class="vs-help billing-card__cta" hidden>
+      This account has a comped subscription for testing. No card is charged.
+    </p>
+    <p id="billing-message" class="vs-status-msg billing-card__cta" hidden aria-live="polite"></p>
+  </section>
+</StudioShell>
+
+<script>
+  const setText = (id: string, value: string) => {
+    const node = document.querySelector(`#${id}`);
+    if (node) node.textContent = value;
+  };
+
+  fetch('/api/video-studio/account', { headers: { accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d) return;
+      setText('plan', `${String(d.plan || 'Plan').replaceAll('_', ' ')} plan`);
+
+      const badge = document.querySelector<HTMLElement>('#plan-badge');
+      if (badge) {
+        const active = d.subscriptionStatus === 'active';
+        badge.textContent = active ? 'Active' : String(d.subscriptionStatus || 'inactive');
+        badge.className = `vs-badge ${active ? 'vs-badge--success' : 'vs-badge--warning'}`;
+        badge.hidden = false;
+      }
+
+      const details = document.querySelector('#billing-details');
+      if (details) {
+        const rows = [['Status', String(d.subscriptionStatus || 'inactive')]];
+        if (d.renewalDate) {
+          rows.push([
+            d.cancelAtPeriodEnd ? 'Ends' : 'Renews',
+            new Date(d.renewalDate).toLocaleDateString(),
+          ]);
+        }
+        rows.push(['Available credits', String(d.credits ?? 0)]);
+        details.innerHTML = rows
+          .map(([label, value]) => {
+            const node = document.createElement('span');
+            node.textContent = value;
+            return `<div class="vs-defrow"><dt class="vs-defrow__label">${label}</dt><dd class="vs-defrow__value">${node.innerHTML}</dd></div>`;
+          })
+          .join('');
+      }
+
+      const manage = document.querySelector<HTMLElement>('#manage');
+      const comp = document.querySelector<HTMLElement>('#comp');
+      if (d.manageSubscriptionAvailable) { if (manage) manage.hidden = false; }
+      else if (comp) comp.hidden = false;
+    })
+    .catch(() => {});
+
+  document.querySelector('#manage')?.addEventListener('click', async () => {
+    const msg = document.querySelector<HTMLElement>('#billing-message');
+    if (msg) {
+      msg.hidden = false;
+      msg.dataset.tone = 'progress';
+      msg.textContent = 'Opening secure billing portal…';
+    }
+    const r = await fetch('/api/video-studio/billing/portal', { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) {
+      if (msg) {
+        msg.dataset.tone = 'error';
+        msg.textContent = d.error || 'Unable to open billing.';
+      }
+      return;
+    }
+    location.href = d.url;
+  });
 </script>
+
+<style>
+  .billing-card__cta { margin-top: 1rem; }
+  @media (min-width: 768px) {
+    #manage { width: auto; }
+  }
+</style>

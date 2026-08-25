@@ -1,12 +1,84 @@
 ---
 import StudioShell from '../../../../components/video-studio/StudioShell.astro';
 ---
+
 <StudioShell title="Projects" section="projects">
-  <div class="page-head"><div><h1>Projects</h1><p>Every project in your Video Studio workspace.</p></div><a class="btn" href="/app/video-studio">New project</a></div>
-  <div id="projects" class="table"><div class="empty">Loading projects…</div></div>
+  <div class="vs-page-head">
+    <div>
+      <h1 class="vs-h1">Projects</h1>
+      <p class="vs-subtitle">Every project in your Video Studio workspace.</p>
+    </div>
+    <div class="vs-page-head__actions">
+      <a class="vs-btn vs-btn--primary vs-btn--block" href="/app/video-studio#create">New Video</a>
+    </div>
+  </div>
+
+  <div id="projects" class="project-grid">
+    <div class="vs-empty"><p class="vs-empty__body">Loading projects…</p></div>
+  </div>
 </StudioShell>
+
 <script>
-  const esc=(v)=>{const s=document.createElement('span');s.textContent=String(v??'');return s.innerHTML};
-  async function load(){const r=await fetch('/api/video-studio/projects');const d=await r.json();const el=document.querySelector('#projects');if(!r.ok){el.innerHTML=`<div class="empty">${esc(d.error||'Unable to load projects.')}</div>`;return;}const rows=d.projects||[];el.innerHTML=rows.length?rows.map(x=>`<a class="row" href="/app/video-studio/projects/${x.id}"><div><strong>${esc(x.title)}</strong><br><small>${esc(x.source_type==='url'?x.source_url:'Creative brief')}</small></div><small class="hide-mobile">${esc(x.platform)} · ${x.duration_seconds}s · ${esc(x.resolution)}</small><span class="status">${esc(x.status)}</span><small>${new Date(x.updated_at).toLocaleDateString()}</small></a>`).join(''):'<div class="empty">No projects yet.</div>';}
+  const esc = (v: unknown) => { const s = document.createElement('span'); s.textContent = String(v ?? ''); return s.innerHTML; };
+
+  function statusTone(status: string) {
+    if (status === 'ready_to_generate') return 'vs-badge--success';
+    if (status === 'generating') return 'vs-badge--info';
+    if (status === 'failed') return 'vs-badge--danger';
+    return '';
+  }
+
+  function verificationBadge(project: Record<string, any>) {
+    const confidence = Number(project.product_identity_confidence || 0);
+    const status = project.product_identity_status;
+    if (status === 'verified' && confidence >= 0.8) return '<span class="vs-badge vs-badge--success"><i class="vs-badge__dot"></i>Verified</span>';
+    if (status === 'verified' && confidence > 0) return '<span class="vs-badge vs-badge--warning"><i class="vs-badge__dot"></i>Low confidence</span>';
+    if (confidence > 0) return '<span class="vs-badge vs-badge--warning"><i class="vs-badge__dot"></i>Needs attention</span>';
+    return '<span class="vs-badge"><i class="vs-badge__dot"></i>Verification required</span>';
+  }
+
+  async function load() {
+    const el = document.querySelector('#projects');
+    if (!el) return;
+    try {
+      const response = await fetch('/api/video-studio/projects', { headers: { accept: 'application/json' } });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to load projects.');
+      const rows = data.projects || [];
+      el.innerHTML = rows.length
+        ? rows.map((x: Record<string, any>) => `
+          <a class="project-card" href="/app/video-studio/projects/${encodeURIComponent(x.id)}">
+            <span class="project-card__thumb" aria-hidden="true">
+              <span>${x.source_type === 'url' ? 'URL' : 'BRIEF'}</span>
+              <b>${esc(x.aspect_ratio || '9:16')}</b>
+            </span>
+            <span class="project-card__body">
+              <strong class="project-card__title">${esc(x.title)}</strong>
+              <span class="project-card__meta">${esc(x.platform)} · ${esc(x.duration_seconds)}s · ${esc(x.resolution)}</span>
+              <span class="project-card__badges">
+                <span class="vs-badge ${statusTone(x.status)}"><i class="vs-badge__dot"></i>${esc(String(x.status || '').replace(/_/g, ' '))}</span>
+                ${verificationBadge(x)}
+              </span>
+              <span class="vs-faint project-card__date">Updated ${new Date(x.updated_at).toLocaleDateString()}</span>
+            </span>
+          </a>`).join('')
+        : `<div class="vs-empty">
+             <p class="vs-empty__title">No projects yet</p>
+             <p class="vs-empty__body">Create your first video project to get started.</p>
+           </div>`;
+    } catch (error) {
+      el.innerHTML = `<div class="vs-empty vs-empty--error">
+        <p class="vs-empty__title">Projects unavailable</p>
+        <p class="vs-empty__body">${esc(error instanceof Error ? error.message : 'Unable to load projects.')}</p>
+      </div>`;
+    }
+  }
+
   load();
 </script>
+
+<!--
+  .project-card / .project-grid styles live in styles/video-studio.css:
+  these cards are injected via innerHTML, so Astro's scoped styles would
+  never match them.
+-->

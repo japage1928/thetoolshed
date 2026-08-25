@@ -1,4 +1,41 @@
 ---
 import StudioShell from '../../../components/video-studio/StudioShell.astro';
 ---
-<StudioShell title="Support" section="support"><div class="page-head"><div><h1>Support</h1><p>Help for Video Studio projects, generations, credits, and billing.</p></div></div><div class="grid" style="grid-template-columns:1fr 1fr"><div class="card"><h2>Generation issue</h2><p class="muted">Include the project name, generation status, and what you expected to happen.</p><a class="btn" href="mailto:support@thetoolshed.work?subject=Video%20Studio%20Support">Email Support</a></div><div class="card"><h2>Billing or credits</h2><p class="muted">Credit reservations, refunds, and subscription status are tracked in your account. Do not send card details by email.</p><a class="btn" href="/app/video-studio/usage">View Usage</a></div></div></StudioShell><style>@media(max-width:760px){.grid{grid-template-columns:1fr!important}}</style>
+
+<StudioShell title="Support" section="support">
+  <div class="vs-page-head">
+    <div>
+      <h1 class="vs-h1">Support</h1>
+      <p class="vs-subtitle">Help for Video Studio projects, generations, credits, and billing.</p>
+    </div>
+  </div>
+
+  <div class="support-grid">
+    <section class="vs-card">
+      <h2 class="vs-h2">Generation issue</h2>
+      <p class="vs-help support-card__body">
+        Include the project name, generation status, and what you expected to happen.
+      </p>
+      <a class="vs-btn vs-btn--primary vs-btn--block" href="mailto:support@thetoolshed.work?subject=Video%20Studio%20Support">
+        Email Support
+      </a>
+    </section>
+
+    <section class="vs-card">
+      <h2 class="vs-h2">Billing or credits</h2>
+      <p class="vs-help support-card__body">
+        Credit reservations, refunds, and subscription status are tracked in your account.
+        Do not send card details by email.
+      </p>
+      <a class="vs-btn vs-btn--secondary vs-btn--block" href="/app/video-studio/usage">View Usage</a>
+    </section>
+  </div>
+</StudioShell>
+
+<style>
+  .support-grid { display: grid; gap: 0.85rem; }
+  .support-card__body { margin: 0.5rem 0 1rem; }
+  @media (min-width: 768px) {
+    .support-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  }
+</style>
