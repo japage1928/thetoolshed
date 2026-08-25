@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request }) => {
     const serviceDb = getServiceDb();
     const { data: referenceRows, error: referenceError } = await serviceDb
       .from('video_studio_reference_images')
-      .select('storage_path')
+      .select('storage_path,inline_data_uri')
       .eq('project_id', projectId)
       .eq('user_id', user.id)
       .order('created_at', { ascending: true })
