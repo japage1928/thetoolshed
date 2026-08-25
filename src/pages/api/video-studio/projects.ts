@@ -11,7 +11,6 @@ import {
   safeError,
   validateProjectInput,
 } from '../../../lib/video-studio/server';
-import { extractProductIdentity } from '../../../lib/video-studio/grounding';
 
 async function context(request: Request) {
   const user = await getAuthenticatedUser(request);
@@ -54,35 +53,25 @@ export const POST: APIRoute = async ({ request }) => {
     assertSameOrigin(request);
     const { user, db } = await context(request);
     const input = validateProjectInput(await request.json().catch(() => ({})));
-    const extraction = input.sourceType === 'url' && input.sourceUrl
-      ? await extractProductIdentity(input.sourceUrl)
-      : { identity: { name: '' }, confidence: 0 };
-    const verified = extraction.confidence >= 0.8 && Boolean(extraction.identity.name);
     const { data, error } = await db.from('video_studio_projects').insert({
       user_id: user.id,
       title: input.title,
       source_type: input.sourceType,
       source_url: input.sourceUrl,
       creative_brief: input.brief,
-      status: 'draft',
+      status: 'identity_required',
       objective: input.objective,
       platform: input.platform,
       aspect_ratio: input.aspectRatio,
       duration_seconds: input.durationSeconds,
       resolution: input.resolution,
-      product_identity: extraction.identity,
-      product_identity_confidence: extraction.confidence,
-      product_identity_status: verified ? 'verified' : 'needs_reference',
-      product_identity_source: verified ? 'url_extraction' : 'unverified',
     }).select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,product_identity,product_identity_status,product_identity_confidence,product_identity_source,created_at,updated_at').single();
     if (error) throw error;
     return json({
       project: data,
       grounding: {
-        canGenerate: verified,
-        message: verified
-          ? 'Product identity was verified from the submitted URL.'
-          : 'The URL was not specific enough to lock the product. Confirm the exact identity and add reference images before generating.',
+        canGenerate: false,
+        message: 'Project saved with a clean identity state. Verify this project’s product before generating.',
       },
     }, 201);
   } catch (error) { return safeError(error); }

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getAuthenticatedUser, getServiceDb, getUserDb, json, requireCurrentLegalAcceptance, requireUuid, safeError } from '../../../../lib/video-studio/server';
+import { estimateCredits, getAuthenticatedUser, getUserDb, json, requireCurrentLegalAcceptance, requireUuid, safeError } from '../../../../lib/video-studio/server';
 import { signedReferenceUrls } from '../../../../lib/video-studio/grounding';
 
 export const GET: APIRoute = async ({ request, params }) => {
@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     ]);
     if (generationsError) throw generationsError;
     if (referenceError) throw referenceError;
-    const urls = await signedReferenceUrls(getServiceDb(), referenceRows || [], 900);
+    const urls = await signedReferenceUrls(db, referenceRows || [], 900);
     const referenceImages = (referenceRows || []).map((row:any, index:number) => ({
       id: row.id,
       name: row.original_name,
@@ -33,9 +33,35 @@ export const GET: APIRoute = async ({ request, params }) => {
       createdAt: row.created_at,
       previewUrl: urls[index] || null,
     }));
+    const confidence = Number(project.product_identity_confidence || 0);
+    const identityBound = project.product_identity_project_id === project.id
+      && Boolean(project.product_identity_source_fingerprint)
+      && Boolean(project.product_identity_fingerprint)
+      && Boolean(project.product_identity_verified_at)
+      && Number(project.product_identity_verified_reference_revision) === Number(project.reference_revision);
+    const referenceSatisfied = !project.product_identity_requires_reference
+      || referenceImages.length > 0
+      || Boolean(project.product_identity?.primaryImageUrl);
+    const canGenerate = project.status === 'ready_to_generate'
+      && project.product_identity_status === 'verified'
+      && confidence >= 0.8
+      && identityBound
+      && referenceSatisfied;
+    const blockedReason = canGenerate ? null
+      : project.status === 'generating' ? 'A generation is already in progress.'
+      : !identityBound || project.product_identity_status !== 'verified' || confidence < 0.8
+        ? 'Product identity must be verified first.'
+        : !referenceSatisfied ? 'Add a current-project reference image, then verify the product again.'
+        : 'Complete the required project steps before generating.';
+    const estimatedCredits = estimateCredits({
+      durationSeconds: project.duration_seconds,
+      resolution: project.resolution,
+      premiumModel: false,
+    });
     return json({
       project,
       referenceImages,
+      generationGate: { canGenerate, blockedReason, estimatedCredits },
       generations: (generations || []).map((g:any) => ({
         ...g,
         videoPath: g.status === 'ready' && g.output_payload?.video_url ? `/api/video-studio/generations/${g.id}/video` : null,

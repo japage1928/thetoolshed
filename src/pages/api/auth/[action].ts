@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { LEGAL_VERSIONS, recordLegalAcceptance } from '../../../lib/legal';
 import { dispatchVideoEmailSafely } from '../../../lib/video-studio/email';
-import { safeRelativePath } from '../../../lib/video-studio/server';
+import { getUserDb, safeRelativePath } from '../../../lib/video-studio/server';
 import {
   SAAS_ACCESS_COOKIE,
   SAAS_REFRESH_COOKIE,
@@ -172,8 +172,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       const data = await response.json();
       if (!response.ok) return json({ error: data.msg || data.message || 'Unable to create account.' }, 400);
       const signupIdentities = data.user?.identities;
-      if (data.user?.id && (!Array.isArray(signupIdentities) || signupIdentities.length > 0)) {
-        await recordLegalAcceptance(String(data.user.id), 'email_signup');
+      if (data.user?.id && data.access_token && (!Array.isArray(signupIdentities) || signupIdentities.length > 0)) {
+        await recordLegalAcceptance(getUserDb(data.access_token), String(data.user.id), 'email_signup');
       }
       if (data.access_token) {
         await sendVideoStudioWelcome(data, next);

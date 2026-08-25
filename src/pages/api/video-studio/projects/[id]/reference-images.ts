@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { assertSameOrigin, getAuthenticatedUser, getServiceDb, getUserDb, json, requireCurrentLegalAcceptance, requireUuid, safeError } from '../../../../../lib/video-studio/server';
+import { assertSameOrigin, getAuthenticatedUser, getUserDb, json, requireCurrentLegalAcceptance, requireUuid, safeError } from '../../../../../lib/video-studio/server';
 
 const MAX_IMAGES = 6;
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -20,12 +20,11 @@ async function context(request: Request, projectIdValue: unknown) {
 export const POST: APIRoute = async ({ request, params }) => {
   try {
     assertSameOrigin(request);
-    const { user, projectId } = await context(request, params.id);
+    const { user, db, projectId } = await context(request, params.id);
     const form = await request.formData();
     const files = form.getAll('images').filter((value): value is File => value instanceof File && value.size > 0);
     if (!files.length) return json({ error: 'Choose at least one product reference image.' }, 400);
-    const service = getServiceDb();
-    const { count, error: countError } = await service.from('video_studio_reference_images').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('user_id', user.id);
+    const { count, error: countError } = await db.from('video_studio_reference_images').select('id', { count: 'exact', head: true }).eq('project_id', projectId);
     if (countError) throw countError;
     if ((count || 0) + files.length > MAX_IMAGES) return json({ error: `A project can have up to ${MAX_IMAGES} reference images.` }, 400);
     const created: any[] = [];
@@ -35,11 +34,11 @@ export const POST: APIRoute = async ({ request, params }) => {
       const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
       const storagePath = `${user.id}/${projectId}/${crypto.randomUUID()}.${ext}`;
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const { error: uploadError } = await service.storage.from('video-studio-references').upload(storagePath, bytes, { contentType: file.type, upsert: false, cacheControl: '3600' });
+      const { error: uploadError } = await db.storage.from('video-studio-references').upload(storagePath, bytes, { contentType: file.type, upsert: false, cacheControl: '3600' });
       if (uploadError) throw uploadError;
-      const { data: row, error: insertError } = await service.from('video_studio_reference_images').insert({ user_id: user.id, project_id: projectId, storage_path: storagePath, original_name: file.name.slice(0, 255), mime_type: file.type, size_bytes: file.size }).select('id,original_name,mime_type,size_bytes,created_at').single();
+      const { data: row, error: insertError } = await db.from('video_studio_reference_images').insert({ user_id: user.id, project_id: projectId, storage_path: storagePath, original_name: file.name.slice(0, 255), mime_type: file.type, size_bytes: file.size }).select('id,original_name,mime_type,size_bytes,created_at').single();
       if (insertError) {
-        await service.storage.from('video-studio-references').remove([storagePath]);
+        await db.storage.from('video-studio-references').remove([storagePath]);
         throw insertError;
       }
       created.push(row);
@@ -57,9 +56,8 @@ export const DELETE: APIRoute = async ({ request, params }) => {
     const { data: row, error } = await db.from('video_studio_reference_images').select('id,storage_path').eq('id', imageId).eq('project_id', projectId).maybeSingle();
     if (error) throw error;
     if (!row) return json({ error: 'Reference image not found.' }, 404);
-    const service = getServiceDb();
-    if (row.storage_path) await service.storage.from('video-studio-references').remove([row.storage_path]);
-    const { error: deleteError } = await service.from('video_studio_reference_images').delete().eq('id', imageId).eq('user_id', user.id);
+    if (row.storage_path) await db.storage.from('video-studio-references').remove([row.storage_path]);
+    const { error: deleteError } = await db.from('video_studio_reference_images').delete().eq('id', imageId).eq('user_id', user.id);
     if (deleteError) throw deleteError;
     return json({ ok: true });
   } catch (error) { return safeError(error); }

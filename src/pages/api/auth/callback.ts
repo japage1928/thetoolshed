@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       if (metadataError) throw metadataError;
     }
 
-    await recordLegalAcceptance(data.user.id, 'google_oauth');
+    await recordLegalAcceptance(supabase, data.user.id, 'google_oauth');
 
     if (next.startsWith('/app/video-studio') && data.user?.id && data.user.email) {
       const metadata = data.user.user_metadata || {};

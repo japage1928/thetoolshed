@@ -1,12 +1,12 @@
-import { getServiceDb } from './video-studio/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { LEGAL_VERSIONS } from './legal-versions';
 
 export { LEGAL_VERSIONS } from './legal-versions';
 
 export type LegalAcceptanceSource = 'email_signup' | 'google_oauth' | 'account_prompt';
 
-export async function recordLegalAcceptance(userId: string, source: LegalAcceptanceSource) {
-  const { error } = await getServiceDb()
+export async function recordLegalAcceptance(db: SupabaseClient, userId: string, source: LegalAcceptanceSource) {
+  const { error } = await db
     .from('tool_shed_legal_acceptances')
     .upsert({
       user_id: userId,
