@@ -1,0 +1,18 @@
+---
+import StudioShell from '../../../../components/video-studio/StudioShell.astro';
+const projectId = Astro.params.id;
+---
+<StudioShell title="Project" section="projects">
+  <div class="page-head"><div><a class="muted" href="/app/video-studio/projects" style="text-decoration:none">← Projects</a><h1 id="title" style="margin-top:10px">Project</h1><p id="meta">Loading project…</p></div></div>
+  <div class="grid" style="grid-template-columns:minmax(0,1fr) 330px;align-items:start">
+    <section class="card"><div id="video-area"><div class="empty">Loading video…</div></div></section>
+    <aside class="card"><h3 style="margin-top:0">Project details</h3><div id="details" class="muted">Loading…</div></aside>
+  </div>
+  <section style="margin-top:22px"><h2>Generations</h2><div id="generations" class="table"><div class="empty">Loading…</div></div></section>
+</StudioShell>
+<script define:vars={{ projectId }}>
+  const esc=(v)=>{const s=document.createElement('span');s.textContent=String(v??'');return s.innerHTML};
+  async function load(){const r=await fetch(`/api/video-studio/projects/${projectId}`);const d=await r.json();if(!r.ok){document.querySelector('#video-area').innerHTML=`<div class="empty">${esc(d.error||'Project unavailable.')}</div>`;return;}const p=d.project;document.querySelector('#title').textContent=p.title;document.querySelector('#meta').textContent=`${p.platform} · ${p.duration_seconds}s · ${p.resolution} · ${p.status}`;document.querySelector('#details').innerHTML=`<p><strong>Source</strong><br>${esc(p.source_type==='url'?p.source_url:'Creative brief')}</p><p><strong>Goal</strong><br>${esc(p.objective)}</p><p><strong>Format</strong><br>${esc(p.aspect_ratio)} · ${esc(p.resolution)}</p><p><strong>Status</strong><br><span class="status">${esc(p.status)}</span></p>`;const ready=(d.generations||[]).find(g=>g.status==='ready'&&g.videoPath);const area=document.querySelector('#video-area');area.innerHTML=ready?`<div class="video-wrap"><video controls playsinline preload="metadata" src="${ready.videoPath}"></video></div><p class="muted" style="margin-bottom:0">Completed generation · ${ready.duration_seconds}s · ${esc(ready.resolution)}</p>`:'<div class="empty">No completed video yet.</div>';const gens=document.querySelector('#generations');gens.innerHTML=(d.generations||[]).length?(d.generations||[]).map(g=>`<div class="row"><strong>${new Date(g.created_at).toLocaleString()}</strong><small class="hide-mobile">${esc(g.provider)} · ${esc(g.model)}</small><span class="status">${esc(g.status)}</span><small>${g.credits_used||g.credits_reserved} credits</small></div>`).join(''):'<div class="empty">No generations yet.</div>';}
+  load();
+</script>
+<style>@media(max-width:800px){.grid{grid-template-columns:1fr!important}}</style>
