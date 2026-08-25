@@ -24,23 +24,28 @@ async function context(request: Request) {
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    const { db } = await context(request);
-    const [projectsResult, balanceResult] = await Promise.all([
+    const { user, db } = await context(request);
+    const [projectsResult, balanceResult, profileResult] = await Promise.all([
       db
         .from('video_studio_projects')
         .select('id,title,source_type,source_url,status,objective,platform,aspect_ratio,duration_seconds,resolution,created_at,updated_at')
         .order('updated_at', { ascending: false })
         .limit(20),
       db.rpc('video_studio_credit_balance'),
+      db.from('video_studio_profiles').select('internal_beta,plan_id').eq('user_id', user.id).maybeSingle(),
     ]);
     if (projectsResult.error) throw projectsResult.error;
     if (balanceResult.error) throw balanceResult.error;
+    if (profileResult.error) throw profileResult.error;
+    const betaApproved = Boolean(profileResult.data?.internal_beta);
+    const canGenerate = generationEnabled() && betaApproved;
     return json({
       projects: projectsResult.data || [],
       credits: Number(balanceResult.data || 0),
       billingEnabled: billingEnabled(),
-      generationEnabled: generationEnabled(),
-      internalBeta: true,
+      generationEnabled: canGenerate,
+      internalBeta: betaApproved,
+      billingBypass: profileResult.data?.plan_id === 'internal_beta',
     });
   } catch (error) {
     return safeError(error);
