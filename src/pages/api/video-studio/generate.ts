@@ -5,7 +5,6 @@ import {
   estimateCredits,
   generationEnabled,
   getAuthenticatedUser,
-  getServiceDb,
   getUserDb,
   json,
   maxDailyVideoSpend,
@@ -28,7 +27,7 @@ async function dispatchAuthorizedBetaWorkflow(payload: Record<string, unknown>) 
       'content-type': 'application/json',
       'x-tool-shed-source': 'video-studio',
     },
-    body: JSON.stringify({ ...payload, source: 'video_studio', live_generation_authorized: true }),
+    body: JSON.stringify({ ...payload, source: 'video_studio_native', live_generation_authorized: true }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -42,6 +41,8 @@ async function dispatchAuthorizedBetaWorkflow(payload: Record<string, unknown>) 
 
 export const POST: APIRoute = async ({ request }) => {
   let generationId: string | null = null;
+  let reservationCreated = false;
+  let userDb: ReturnType<typeof getUserDb> | null = null;
   try {
     assertSameOrigin(request);
     if (!generationEnabled()) return json({ error: 'Video generation is globally paused.', code: 'generation_paused' }, 503);
@@ -55,7 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
     const durationSeconds = [15, 30, 45, 60].includes(Number(body.durationSeconds)) ? Number(body.durationSeconds) : 30;
     const resolution = ['480p', '720p', '1080p'].includes(String(body.resolution)) ? body.resolution : '480p';
 
-    const userDb = getUserDb(user.token);
+    userDb = getUserDb(user.token);
     await requireCurrentLegalAcceptance(userDb);
 
     const { data: profile, error: profileError } = await userDb
@@ -89,28 +90,31 @@ export const POST: APIRoute = async ({ request }) => {
 
     const identity = (project.product_identity || {}) as ProductIdentity;
     const identityConfidence = Number(project.product_identity_confidence || 0);
-    if (project.product_identity_status !== 'verified' || identityConfidence < 0.8 || !identity?.name) {
+    const identityBound = project.product_identity_project_id === project.id
+      && Boolean(project.product_identity_source_fingerprint)
+      && Boolean(project.product_identity_fingerprint)
+      && Boolean(project.product_identity_verified_at)
+      && Number(project.product_identity_verified_reference_revision) === Number(project.reference_revision);
+    if (project.status !== 'ready_to_generate' || project.product_identity_status !== 'verified' || identityConfidence < 0.8 || !identity?.name || !identityBound) {
       return json({
-        error: 'Product identity is not verified strongly enough to generate. Confirm the exact product and add clear reference images first.',
+        error: 'Product identity is stale, incomplete, or not bound to this project and source. Verify it again before generating.',
         code: 'product_identity_unverified',
         groundingRequired: true,
         identityConfidence,
       }, 409);
     }
 
-    const serviceDb = getServiceDb();
-    const { data: referenceRows, error: referenceError } = await serviceDb
+    const { data: referenceRows, error: referenceError } = await userDb
       .from('video_studio_reference_images')
       .select('storage_path,inline_data_uri')
       .eq('project_id', projectId)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: true })
       .limit(6);
     if (referenceError) throw referenceError;
-    const uploadedReferenceUrls = await signedReferenceUrls(serviceDb, referenceRows || []);
+    const uploadedReferenceUrls = await signedReferenceUrls(userDb, referenceRows || []);
     const referenceImageUrls = [identity.primaryImageUrl, ...uploadedReferenceUrls].filter((value): value is string => Boolean(value)).slice(0, 7);
 
-    if (project.product_identity_source !== 'url_extraction' && referenceImageUrls.length === 0) {
+    if (project.product_identity_requires_reference && referenceImageUrls.length === 0) {
       return json({
         error: 'A user-confirmed product requires at least one reference image before generation.',
         code: 'product_reference_required',
@@ -126,7 +130,7 @@ export const POST: APIRoute = async ({ request }) => {
     const credits = estimateCredits({ durationSeconds, resolution, premiumModel: Boolean(body.premiumModel) });
     const estimatedApiCost = estimateApiCost(credits);
     const dailySpendLimit = maxDailyVideoSpend();
-    const { data: reservation, error: reservationError } = await serviceDb.rpc('video_studio_reserve_generation', {
+    const { data: reservation, error: reservationError } = await userDb.rpc('video_studio_reserve_generation', {
       p_user_id: user.id,
       p_project_id: projectId,
       p_request_key: requestKey,
@@ -143,6 +147,16 @@ export const POST: APIRoute = async ({ request }) => {
     }
     generationId = row?.generation_id || null;
     if (!generationId) throw new Error('Generation reservation did not return an id.');
+    reservationCreated = Boolean(row?.reserved);
+    if (!reservationCreated) {
+      return json({
+        generationId,
+        status: 'generating',
+        creditsReserved: 0,
+        duplicate: true,
+        reason: row?.reason || 'duplicate',
+      }, 202);
+    }
 
     const workflow = await dispatchAuthorizedBetaWorkflow({
       generation_id: generationId,
@@ -165,6 +179,9 @@ export const POST: APIRoute = async ({ request }) => {
       ],
       reference_to_video_required: referenceImageUrls.length > 0,
       reference_images: referenceImageUrls.map((url) => ({ url })),
+      // n8n workflow inputs are scalar values, so preserve the exact authorized
+      // reference set as JSON instead of relying on an implicit array coercion.
+      reference_images_json: JSON.stringify(referenceImageUrls.map((url) => ({ url }))),
       reference_image_urls: referenceImageUrls,
       preferred_video_model: referenceImageUrls.length > 0 ? 'grok-imagine-video-1.5' : 'grok-imagine-video',
       source_url: project.source_url,
@@ -173,19 +190,22 @@ export const POST: APIRoute = async ({ request }) => {
       aspect_ratio: project.aspect_ratio,
       duration_seconds: durationSeconds,
       total_duration_seconds: durationSeconds,
+      clip_duration_seconds: Math.min(durationSeconds, 15),
       resolution,
+      requested_resolution: resolution,
       estimated_credits: credits,
       estimated_api_cost: estimatedApiCost,
     });
-    await serviceDb
-      .from('video_studio_generations')
-      .update({ status: 'queued', workflow_payload: { ...workflow, product_identity: identity, identity_confidence: identityConfidence, reference_count: referenceImageUrls.length, prompt_policy_version: 'product-lock-v1' }, updated_at: new Date().toISOString() })
-      .eq('id', generationId);
+    const { error: queuedError } = await userDb.rpc('video_studio_mark_generation_queued', {
+      p_generation_id: generationId,
+      p_workflow_payload: { ...workflow, product_identity: identity, identity_confidence: identityConfidence, reference_count: referenceImageUrls.length, prompt_policy_version: 'product-lock-v2' },
+    });
+    if (queuedError) throw queuedError;
     return json({ generationId, status: 'queued', creditsReserved: credits, estimatedApiCost, identityConfidence, referenceCount: referenceImageUrls.length }, 202);
   } catch (error) {
-    if (generationId) {
+    if (generationId && reservationCreated && userDb) {
       try {
-        await getServiceDb().rpc('video_studio_fail_generation', {
+        await userDb.rpc('video_studio_fail_own_generation', {
           p_generation_id: generationId,
           p_reason: error instanceof Error ? error.message.slice(0, 500) : 'Workflow dispatch failed.',
         });

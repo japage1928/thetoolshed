@@ -52,12 +52,26 @@ async function fetchProductHtml(sourceUrl: string) {
       continue;
     }
     if (!response.ok) throw new Error(`Product page returned HTTP ${response.status}.`);
-    const type = response.headers.get('content-type') || '';
-    if (!type.includes('text/html') && !type.includes('application/xhtml+xml')) throw new Error('Product URL did not return an HTML page.');
     const html = (await response.text()).slice(0, 2_000_000);
+    const type = response.headers.get('content-type') || '';
+    const looksLikeHtml = /^\s*(?:<!doctype\s+html|<html|<!--)/i.test(html);
+    if (type && !type.includes('text/html') && !type.includes('application/xhtml+xml') && !looksLikeHtml) {
+      throw new Error('Product URL did not return an HTML page.');
+    }
+    if (!type && !looksLikeHtml) throw new Error('Product URL did not return an HTML page.');
     return { html, finalUrl: current.toString() };
   }
   throw new Error('Product URL redirected too many times.');
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)));
 }
 
 function meta(html: string, key: string) {
@@ -68,13 +82,22 @@ function meta(html: string, key: string) {
   ];
   for (const pattern of patterns) {
     const match = html.match(pattern);
-    if (match?.[1]) return clean(match[1], 1000);
+    if (match?.[1]) return clean(decodeHtml(match[1]), 1000);
   }
   return '';
 }
 
 function titleTag(html: string) {
-  return clean(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, ' '), 300);
+  return clean(decodeHtml(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, ' ') || ''), 300);
+}
+
+function merchantImage(html: string) {
+  const candidates = [
+    html.match(/"hiRes"\s*:\s*"([^"]+)"/i)?.[1],
+    html.match(/"large"\s*:\s*"([^"]+)"/i)?.[1],
+    html.match(/id=["']landingImage["'][^>]+(?:data-old-hires|src)=["']([^"']+)/i)?.[1],
+  ];
+  return clean(candidates.find(Boolean)?.replace(/\\u0026/g, '&').replace(/\\\//g, '/') || '', 2000);
 }
 
 function productJsonLd(html: string): Record<string, any> | null {
@@ -103,8 +126,9 @@ export async function extractProductIdentity(sourceUrl: string): Promise<{ ident
     const imageValue = Array.isArray(product?.image) ? product.image[0] : typeof product?.image === 'string' ? product.image : clean(product?.image?.url, 2000);
     const name = clean(product?.name, 300) || meta(html, 'og:title') || titleTag(html);
     const description = clean(product?.description, 1000) || meta(html, 'og:description') || meta(html, 'description');
-    const primaryImageUrl = clean(imageValue, 2000) || meta(html, 'og:image');
-    const sku = clean(product?.sku || product?.mpn || product?.productID, 120);
+    const primaryImageUrl = clean(imageValue, 2000) || meta(html, 'og:image') || merchantImage(html);
+    const amazonAsin = new URL(finalUrl).pathname.match(/\/dp\/([A-Z0-9]{10})/i)?.[1];
+    const sku = clean(product?.sku || product?.mpn || product?.productID || amazonAsin, 120);
     const model = clean(product?.model, 160);
     const identity: ProductIdentity = {
       name,
@@ -171,5 +195,5 @@ export function buildProductIdentityLock(identity: ProductIdentity, referenceUrl
     identity.userNotes ? `User-confirmed identity notes: ${identity.userNotes}` : '',
   ].filter(Boolean).join('\n');
   const refs = referenceUrls.length ? referenceUrls.map((url, i) => `Reference ${i + 1}: ${url.startsWith('data:') ? '[private image data supplied]' : url}`).join('\n') : 'No separate user reference image supplied.';
-  return `STRICT PRODUCT IDENTITY LOCK — HIGHEST PRIORITY\n${exact}\n\nVISUAL REFERENCES — THESE DEFINE THE PRODUCT\n${refs}\n\nMANDATORY RULES:\n- Preserve the exact submitted product identity in every frame where the product appears.\n- Match silhouette, proportions, materials, controls, logos/markings, ear-cup/headband geometry, color, finish, and accessory layout to the verified identity and references.\n- Do not redesign, beautify, simplify, substitute, or hallucinate the product.\n- Do not convert the product into a generic product from the same category.\n- Do not add features, buttons, microphones, stems, displays, lights, ports, packaging, branding, or accessories that are not visible or verified.\n- If a requested shot cannot preserve the product exactly, use a safer angle or product-free contextual shot instead of inventing details.\n\nNEGATIVE PRODUCT CONSTRAINTS:\nNo generic lookalikes. No alternate models. No competitor products. No changed logo. No changed colorway. No changed proportions. No extra controls. No invented accessories. No category substitution. No headset/headphone/earbud form-factor substitution.\n\nThe product identity lock overrides cinematic style, creativity, composition, and motion. Accuracy is more important than spectacle.`;
+  return `STRICT PRODUCT IDENTITY LOCK — HIGHEST PRIORITY\n${exact}\n\nVISUAL REFERENCES — THESE DEFINE THE PRODUCT\n${refs}\n\nMANDATORY RULES:\n- Preserve the exact submitted product identity in every frame where the product appears.\n- Match the verified silhouette, proportions, materials, controls, logos/markings, color, finish, and accessory layout shown by this project's identity and references.\n- Do not redesign, beautify, simplify, substitute, or hallucinate the product.\n- Do not convert the product into a generic product from the same category.\n- Do not add features, controls, displays, lights, ports, packaging, branding, or accessories that are not visible or verified for this project.\n- If a requested shot cannot preserve the product exactly, use a safer angle or product-free contextual shot instead of inventing details.\n\nNEGATIVE PRODUCT CONSTRAINTS:\nNo generic lookalikes. No alternate models. No competitor products. No changed logo. No changed colorway. No changed proportions. No extra controls. No invented accessories. No category or form-factor substitution.\n\nThe product identity lock overrides cinematic style, creativity, composition, and motion. Accuracy is more important than spectacle.`;
 }

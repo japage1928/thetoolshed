@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { dispatchVideoEmail } from '../src/lib/video-studio/email';
+import { buildProductIdentityLock, mergeUserConfirmation } from '../src/lib/video-studio/grounding';
 import {
   billingEnabled,
   estimateApiCost,
@@ -81,6 +82,59 @@ test('post-auth redirects remain local to The Tool Shed', () => {
   assert.equal(safeRelativePath('/app/video-studio?tab=projects'), '/app/video-studio?tab=projects');
   assert.equal(safeRelativePath('//evil.example'), '/app/video-studio');
   assert.equal(safeRelativePath('https://evil.example'), '/app/video-studio');
+});
+
+test('Stanley confirmation is grounded only in the current project identity', () => {
+  const result = mergeUserConfirmation({
+    name: 'Stanley Quencher H2.0 FlowState Stainless Steel Vacuum Insulated Tumbler',
+    primaryImageUrl: 'https://m.media-amazon.com/images/I/41ryNvEnNCL._AC_SL1500_.jpg',
+    sku: 'B0CP9Z56SW',
+  }, {
+    productName: 'Stanley Quencher H2.0 FlowState',
+    brand: 'Stanley',
+    model: 'Quencher H2.0 FlowState',
+    variant: 'handled insulated tumbler with straw',
+    color: 'light/pale pink',
+  }, 1);
+
+  assert.equal(result.confidence, 0.98);
+  assert.deepEqual({
+    brand: result.identity.brand,
+    model: result.identity.model,
+    variant: result.identity.variant,
+    color: result.identity.color,
+  }, {
+    brand: 'Stanley',
+    model: 'Quencher H2.0 FlowState',
+    variant: 'handled insulated tumbler with straw',
+    color: 'light/pale pink',
+  });
+  const lock = buildProductIdentityLock(result.identity, [result.identity.primaryImageUrl!]);
+  assert.match(lock, /Stanley/);
+  assert.doesNotMatch(lock, /LEVN|headset/i);
+});
+
+test('a clean project identity cannot inherit fields from a previous project', () => {
+  const priorProject = {
+    name: 'LEVN Wireless Headset',
+    brand: 'LEVN',
+    model: 'LE-HS011 Superior',
+    variant: 'over-ear headset',
+    color: 'black',
+  };
+  const newProject = mergeUserConfirmation({ name: '' }, {}, 0);
+
+  assert.deepEqual(newProject.identity, {
+    name: '',
+    brand: undefined,
+    model: undefined,
+    variant: undefined,
+    color: undefined,
+    userNotes: undefined,
+    evidence: ['user_confirmation'],
+  });
+  assert.equal(newProject.confidence, 0);
+  assert.notDeepEqual(newProject.identity, priorProject);
 });
 
 
