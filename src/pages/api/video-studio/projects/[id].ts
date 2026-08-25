@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, params }) => {
         .eq('project_id', projectId)
         .order('created_at', { ascending: false }),
       db.from('video_studio_reference_images')
-        .select('id,storage_path,original_name,mime_type,size_bytes,created_at')
+        .select('id,storage_path,inline_data_uri,original_name,mime_type,size_bytes,created_at')
         .eq('project_id', projectId)
         .order('created_at', { ascending: true }),
     ]);
