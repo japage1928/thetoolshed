@@ -1,34 +1,89 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import EmailCapture from '../components/EmailCapture.astro';
-import { SITE_NAME, SITE_DESCRIPTION } from '../lib/site';
-import { getPublishedPosts, getPrompts, getTools, toolUrl } from '../lib/supabase';
-const tools = await getTools();
+import { getPublishedPosts, getPrompts } from '../lib/supabase';
+
 const prompts = await getPrompts();
 const latestPosts = (await getPublishedPosts()).slice(0, 3);
-const eligibleTools = tools.filter((tool) => tool.is_featured_eligible && tool.is_active);
-const now = new Date();
-const weekNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / (7 * 24 * 60 * 60 * 1000));
-const hash = (value: string) => { let h = 2166136261; for (let i = 0; i < value.length; i++) { h ^= value.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-const rankedForWeek = (week: number) => [...eligibleTools].sort((a, b) => hash(`${a.slug}:${week}`) - hash(`${b.slug}:${week}`));
-const previousSlugs = new Set(rankedForWeek(weekNumber - 1).slice(0, 10).map((tool) => tool.slug));
-const featuredTools = rankedForWeek(weekNumber).filter((tool) => !previousSlugs.has(tool.slug)).slice(0, 10);
 const featuredPrompts = prompts.filter((item) => item.featured).slice(0, 3);
+const homeTitle = 'AI video production, without the knobs';
+const homeDescription = 'Write a prompt. Get a planned, QA\u2019d video \u2014 without picking models or babysitting renders.';
 ---
-<BaseLayout title={SITE_NAME} description={SITE_DESCRIPTION} path="/">
+<BaseLayout title={homeTitle} description={homeDescription} path="/">
 <div class="home-page">
-<section class="shed-hero" aria-labelledby="hero-title"><div class="shed-hero__wall" aria-hidden="true"></div><div class="shed-hero__workbench" aria-hidden="true"></div><div class="shed-hero__tools" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="shed-hero__circuits" aria-hidden="true"></div><div class="shed-hero__laptop" aria-hidden="true"><div class="shed-hero__screen"><span></span><span></span><span></span><span></span><span></span></div></div><div class="shed-hero__lamp" aria-hidden="true"></div><div class="shed-hero__copy"><span class="shed-hero__eyebrow">AI tools · prompts · automation · practical resources</span><h1 id="hero-title"><span class="shed-hero__the">THE</span><span class="shed-hero__tool">TOOL</span><span class="shed-hero__shed">SHED</span></h1>
-<div class="featured-tools-carousel" aria-label="Featured AI tools this week"><div class="featured-tools-carousel__header"><span>Featured this week</span><a href="/tools">Explore all tools →</a></div><div class="featured-tools-carousel__track">{featuredTools.map((tool,index)=>{const domain=new URL(tool.website_url).hostname.replace(/^www\./,'');const iconUrl=tool.icon_url||`https://www.google.com/s2/favicons?domain=${domain}&sz=128`;return <a class="featured-tool-icon" href={toolUrl(tool)} target="_blank" rel={tool.is_affiliate?'sponsored noopener noreferrer':'noopener noreferrer'} title={tool.name} aria-label={`Visit ${tool.name}`} data-tool-name={tool.name} data-tool-slug={tool.slug} data-tool-category={tool.category} data-affiliate={tool.is_affiliate?'true':'false'} data-position={index+1}><img src={iconUrl} alt={tool.name} width="56" height="56" loading="lazy" decoding="async" /></a>})}</div></div>
-<p>Useful things for people who want to build, automate, and actually get something done.</p><div class="shed-hero__actions"><a class="hero-button hero-button--primary" href="/saas-tools">Explore Our SaaS Tools <span>→</span></a><a class="hero-button" href="/tools">Browse the AI Directory <span>→</span></a></div></div><div class="shed-hero__tagline">BUILD <b>•</b> AUTOMATE <b>•</b> GROW</div></section>
-<section class="home-section home-section--resources" aria-labelledby="resources-heading"><div class="wrapper"><div class="section-heading"><div><span class="eyebrow">Built in the shed</span><h2 id="resources-heading">Our software &amp; practical AI resources</h2></div></div><div class="resource-grid"><article class="resource-panel"><span class="eyebrow">THE TOOL SHED SAAS</span><h3>Homebrewed tools built around outcomes</h3><p>Schedule evergreen X content or turn a product brief into a controlled video-production project without juggling automation plumbing.</p><ul><li><a href="/tools/evergreen-x-scheduler">Evergreen X Post Scheduler</a></li><li><a href="/tools/video-studio">AI Video Studio</a></li></ul><a class="resource-panel__cta" href="/saas-tools">Explore our SaaS tools →</a></article><article class="resource-panel"><span class="eyebrow">AI PROMPTS &amp; LOOPS</span><h3>Ready-to-use AI instructions</h3><p>Useful prompts and iterative loops for writing, research, career work, productivity, and more.</p>{featuredPrompts.length > 0 && <ul>{featuredPrompts.map((item)=><li><a href={`/prompts/${item.slug}`}>{item.name}</a></li>)}</ul>}<a class="resource-panel__cta" href="/prompts">Browse prompts &amp; loops →</a></article></div></div></section>
-{latestPosts.length>0&&<section class="home-section home-section--latest" aria-labelledby="latest-heading"><div class="wrapper"><div class="section-heading"><div><span class="eyebrow">From the bench</span><h2 id="latest-heading">Latest</h2></div><a href="/blog">View all →</a></div><div class="blog-index__grid">{latestPosts.map(post=><article class="db-post-card"><span class="eyebrow">{post.category || 'Article'}</span><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p>{post.excerpt}</p><a class="db-post-card__link" href={`/blog/${post.slug}`}>Read article →</a></article>)}</div></div></section>}
+<section class="shed-hero" aria-labelledby="hero-title">
+  <div class="shed-hero__wall" aria-hidden="true"></div>
+  <div class="shed-hero__workbench" aria-hidden="true"></div>
+  <div class="shed-hero__tools" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="shed-hero__circuits" aria-hidden="true"></div>
+  <div class="shed-hero__laptop" aria-hidden="true"><div class="shed-hero__screen"><span></span><span></span><span></span><span></span><span></span></div></div>
+  <div class="shed-hero__lamp" aria-hidden="true"></div>
+  <div class="shed-hero__copy">
+    <span class="shed-hero__eyebrow">INTERNAL BETA · AI VIDEO STUDIO</span>
+    <h1 id="hero-title"><span class="shed-hero__the">THE</span><span class="shed-hero__tool">TOOL</span><span class="shed-hero__shed">SHED</span></h1>
+    <p>Write a prompt. Get a planned, QA’d video — without picking models or babysitting renders.</p>
+    <div class="shed-hero__actions">
+      <a class="hero-button hero-button--primary" href="/app/video-studio">Open Video Studio <span>→</span></a>
+      <a class="hero-button" href="/tools/video-studio">See how it works</a>
+    </div>
+  </div>
+  <div class="shed-hero__tagline">PROMPT <b>•</b> SHORT CLIP <b>•</b> DONE</div>
+</section>
+
+<section class="home-section home-section--resources" aria-labelledby="resources-heading">
+  <div class="wrapper">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">A production department, not a model picker</span>
+        <h2 id="resources-heading">Prompt to a short clip</h2>
+      </div>
+    </div>
+    <div class="resource-grid">
+      <article class="resource-panel">
+        <span class="eyebrow">AI VIDEO STUDIO</span>
+        <h3>Write what you want to see, then generate</h3>
+        <p>One prompt in. About 15 seconds out. Credits and spend caps stay inside the studio. Billing stays off.</p>
+        <ul>
+          <li><a href="/app/video-studio">Open Video Studio</a></li>
+          <li><a href="/tools/video-studio">See how it works</a></li>
+        </ul>
+        <a class="resource-panel__cta" href="/tools/video-studio">View Video Studio →</a>
+      </article>
+      <article class="resource-panel">
+        <span class="eyebrow">ON THE BENCH</span>
+        <h3>Prompts, loops, and notes</h3>
+        <p>Ready-to-use AI instructions and the build logs from shipping Video Studio. Directory and the X scheduler stay side doors.</p>
+        {featuredPrompts.length > 0 && <ul>{featuredPrompts.map((item) => <li><a href={`/prompts/${item.slug}`}>{item.name}</a></li>)}</ul>}
+        <a class="resource-panel__cta" href="/prompts">Browse prompts &amp; loops →</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+{latestPosts.length > 0 && <section class="home-section home-section--latest" aria-labelledby="latest-heading">
+  <div class="wrapper">
+    <div class="section-heading">
+      <div><span class="eyebrow">Latest from the bench</span><h2 id="latest-heading">Latest</h2></div>
+      <a href="/blog">View all →</a>
+    </div>
+    <div class="blog-index__grid">{latestPosts.map((post) => <article class="db-post-card"><span class="eyebrow">{post.category || 'Article'}</span><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p>{post.excerpt}</p><a class="db-post-card__link" href={`/blog/${post.slug}`}>Read article →</a></article>)}</div>
+  </div>
+</section>}
+
 <section class="home-section"><div class="wrapper"><EmailCapture source="homepage" /></div></section>
-<section class="home-section home-section--x" aria-labelledby="x-heading"><div class="wrapper x-callout"><div><span class="eyebrow">Follow the builder</span><h2 id="x-heading">More AI experiments, tools &amp; ideas on X</h2><p>Follow John for practical AI finds, experiments, workflows, and what actually works.</p></div><a class="hero-button hero-button--primary" href="https://x.com/john_page1990" target="_blank" rel="me noopener noreferrer">Follow @john_page1990 on X <span>→</span></a></div></section>
+
+<section class="home-section home-section--x" aria-labelledby="x-heading">
+  <div class="wrapper x-callout">
+    <div>
+      <span class="eyebrow">Follow the builder</span>
+      <h2 id="x-heading">More of what actually ships, on X</h2>
+      <p>Build logs, Video Studio experiments, and the occasional useful workflow. No tool-roundup noise.</p>
+    </div>
+    <a class="hero-button hero-button--primary" href="https://x.com/john_page1990" target="_blank" rel="me noopener noreferrer">Follow @john_page1990 on X <span>→</span></a>
+  </div>
+</section>
 </div>
 </BaseLayout>
 <style>
-.featured-tools-carousel{margin:1.35rem auto 1.5rem;width:min(100%,920px);text-align:left}.featured-tools-carousel__header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.65rem;font-size:.75rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.featured-tools-carousel__header span{opacity:.72}.featured-tools-carousel__header a{color:inherit;text-decoration:none;opacity:.8;letter-spacing:.02em;text-transform:none}.featured-tools-carousel__header a:hover{opacity:1;text-decoration:underline}.featured-tools-carousel__track{display:flex;align-items:center;justify-content:center;gap:clamp(.7rem,1.7vw,1.1rem);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:.2rem .25rem .6rem;mask-image:linear-gradient(to right,transparent,black 4%,black 96%,transparent)}.featured-tools-carousel__track::-webkit-scrollbar{display:none}.featured-tool-icon{flex:0 0 auto;width:68px;height:68px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.15);border-radius:17px;background:rgba(7,10,14,.76);box-shadow:0 8px 20px rgba(0,0,0,.18);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.featured-tool-icon:hover,.featured-tool-icon:focus-visible{transform:translateY(-3px) scale(1.06);border-color:rgba(255,255,255,.4);box-shadow:0 10px 26px rgba(0,0,0,.28);outline:none}.featured-tool-icon img{width:52px;height:52px;border-radius:13px;background:#fff;padding:4px;object-fit:contain}.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.resource-panel{padding:1.4rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}.resource-panel h3{margin:.5rem 0}.resource-panel p{color:#aaa69e;line-height:1.55}.resource-panel ul{margin:1rem 0;padding-left:1.1rem}.resource-panel li{margin:.45rem 0}.resource-panel a{color:#f1eee7}.resource-panel__cta{display:inline-block;margin-top:.5rem;font-weight:700;text-decoration:none}.x-callout{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.5rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}.x-callout p{color:#aaa69e;max-width:42rem}.db-post-card{padding:1.25rem;border:1px solid var(--color-border);border-radius:.6rem;background:#0f100f}.db-post-card h3{margin:.5rem 0}.db-post-card h3 a{color:#f1eee7;text-decoration:none}.db-post-card p{color:#aaa69e;line-height:1.55}.db-post-card__link{font-size:.8rem;font-weight:700;text-decoration:none}.db-post-card__link:hover{text-decoration:underline}@media(max-width:700px){.featured-tools-carousel{margin-top:1rem}.featured-tools-carousel__track{justify-content:flex-start;gap:.65rem}.featured-tool-icon{width:58px;height:58px;border-radius:15px}.featured-tool-icon img{width:44px;height:44px;border-radius:11px}.resource-grid{grid-template-columns:1fr}.x-callout{align-items:flex-start;flex-direction:column}}
+.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.resource-panel{padding:1.4rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}.resource-panel h3{margin:.5rem 0}.resource-panel p{color:#aaa69e;line-height:1.55}.resource-panel ul{margin:1rem 0;padding-left:1.1rem}.resource-panel li{margin:.45rem 0}.resource-panel a{color:#f1eee7}.resource-panel__cta{display:inline-block;margin-top:.5rem;font-weight:700;text-decoration:none}.x-callout{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.5rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}.x-callout p{color:#aaa69e;max-width:42rem}.db-post-card{padding:1.25rem;border:1px solid var(--color-border);border-radius:.6rem;background:#0f100f}.db-post-card h3{margin:.5rem 0}.db-post-card h3 a{color:#f1eee7;text-decoration:none}.db-post-card p{color:#aaa69e;line-height:1.55}.db-post-card__link{font-size:.8rem;font-weight:700;text-decoration:none}.db-post-card__link:hover{text-decoration:underline}@media(max-width:700px){.resource-grid{grid-template-columns:1fr}.x-callout{align-items:flex-start;flex-direction:column}}
 </style>
-<script>
-document.querySelectorAll<HTMLElement>('.featured-tool-icon').forEach(link=>link.addEventListener('click',()=>{const gtag=(window as any).gtag;if(typeof gtag!=='function')return;const params={tool_name:link.dataset.toolName??'',tool_slug:link.dataset.toolSlug??'',tool_category:link.dataset.toolCategory??'',affiliate:link.dataset.affiliate==='true',position:Number(link.dataset.position??0)};gtag('event','featured_tool_click',params);if(params.affiliate)gtag('event','affiliate_click',params)}));
-</script>
