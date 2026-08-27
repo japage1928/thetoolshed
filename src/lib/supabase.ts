@@ -9,7 +9,7 @@ export type DbPrompt = { id: string; name: string; slug: string; description: st
 const url = process.env.PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-async function query<T>(table: string, params: string): Promise<T[]> {
+export async function query<T>(table: string, params: string): Promise<T[]> {
   if (!url || !key) return [];
   const response = await fetch(`${url}/rest/v1/${table}?${params}`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
   if (!response.ok) throw new Error(`Supabase request failed: ${response.status}`);

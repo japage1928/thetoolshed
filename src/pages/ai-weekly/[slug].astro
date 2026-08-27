@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import EmailCapture from '../../components/EmailCapture.astro';
+import AiWeeklyItems from '../../components/AiWeeklyItems.astro';
 import { getAiWeeklyFilterBySlug } from '../../lib/ai-weekly';
 import { SITE_NAME } from '../../lib/site';
 
@@ -22,16 +23,6 @@ const jsonLd = {
   articleSection: 'AI Weekly Filter',
 };
 
-const renderItem = (item: typeof post.keep_items[number]) => (
-  <section class="filter-item">
-    <h3>{item.title}</h3>
-    <p><strong>What:</strong> {item.what}</p>
-    <p><strong>Why it matters:</strong> {item.why}</p>
-    <p><strong>What to do:</strong> {item.action}</p>
-    {item.avoid && <p><strong>Do not:</strong> {item.avoid}</p>}
-    {item.sources?.length ? <p class="sources">Sources: {item.sources.map((source, index) => <span><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a>{index < item.sources!.length - 1 ? ', ' : ''}</span>)}</p> : null}
-  </section>
-);
 ---
 <BaseLayout
   title={post.seo_title || post.title}
@@ -54,9 +45,9 @@ const renderItem = (item: typeof post.keep_items[number]) => (
 
       <p class="week-line">{post.one_sentence_week}</p>
 
-      {post.keep_items.length > 0 && <section class="filter-group"><h2>Keep</h2>{post.keep_items.map(renderItem)}</section>}
-      {post.skip_items.length > 0 && <section class="filter-group"><h2>Skip</h2>{post.skip_items.map(renderItem)}</section>}
-      {post.dont_pay_items.length > 0 && <section class="filter-group"><h2>Don’t pay</h2>{post.dont_pay_items.map(renderItem)}</section>}
+      {post.keep_items.length > 0 && <section class="filter-group"><h2>Keep</h2><AiWeeklyItems items={post.keep_items} /></section>}
+      {post.skip_items.length > 0 && <section class="filter-group"><h2>Skip</h2><AiWeeklyItems items={post.skip_items} /></section>}
+      {post.dont_pay_items.length > 0 && <section class="filter-group"><h2>Don’t pay</h2><AiWeeklyItems items={post.dont_pay_items} /></section>}
 
       {post.costs_limits && <section class="filter-group"><h2>Costs &amp; limits</h2><p>{post.costs_limits}</p></section>}
       {post.what_im_ignoring && <section class="filter-group"><h2>What I’m ignoring</h2><p>{post.what_im_ignoring}</p></section>}

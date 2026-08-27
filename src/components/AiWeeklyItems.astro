@@ -1,0 +1,14 @@
+---
+import type { AiWeeklyItem } from '../lib/ai-weekly';
+
+const { items } = Astro.props as { items: AiWeeklyItem[] };
+---
+
+{items.map((item) => <section class="filter-item">
+  <h3>{item.title}</h3>
+  <p><strong>What:</strong> {item.what}</p>
+  <p><strong>Why it matters:</strong> {item.why}</p>
+  <p><strong>What to do:</strong> {item.action}</p>
+  {item.avoid && <p><strong>Do not:</strong> {item.avoid}</p>}
+  {item.sources?.length ? <p class="sources">Sources: {item.sources.map((source, index) => <span><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a>{index < item.sources!.length - 1 ? ', ' : ''}</span>)}</p> : null}
+</section>)}
