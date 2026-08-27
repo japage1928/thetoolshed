@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EmailCapture from '../../components/EmailCapture.astro';
+import { getAiWeeklyFilterBySlug } from '../../lib/ai-weekly';
+import { SITE_NAME } from '../../lib/site';
+
+const post = await getAiWeeklyFilterBySlug(Astro.params.slug ?? '');
+if (!post) return Astro.redirect('/blog', 302);
+
+const publishedDate = new Date(`${post.published_date}T00:00:00Z`);
+const canonicalPath = `/ai-weekly/${post.slug}`;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: post.title,
+  description: post.meta_description || post.one_sentence_week,
+  datePublished: publishedDate.toISOString(),
+  dateModified: new Date(post.updated_at).toISOString(),
+  author: { '@type': 'Person', name: post.author },
+  publisher: { '@type': 'Organization', name: SITE_NAME },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': new URL(canonicalPath, Astro.site).toString() },
+  articleSection: 'AI Weekly Filter',
+};
+
+const renderItem = (item: typeof post.keep_items[number]) => (
+  <section class="filter-item">
+    <h3>{item.title}</h3>
+    <p><strong>What:</strong> {item.what}</p>
+    <p><strong>Why it matters:</strong> {item.why}</p>
+    <p><strong>What to do:</strong> {item.action}</p>
+    {item.avoid && <p><strong>Do not:</strong> {item.avoid}</p>}
+    {item.sources?.length ? <p class="sources">Sources: {item.sources.map((source, index) => <span><a href={source.url} target="_blank" rel="noreferrer">{source.label}</a>{index < item.sources!.length - 1 ? ', ' : ''}</span>)}</p> : null}
+  </section>
+);
+---
+<BaseLayout
+  title={post.seo_title || post.title}
+  description={post.meta_description || post.one_sentence_week}
+  path={canonicalPath}
+  type="article"
+  publishedDate={publishedDate}
+  updatedDate={new Date(post.updated_at)}
+  jsonLd={jsonLd}
+>
+  <article class="wrapper weekly-page">
+    <div class="article-content">
+      <span class="eyebrow">AI WEEKLY FILTER</span>
+      <h1 class="page-title">{post.title}</h1>
+      <div class="meta-line">
+        <span>By {post.author}</span>
+        <span>·</span>
+        <time datetime={publishedDate.toISOString()}>Published {publishedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</time>
+      </div>
+
+      <p class="week-line">{post.one_sentence_week}</p>
+
+      {post.keep_items.length > 0 && <section class="filter-group"><h2>Keep</h2>{post.keep_items.map(renderItem)}</section>}
+      {post.skip_items.length > 0 && <section class="filter-group"><h2>Skip</h2>{post.skip_items.map(renderItem)}</section>}
+      {post.dont_pay_items.length > 0 && <section class="filter-group"><h2>Don’t pay</h2>{post.dont_pay_items.map(renderItem)}</section>}
+
+      {post.costs_limits && <section class="filter-group"><h2>Costs &amp; limits</h2><p>{post.costs_limits}</p></section>}
+      {post.what_im_ignoring && <section class="filter-group"><h2>What I’m ignoring</h2><p>{post.what_im_ignoring}</p></section>}
+
+      {post.faqs.length > 0 && <section class="filter-group"><h2>FAQs</h2>{post.faqs.map((faq) => <section class="faq"><h3>{faq.question}</h3><p>{faq.answer}</p></section>)}</section>}
+
+      {post.cta_label && <p class="weekly-cta"><a href={post.cta_href || '#newsletter'}>{post.cta_label}</a></p>}
+      <EmailCapture
+        source={`ai-weekly-${post.slug}`}
+        compact
+        heading="Want next week’s recap sent to your email?"
+        description="Sign up and I’ll send the useful parts—not a padded list of AI nonsense."
+        buttonLabel="Sign up for the recap"
+        incentive="ai-weekly-filter"
+      />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+.weekly-page{padding-top:2rem;padding-bottom:4rem}.article-content{max-width:48rem;margin:0 auto}.page-title{margin:.55rem 0}.meta-line{display:flex;gap:.55rem;flex-wrap:wrap;color:#77736d;font-size:.78rem;margin:1rem 0 2rem}.week-line{font-size:1.18rem;line-height:1.65;color:#f1eee7;border-left:3px solid var(--shed-blue);padding-left:1rem;margin:0 0 2.5rem}.filter-group{margin:2.5rem 0}.filter-group>h2{font-size:1.55rem;color:#f1eee7;margin-bottom:1rem}.filter-item,.faq{border-top:1px solid var(--color-border);padding:1.15rem 0}.filter-item h3,.faq h3{font-size:1.08rem;color:#f1eee7;margin:0 0 .7rem}.filter-item p,.faq p,.filter-group>p{color:#c7c2ba;line-height:1.8;margin:.55rem 0}.filter-item strong{color:#f1eee7}.sources{font-size:.78rem;color:#77736d!important}.sources a,.weekly-cta a{color:var(--shed-blue)}.weekly-cta{margin:2.5rem 0 0;padding:1rem 1.1rem;border:1px solid var(--color-border);border-radius:.6rem;background:#10110f}.weekly-cta a{font-weight:800;text-decoration:none}.weekly-cta a:hover{text-decoration:underline}
+</style>

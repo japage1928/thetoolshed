@@ -2,20 +2,31 @@
 interface Props {
   source?: string;
   compact?: boolean;
+  heading?: string;
+  description?: string;
+  buttonLabel?: string;
+  incentive?: string;
 }
-const { source = 'website', compact = false } = Astro.props;
+const {
+  source = 'website',
+  compact = false,
+  heading = 'Get useful AI prompts and tools in your inbox.',
+  description = 'Join the Tool Shed list for practical prompts, workflow ideas, and useful AI finds. No daily inbox assault.',
+  buttonLabel = 'Get the free prompt pack',
+  incentive = 'free-ai-prompt-pack',
+} = Astro.props;
 ---
 
-<section class:list={['email-capture', compact && 'email-capture--compact']} aria-labelledby={`email-heading-${source}`}>
+<section id="newsletter" class:list={['email-capture', compact && 'email-capture--compact']} aria-labelledby={`email-heading-${source}`}>
   <div>
-    <span class="eyebrow">FREE AI RESOURCES</span>
-    <h2 id={`email-heading-${source}`}>Get useful AI prompts and tools in your inbox.</h2>
-    <p>Join the Tool Shed list for practical prompts, workflow ideas, and useful AI finds. No daily inbox assault.</p>
+    <span class="eyebrow">EMAIL FILTER</span>
+    <h2 id={`email-heading-${source}`}>{heading}</h2>
+    <p>{description}</p>
   </div>
-  <form class="email-capture__form" data-source={source}>
+  <form class="email-capture__form" data-source={source} data-incentive={incentive}>
     <label class="sr-only" for={`subscriber-email-${source}`}>Email address</label>
     <input id={`subscriber-email-${source}`} name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-    <button type="submit">Get the free prompt pack <span>→</span></button>
+    <button type="submit">{buttonLabel} <span>→</span></button>
     <p class="email-capture__status" role="status" aria-live="polite" hidden></p>
   </form>
 </section>
@@ -47,6 +58,7 @@ document.querySelectorAll<HTMLFormElement>('.email-capture__form').forEach((form
           email: input.value.trim(),
           name: '',
           source: form.dataset.source || 'website',
+          incentive: form.dataset.incentive || 'website',
           consent: true,
         }),
       });
@@ -55,7 +67,7 @@ document.querySelectorAll<HTMLFormElement>('.email-capture__form').forEach((form
         status.textContent = 'You’re on the list.';
         input.value = '';
         const gtag = (window as any).gtag;
-        if (typeof gtag === 'function') gtag('event', 'email_signup', { source: form.dataset.source || 'website', incentive: 'free-ai-prompt-pack' });
+        if (typeof gtag === 'function') gtag('event', 'email_signup', { source: form.dataset.source || 'website', incentive: form.dataset.incentive || 'website' });
         return;
       }
 
