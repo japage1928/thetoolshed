@@ -79,7 +79,6 @@ const shouldNoindex = noindex || privateRoute;
         };
         if (href.includes('x.com/john_page1990') || href.includes('twitter.com/john_page1990')) track('x_profile_click', data);
         if (href.includes('payhip.com/')) track('payhip_click', data);
-        if (href.includes('/saas-tools')) track('saas_tools_click', data);
         if (href.includes('/tools/')) track('tool_view_click', data);
         if (href.includes('/prompts/')) track('prompt_view_click', data);
         if (href.startsWith('http') && !href.includes(window.location.hostname) && !href.includes('payhip.com') && !href.includes('x.com')) track('outbound_link_click', data);
