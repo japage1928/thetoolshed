@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const title = 'Practical AI How-To Guides';
+const description = 'Practical how to guides for Shopify, Grok Bot, n8n, and API costs, written to help beginners avoid expensive AI experiments.';
+const faqs = [
+  ['What are these guides about?', 'They cover practical AI use, including Shopify, Grok Bot, n8n, APIs, AI tools, and AI news.'],
+  ['Do these guides promise business results?', 'No. They explain processes, risks, costs, and decision points.'],
+  ['Are these AI tool reviews?', 'Some discuss specific tools, but the purpose is filtering—not promoting everything that exists.'],
+  ['Can I ask for help with a specific task?', 'Yes. Message [YOUR_OFFER_OR_CONTACT] with the actual task and where you are stuck.'],
+];
+---
+<BaseLayout title={title} description={description} path="/how-to" jsonLd={{'@context':'https://schema.org','@type':'FAQPage',mainEntity:faqs.map(([q,a])=>({'@type':'Question',name:q,acceptedAnswer:{'@type':'Answer',text:a}}))}}>
+<article class="howto wrapper">
+  <span class="eyebrow">HOW-TO · AI WITHOUT THE NOISE</span><h1>Practical AI How-To Guides Without the Slop</h1>
+  <p class="lead">These are hands-on guides for people trying to use AI without setting fire to their budget. I write about Shopify, Grok Bot, n8n, APIs, and AI tools from the perspective of someone building on a real budget—not from a conference stage with somebody else’s money. The filter is simple: would I pay for this, did it help, and what did it cost me to find out? These guides exist so you do not fund unproven experiments with grocery money.</p>
+  <div class="notice"><strong>Who this is for:</strong> beginners who want to use Shopify, agents, n8n, or APIs without overspending. <strong>Not for:</strong> people looking for guaranteed income, magic prompts, or passive-business fantasies.</div>
+  <section><h2>Start with the guide that matches the risk</h2><div class="cards">
+    <a href="/how-to/shopify-store-grok-bot"><b>How to Set Up a Shopify Store with Grok Bot</b><span>Set a cap, define “done,” and review the store before the meter eats your budget.</span></a>
+    <a href="/how-to/manage-n8n-with-chatgpt"><b>How to Manage n8n with ChatGPT</b><span>Design small flows around named deliverables instead of building automation theater.</span></a>
+    <a href="/how-to/stop-wasting-money-on-ai-apis"><b>How to Stop Wasting Money on AI API Costs</b><span>A freeze rule for expensive experiments, separate meters, and unproven SaaS.</span></a>
+  </div></section>
+  <section><h2>How I decide what to publish</h2><ul><li>I used, tested, paid for, or deliberately archived it.</li><li>I separate what I know from what I am guessing.</li><li>I explain what failed, not just what looked impressive.</li><li>I include what not to do because that is where money disappears.</li><li>The lesson should help someone make a cheaper or clearer decision.</li></ul></section>
+  <section><h2>FAQ</h2>{faqs.map(([q,a])=><details><summary>{q}</summary><p>{a}</p></details>)}</section>
+  <p class="links"><a href="/how-to/shopify-store-grok-bot">Shopify and Grok Bot</a> · <a href="/how-to/manage-n8n-with-chatgpt">n8n with ChatGPT</a> · <a href="/how-to/stop-wasting-money-on-ai-apis">Stop wasting API costs</a></p>
+  <p class="alt">Image alt suggestions: AI how-to guides for beginners · Reviewing AI costs before an experiment · Practical AI notes from [AUTHOR_NAME]</p>
+</article>
+</BaseLayout>
+<style>.howto{padding:4rem 1rem 7rem;max-width:850px}.howto h1{font-size:clamp(2.8rem,7vw,5.8rem);line-height:.95;letter-spacing:-.06em;margin:.7rem 0 1.4rem}.eyebrow{color:#c7a76a;font-size:.7rem;letter-spacing:.16em;font-weight:900}.lead{color:#aaa69e;font-size:1.1rem;line-height:1.75}.howto section{margin-top:3.5rem}.notice{margin-top:2rem;padding:1.2rem;border:1px solid #4d4538;border-radius:.6rem;color:#d4c8b5;line-height:1.7}.cards{display:grid;gap:1rem}.cards a{display:grid;gap:.55rem;padding:1.3rem;border:1px solid var(--color-border);border-radius:.6rem;color:#f1eee7;text-decoration:none;background:#10110f}.cards span,details p,.alt{color:#99958d;line-height:1.6}.howto li{margin:.7rem 0;color:#b8b3aa}.howto details{padding:1rem;border-bottom:1px solid var(--color-border)}summary{cursor:pointer;font-weight:800}.links{margin-top:3rem}.links a{color:#a9d2ff}.alt{font-size:.8rem;margin-top:3rem}</style>
