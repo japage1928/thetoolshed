@@ -6,8 +6,8 @@ import { getPublishedPosts, getPrompts } from '../lib/supabase';
 const prompts = await getPrompts();
 const latestPosts = (await getPublishedPosts()).slice(0, 3);
 const featuredPrompts = prompts.filter((item) => item.featured).slice(0, 3);
-const homeTitle = 'AI video production, without the knobs';
-const homeDescription = 'Write a prompt. Get a planned, QA\u2019d video \u2014 without picking models or babysitting renders.';
+const homeTitle = 'Useful AI tools, news, and working notes';
+const homeDescription = 'Practical coverage of AI tools, news, prompts, and workflows worth your attention.';
 ---
 <BaseLayout title={homeTitle} description={homeDescription} path="/">
 <div class="home-page">
@@ -19,12 +19,12 @@ const homeDescription = 'Write a prompt. Get a planned, QA\u2019d video \u2014 w
   <div class="shed-hero__laptop" aria-hidden="true"><div class="shed-hero__screen"><span></span><span></span><span></span><span></span><span></span></div></div>
   <div class="shed-hero__lamp" aria-hidden="true"></div>
   <div class="shed-hero__copy">
-    <span class="shed-hero__eyebrow">INTERNAL BETA · AI VIDEO STUDIO</span>
+    <span class="shed-hero__eyebrow">AI TOOLS · NEWS · WORKFLOWS</span>
     <h1 id="hero-title"><span class="shed-hero__the">THE</span><span class="shed-hero__tool">TOOL</span><span class="shed-hero__shed">SHED</span></h1>
-    <p>Write a prompt. Get a planned, QA’d video — without picking models or babysitting renders.</p>
+    <p>Useful AI tools, important updates, and practical ways to put them to work.</p>
     <div class="shed-hero__actions">
-      <a class="hero-button hero-button--primary" href="/app/video-studio">Open Video Studio <span>→</span></a>
-      <a class="hero-button" href="/tools/video-studio">See how it works</a>
+      <a class="hero-button hero-button--primary" href="/tools">Explore AI tools <span>→</span></a>
+      <a class="hero-button" href="/blog">Read the latest</a>
     </div>
   </div>
   <div class="shed-hero__tagline">PROMPT <b>•</b> SHORT CLIP <b>•</b> DONE</div>
@@ -34,25 +34,21 @@ const homeDescription = 'Write a prompt. Get a planned, QA\u2019d video \u2014 w
   <div class="wrapper">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">A production department, not a model picker</span>
-        <h2 id="resources-heading">Prompt to a short clip</h2>
+        <span class="eyebrow">Practical coverage, not AI theater</span>
+        <h2 id="resources-heading">Find what is worth using</h2>
       </div>
     </div>
     <div class="resource-grid">
       <article class="resource-panel">
-        <span class="eyebrow">AI VIDEO STUDIO</span>
-        <h3>Write what you want to see, then generate</h3>
-        <p>One prompt in. About 15 seconds out. Credits and spend caps stay inside the studio. Billing stays off.</p>
-        <ul>
-          <li><a href="/app/video-studio">Open Video Studio</a></li>
-          <li><a href="/tools/video-studio">See how it works</a></li>
-        </ul>
-        <a class="resource-panel__cta" href="/tools/video-studio">View Video Studio →</a>
+        <span class="eyebrow">AI TOOLS</span>
+        <h3>Tools explained without the brochure voice</h3>
+        <p>Browse practical write-ups on what AI tools do, who they are for, and where they fit in a real workflow.</p>
+        <a class="resource-panel__cta" href="/tools">Browse the AI directory →</a>
       </article>
       <article class="resource-panel">
         <span class="eyebrow">ON THE BENCH</span>
         <h3>Prompts, loops, and notes</h3>
-        <p>Ready-to-use AI instructions and the build logs from shipping Video Studio. Directory and the X scheduler stay side doors.</p>
+        <p>Ready-to-use prompts, practical workflow notes, and experiments that survived contact with reality.</p>
         {featuredPrompts.length > 0 && <ul>{featuredPrompts.map((item) => <li><a href={`/prompts/${item.slug}`}>{item.name}</a></li>)}</ul>}
         <a class="resource-panel__cta" href="/prompts">Browse prompts &amp; loops →</a>
       </article>
@@ -77,7 +73,7 @@ const homeDescription = 'Write a prompt. Get a planned, QA\u2019d video \u2014 w
     <div>
       <span class="eyebrow">Follow the builder</span>
       <h2 id="x-heading">More of what actually ships, on X</h2>
-      <p>Build logs, Video Studio experiments, and the occasional useful workflow. No tool-roundup noise.</p>
+      <p>Practical AI tool notes, news, and the occasional useful workflow. No hype-factory nonsense.</p>
     </div>
     <a class="hero-button hero-button--primary" href="https://x.com/john_page1990" target="_blank" rel="me noopener noreferrer">Follow @john_page1990 on X <span>→</span></a>
   </div>
