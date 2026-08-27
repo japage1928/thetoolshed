@@ -87,28 +87,28 @@
   status = 301
   force = true
 
-# Retire the old downloadable-template catalog in favor of Tool Shed SaaS.
+# Retire the old downloadable-template catalog in favor of the AI directory.
 [[redirects]]
   from = "/templates"
-  to = "/saas-tools"
+  to = "/tools"
   status = 301
   force = true
 
 [[redirects]]
   from = "/templates/*"
-  to = "/saas-tools"
+  to = "/tools"
   status = 301
   force = true
 
 [[redirects]]
   from = "/workflows"
-  to = "/saas-tools"
+  to = "/tools"
   status = 301
   force = true
 
 [[redirects]]
   from = "/workflows/*"
-  to = "/saas-tools"
+  to = "/tools"
   status = 301
   force = true
 
