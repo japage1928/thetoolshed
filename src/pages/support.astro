@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Support" description="Get help with a Tool Shed account, subscription, credits, or Video Studio project." path="/support">
+<BaseLayout title="Support" description="Get help with The Tool Shed, its content, and newsletter." path="/support">
   <section class="support wrapper">
     <span class="eyebrow">THE TOOL SHED · SUPPORT</span>
     <h1>How can we help?</h1>
@@ -10,18 +10,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <div class="support-grid">
       <article>
-        <span>01</span><h2>Account & billing</h2>
-        <p>View subscription status, update a payment method, download invoices, cancel, export data, or delete an eligible account.</p>
-        <a href="/account">Open Account</a>
+        <span>01</span><h2>Content questions</h2>
+        <p>Ask about an article, report an issue, or suggest a tool or AI topic worth covering.</p>
+        <a href="mailto:hello@thetoolshed.work?subject=Content%20question">Email The Tool Shed</a>
       </article>
       <article>
-        <span>02</span><h2>Video Studio help</h2>
-        <p>Include the project name, approximate time, and what you expected. Do not send passwords, API keys, or full card details.</p>
-        <a href="mailto:hello@thetoolshed.work?subject=Video%20Studio%20support">Email Video Studio support</a>
+        <span>02</span><h2>Newsletter help</h2>
+        <p>Contact us about subscription status, newsletter delivery, or changing your email preferences.</p>
+        <a href="mailto:hello@thetoolshed.work?subject=Newsletter%20help">Email newsletter support</a>
       </article>
       <article>
         <span>03</span><h2>Privacy & legal</h2>
-        <p>Request access, correction, export, or deletion, or review the policies that apply to Tool Shed SaaS tools.</p>
+        <p>Request access, correction, export, or deletion, or review the policies that apply to this site.</p>
         <a href="/privacy-choices">Open Privacy Choices</a>
       </article>
     </div>
@@ -33,8 +33,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <h2 class="faq-title">Quick answers</h2>
     <div class="faq">
-      <details><summary>How do I cancel?</summary><p>Sign in, open Account, choose Manage billing, and cancel in the Stripe portal. The portal shows the date your access ends before you confirm.</p></details>
-      <details><summary>Where are my credits?</summary><p>Your current balance and recent credit activity appear on the Account page and inside Video Studio.</p></details>
+      <details><summary>How do I unsubscribe?</summary><p>Use the unsubscribe link in any newsletter email, or contact support and we will help update your preferences.</p></details>
       <details><summary>What if a payment fails?</summary><p>Open Manage billing to update the payment method. Stripe may retry the payment, and we will send a service email when a payment needs attention.</p></details>
       <details><summary>Can support see my password or card number?</summary><p>No. Never email either one. Stripe handles full card details, and passwords are managed through Supabase authentication.</p></details>
     </div>
