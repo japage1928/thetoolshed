@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPublishedPosts } from '../lib/supabase';
+
+const recapPosts = (await getPublishedPosts())
+  .filter((post) => post.category?.toLowerCase() === 'news' && !post.is_draft)
+  .sort((a, b) => new Date(b.published_at ?? b.created_at).getTime() - new Date(a.published_at ?? a.created_at).getTime());
+
+const formatDate = (value: string | null) =>
+  value ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(value)) : 'Published';
+---
+<BaseLayout title="Weekly recaps | The Tool Shed" description="Weekly AI news recaps filtered for what affects real money, limits, products, and workflows." path="/news">
+  <div class="wrapper news-page">
+    <header class="news-heading">
+      <span class="eyebrow">THE TOOL SHED</span>
+      <h1 class="page-title">Weekly recaps</h1>
+      <p>AI news filtered for what affects real money, limits, products, and working workflows.</p>
+    </header>
+    {recapPosts.length > 0 ? (
+      <section class="recap-list" aria-label="Weekly AI news recaps">
+        {recapPosts.map((post) => (
+          <article class="recap-row">
+            <div>
+              <time datetime={post.published_at ?? post.created_at}>{formatDate(post.published_at ?? post.created_at)}</time>
+              <h2><a href={`/blog/${post.slug}`}>{post.title}</a></h2>
+              <p>{post.excerpt}</p>
+            </div>
+            <a class="recap-row__link" href={`/blog/${post.slug}`}>Read recap <span aria-hidden="true">→</span></a>
+          </article>
+        ))}
+      </section>
+    ) : <p class="empty-state">No weekly recaps have been published yet.</p>}
+  </div>
+</BaseLayout>
+<style>
+.news-page{padding-top:3rem;padding-bottom:5rem;max-width:58rem}.news-heading{max-width:42rem;margin-bottom:2.5rem}.news-heading p{color:var(--color-text-muted);line-height:1.7}.recap-list{border-top:1px solid var(--color-border)}.recap-row{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;padding:1.35rem 0;border-bottom:1px solid var(--color-border)}.recap-row time{color:#77736d;font-size:.72rem}.recap-row h2{margin:.4rem 0;font-size:1.25rem}.recap-row h2 a{color:#f1eee7;text-decoration:none}.recap-row h2 a:hover{text-decoration:underline}.recap-row p{max-width:42rem;margin:0;color:#aaa69e;line-height:1.6}.recap-row__link{flex:0 0 auto;color:#e3dfd7;font-size:.8rem;font-weight:700;text-decoration:none}.recap-row__link:hover{text-decoration:underline}.empty-state{padding:1.5rem;border:1px solid var(--color-border);color:#aaa69e}@media(max-width:640px){.recap-row{display:block}.recap-row__link{display:inline-block;margin-top:1rem}}
+</style>
