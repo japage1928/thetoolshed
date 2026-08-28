@@ -15,9 +15,9 @@ export async function query<T>(table: string, params: string): Promise<T[]> {
   if (!response.ok) throw new Error(`Supabase request failed: ${response.status}`);
   return response.json() as Promise<T[]>;
 }
-export async function getTools(){return query<DbTool>('ai_tools','is_active=eq.true&order=sort_order.asc,name.asc');}
-export async function getToolBySlug(slug:string){const x=await query<DbTool>('ai_tools',`slug=eq.${encodeURIComponent(slug)}&is_active=eq.true&limit=1`);return x[0]??null;}
-export async function getToolsByCategory(category:string){return query<DbTool>('ai_tools',`category=eq.${encodeURIComponent(category)}&is_active=eq.true&order=sort_order.asc,name.asc`);}
+export async function getTools(){return (await query<DbTool>('ai_tools','is_active=eq.true&order=sort_order.asc,name.asc')).map(sanitizeTool);}
+export async function getToolBySlug(slug:string){const x=await query<DbTool>('ai_tools',`slug=eq.${encodeURIComponent(slug)}&is_active=eq.true&limit=1`);return x[0]?sanitizeTool(x[0]):null;}
+export async function getToolsByCategory(category:string){return (await query<DbTool>('ai_tools',`category=eq.${encodeURIComponent(category)}&is_active=eq.true&order=sort_order.asc,name.asc`)).map(sanitizeTool);}
 export async function getToolCategories(){const x=await getTools();return [...new Set(x.map(t=>t.category))].sort();}
 export async function getPublishedPosts(){return query<DbPost>('blog_posts','is_draft=eq.false&order=published_at.desc');}
 export async function getPostBySlug(slug:string){const x=await query<DbPost>('blog_posts',`slug=eq.${encodeURIComponent(slug)}&is_draft=eq.false&limit=1`);return x[0]??null;}
