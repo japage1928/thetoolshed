@@ -22,6 +22,8 @@ export const onRequest = defineMiddleware(async ({ request, redirect }, next) =>
   const isEvergreenApp=url.pathname.startsWith('/app/evergreen-x');
   const isStoryStudioApp=url.pathname.startsWith('/app/story-studio');
   const isVideoStudioApp=url.pathname.startsWith('/app/video-studio');
+  const isRetiredVideoStudioRoute=isVideoStudioApp || url.pathname.startsWith('/video-studio');
+  if(isRetiredVideoStudioRoute)return new Response('Not Found',{status:404,headers:{'cache-control':'no-store'}});
   const isSaasApp=isEvergreenApp||isStoryStudioApp||isVideoStudioApp;
   const isAccountPage=url.pathname==='/account'||url.pathname.startsWith('/account/');
   const evergreenLaunched=process.env.EVERGREEN_X_LAUNCH_ENABLED==='true';
