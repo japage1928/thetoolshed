@@ -6,6 +6,16 @@ export type DbPost = { id: string; title: string; slug: string; excerpt: string;
 export type DbWorkflow = { id: string; name: string; slug: string; description: string; category: string; difficulty: string; price: number; image_url: string | null; included: string[]; apps_required: string[]; payhip_product_id: string | null; featured: boolean; is_free: boolean; is_published: boolean; seo_title: string | null; seo_description: string | null; };
 export type DbPrompt = { id: string; name: string; slug: string; description: string; type: 'prompt' | 'loop'; category: string; prompt_text: string; compatible_tools: string[]; price: number; is_free: boolean; payhip_product_id: string | null; image_url: string | null; featured: boolean; is_published: boolean; };
 
+const retiredVideoCopy = /video studio|pick the tool shed video studio/i;
+const cleanText = (value: unknown) => typeof value === 'string' && retiredVideoCopy.test(value) ? '' : String(value ?? '');
+const cleanList = (value: unknown) => Array.isArray(value) ? value.map(cleanText).filter(Boolean) : [];
+const cleanFaq = (value: unknown) => Array.isArray(value) ? value.map((item) => ({ question: cleanText(item?.question), answer: cleanText(item?.answer) })).filter((item) => item.question || item.answer) : [];
+function sanitizeTool(tool: DbTool): DbTool {
+  const safeUrl = (value: unknown) => { try { return new URL(String(value ?? '')).toString(); } catch { return 'https://example.com'; } };
+  return { ...tool, website_url: safeUrl(tool.website_url), affiliate_url: tool.affiliate_url ? safeUrl(tool.affiliate_url) : null, description: cleanText(tool.description), best_for: cleanText(tool.best_for), pros: cleanList(tool.pros), cons: cleanList(tool.cons), use_cases: cleanList(tool.use_cases), faq: cleanFaq(tool.faq) } as DbTool;
+}
+export function toolDomain(value: string) { try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return 'example.com'; } }
+
 const url = process.env.PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
