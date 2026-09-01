@@ -66,10 +66,6 @@ const shouldNoindex = noindex || privateRoute;
         if (typeof gtag === 'function') gtag('event', name, params);
       };
       const pagePath = window.location.pathname.replace(/\/$/, '') || '/';
-      if (pagePath === '/business-intelligence') track('business_intelligence_view', { page_path: pagePath });
-      if (pagePath === '/business-intelligence/polk-county') track('polk_product_view', { page_path: pagePath });
-      if (pagePath === '/business-intelligence/sample') track('sample_view', { page_path: pagePath });
-      if (pagePath.startsWith('/business-intelligence/insights/') && pagePath !== '/business-intelligence/insights') track('insight_article_view', { page_path: pagePath });
       document.addEventListener('click', (event) => {
         const target = event.target as HTMLElement | null;
         const link = target?.closest('a') as HTMLAnchorElement | null;
@@ -84,7 +80,6 @@ const shouldNoindex = noindex || privateRoute;
         };
         if (href.includes('x.com/john_page1990') || href.includes('twitter.com/john_page1990')) track('x_profile_click', data);
         if (href.includes('payhip.com/')) track('payhip_click', data);
-        if (href.includes('opportunityatlas.gumroad.com/l/ojthrs')) track('gumroad_checkout_click', data);
         if (link.hasAttribute('data-sample-download')) track('sample_download', data);
         if (href.includes('/tools/')) track('tool_view_click', data);
         if (href.includes('/prompts/')) track('prompt_view_click', data);
