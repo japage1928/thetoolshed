@@ -9,7 +9,7 @@ import { insights, researchFields } from '../../lib/business-intelligence';
 export const prerender = true;
 
 const title = 'Florida Local Business Intelligence for B2B Prospecting';
-const description = 'Verified local-business intelligence for agencies and B2B service providers. Explore 200+ researched Polk County, Florida businesses for $29.';
+const description = 'Explore a paid evaluation sample packet showing the research depth, scoring, methodology, and Polk County example for $29.';
 const audiences = [
   ['Web Design', 'Conversion paths, mobile usability, forms, booking, and site structure.'],
   ['SEO / Local SEO', 'City targeting, service-area pages, reviews, NAP, and observable local signals.'],
@@ -29,7 +29,7 @@ const audiences = [
         <span class="bi-kicker">The Tool Shed Business Intelligence</span>
         <h1>Local Business Opportunities, Already Researched.</h1>
         <p>Verified local-business intelligence for agencies and B2B service providers that want to spend less time researching prospects and more time pursuing worthwhile opportunities.</p>
-        <ProductCTA label="Explore Polk County" primaryHref="/business-intelligence/polk-county" secondaryHref="/business-intelligence/sample" secondaryLabel="View Free Sample" />
+        <ProductCTA label="View the $29 Sample Packet" primaryHref="/business-intelligence/polk-county" secondaryHref="/business-intelligence/sample" secondaryLabel="View Free Sample" />
         <p class="bi-note">Built from live public-source research rather than simple directory scraping.</p>
       </div>
       <aside class="bi-hero__proof"><strong>Research first. Outreach second.</strong><p>Business identity, public-source verification, digital signals, opportunity gaps, contact approach, and the evidence behind the record.</p></aside>
@@ -51,9 +51,9 @@ const audiences = [
     </div>
   </section>
 
-  <section class="bi-section" aria-labelledby="coverage-title"><div class="bi-shell"><div class="bi-section-heading"><div><span class="bi-kicker">Currently available</span><h2 id="coverage-title">Polk County, Florida</h2><p>One live product. No fake “coming soon” catalog pretending to be inventory.</p></div></div><CountyProductCard /></div></section>
+  <section class="bi-section" aria-labelledby="coverage-title"><div class="bi-shell"><div class="bi-section-heading"><div><span class="bi-kicker">Currently available</span><h2 id="coverage-title">Polk County, Florida</h2><p>One live product: a paid evaluation sample packet. No fake “coming soon” catalog pretending to be inventory.</p></div></div><CountyProductCard /></div></section>
   <MethodologySection />
   <section class="bi-section" aria-labelledby="insights-title"><div class="bi-shell"><div class="bi-section-heading"><div><span class="bi-kicker">Prospecting insights</span><h2 id="insights-title">Learn the signals before buying the research.</h2></div><a class="bi-text-link" href="/business-intelligence/insights">View all insights →</a></div><div class="bi-insight-grid">{insights.map((item) => <InsightCard {...item} />)}</div></div></section>
   <section class="bi-section bi-section--tint"><div class="bi-shell"><div class="bi-trust"><h2>What “verified” means</h2><p>Verified means a record received public-source research against available sources. It does not mean every possible field was discoverable, the business wants to be contacted, the company will purchase services, or every signal will remain unchanged indefinitely.</p><a class="bi-text-link" href="/business-intelligence/methodology">See how the research is built →</a></div></div></section>
-  <section class="bi-final-cta"><div class="bi-shell"><span class="bi-kicker">Spend less time researching</span><h2>Spend more time talking to the right ones.</h2><p>Inspect the real sample first. If the research depth saves you time, the full Polk County dataset is $29.</p><ProductCTA label="Get Polk County — $29" secondaryHref="/business-intelligence/sample" secondaryLabel="View Free Sample" /></div></section>
+  <section class="bi-final-cta"><div class="bi-shell"><span class="bi-kicker">Spend less time researching</span><h2>Spend more time talking to the right ones.</h2><p>Inspect the five-record sample first. If the research depth earns your trust, the $29 packet gives you a short PDF showing the work, scoring, methodology, and Polk County example.</p><ProductCTA label="Get the $29 Sample Packet" secondaryHref="/business-intelligence/sample" secondaryLabel="View Free Sample" /></div></section>
 </BusinessIntelligenceLayout>
