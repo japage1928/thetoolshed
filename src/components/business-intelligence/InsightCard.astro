@@ -1,0 +1,5 @@
+---
+interface Props { href: string; label: string; title: string; description: string; }
+const { href, label, title, description } = Astro.props;
+---
+<article class="bi-insight-card"><span class="bi-kicker">{label}</span><h3><a href={href}>{title}</a></h3><p>{description}</p><a class="bi-text-link" href={href}>Read the guide →</a></article>

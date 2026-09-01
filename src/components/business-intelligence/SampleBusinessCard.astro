@@ -1,0 +1,39 @@
+---
+import type { SampleBusiness } from '../../lib/business-intelligence';
+import ResearchField from './ResearchField.astro';
+interface Props { record: SampleBusiness; }
+const { record } = Astro.props;
+---
+
+<article class="bi-sample-card">
+  <div class="bi-sample-card__heading">
+    <div><span class="bi-kicker">{record.industry}</span><h3>{record.business}</h3><p>{record.city}, Florida</p></div>
+    <span class="bi-signal">{record.primaryGap}</span>
+  </div>
+  <dl class="bi-sample-card__summary">
+    <ResearchField label="License" value={record.licenseStatus} />
+    <ResearchField label="Review signal" value={record.reviewSignal} />
+    <ResearchField label="Intake" value={record.intakeMode} />
+    <ResearchField label="Best channel" value={record.bestOutreachChannel} />
+  </dl>
+  <details>
+    <summary>View details</summary>
+    <dl class="bi-details-grid">
+      <ResearchField label="Officer" value={record.officer} />
+      <ResearchField label="Officer title" value={record.officerTitle} />
+      <ResearchField label="Website platform" value={record.websitePlatform} />
+      <ResearchField label="Online booking" value={record.onlineBooking} />
+      <ResearchField label="Chat" value={record.chat} />
+      <ResearchField label="Review velocity" value={record.reviewVelocity} />
+      <ResearchField label="Service-area pages" value={record.serviceAreaPages} />
+      <ResearchField label="SEO signal" value={record.seoSignal} />
+      <ResearchField label="Commercial work" value={record.commercialWork} />
+      <ResearchField label="Hiring signal" value={record.hiringSignal} />
+      <ResearchField label="Suggested first sentence" value={record.suggestedFirstSentence} />
+      <div class="bi-research-field bi-research-field--sources">
+        <dt>Verification sources</dt>
+        <dd>{record.verificationSources.map((source) => <a href={source} target="_blank" rel="noopener noreferrer">{new URL(source).hostname}</a>)}</dd>
+      </div>
+    </dl>
+  </details>
+</article>

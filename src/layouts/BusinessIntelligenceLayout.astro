@@ -1,0 +1,43 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import '../styles/business-intelligence.css';
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  type?: 'website' | 'article';
+  publishedDate?: Date;
+  updatedDate?: Date;
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, path, type = 'website', publishedDate, updatedDate, jsonLd } = Astro.props;
+const currentPath = Astro.url.pathname;
+const sectionLinks = [
+  { href: '/business-intelligence', label: 'Overview' },
+  { href: '/business-intelligence/polk-county', label: 'Polk County' },
+  { href: '/business-intelligence/sample', label: 'Free Sample' },
+  { href: '/business-intelligence/methodology', label: 'Methodology' },
+  { href: '/business-intelligence/insights', label: 'Insights' },
+];
+---
+
+<BaseLayout {title} {description} {path} {type} {publishedDate} {updatedDate} {jsonLd}>
+  <div class="bi-page">
+    <nav class="bi-subnav" aria-label="Business Intelligence">
+      <div class="bi-shell bi-subnav__inner">
+        <a class="bi-subnav__brand" href="/business-intelligence">
+          <span>The Tool Shed</span>
+          <strong>Business Intelligence</strong>
+        </a>
+        <div class="bi-subnav__links">
+          {sectionLinks.map((link) => (
+            <a href={link.href} aria-current={currentPath === link.href ? 'page' : undefined}>{link.label}</a>
+          ))}
+        </div>
+      </div>
+    </nav>
+    <slot />
+  </div>
+</BaseLayout>

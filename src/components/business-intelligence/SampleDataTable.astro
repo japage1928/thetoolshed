@@ -1,0 +1,17 @@
+---
+import type { SampleBusiness } from '../../lib/business-intelligence';
+import SampleBusinessCard from './SampleBusinessCard.astro';
+interface Props { records: SampleBusiness[]; }
+const { records } = Astro.props;
+---
+
+<div class="bi-sample-table-wrap">
+  <table class="bi-sample-table">
+    <caption class="sr-only">Sample Polk County business intelligence records</caption>
+    <thead><tr><th>Business</th><th>Industry</th><th>City</th><th>License status</th><th>Review signal</th><th>Primary gap</th><th>Intake mode</th><th>Best channel</th><th>Details</th></tr></thead>
+    <tbody>{records.map((record, index) => <tr><th scope="row">{record.business}</th><td>{record.industry}</td><td>{record.city}</td><td>{record.licenseStatus}</td><td>{record.reviewSignal}</td><td>{record.primaryGap}</td><td>{record.intakeMode}</td><td>{record.bestOutreachChannel}</td><td><a href={`#sample-${index + 1}`}>View details</a></td></tr>)}</tbody>
+  </table>
+</div>
+<div class="bi-sample-cards">
+  {records.map((record, index) => <div class="bi-sample-anchor" id={`sample-${index + 1}`}><SampleBusinessCard {record} /></div>)}
+</div>

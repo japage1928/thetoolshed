@@ -1,0 +1,26 @@
+---
+import BusinessIntelligenceLayout from '../../layouts/BusinessIntelligenceLayout.astro';
+import ProductCTA from '../../components/business-intelligence/ProductCTA.astro';
+import SampleDataTable from '../../components/business-intelligence/SampleDataTable.astro';
+import MethodologySection from '../../components/business-intelligence/MethodologySection.astro';
+import { sampleBusinesses } from '../../lib/business-intelligence';
+
+export const prerender = true;
+
+const title = 'Polk County Business Intelligence — 200+ Researched Businesses';
+const description = 'Get 200+ researched Polk County, Florida businesses with public-source intelligence for B2B prospecting. PDF and CSV, $29 one-time through Gumroad.';
+const jsonLd = { '@context': 'https://schema.org', '@type': 'Product', name: 'Polk County Business Intelligence', description, brand: { '@type': 'Brand', name: 'The Tool Shed Business Intelligence' }, offers: { '@type': 'Offer', price: '29.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: 'https://opportunityatlas.gumroad.com/l/ojthrs?wanted=true' } };
+---
+
+<BusinessIntelligenceLayout {title} {description} path="/business-intelligence/polk-county" {jsonLd}>
+  <section class="bi-product-hero"><div class="bi-shell"><span class="bi-kicker">The Tool Shed Business Intelligence</span><h1>Polk County Business Intelligence</h1><p>200+ researched Polk County businesses with public-source intelligence designed to make B2B prospecting faster and more informed.</p><p class="bi-price"><strong>$29</strong><span>one-time purchase</span></p><ProductCTA label="Get the Full Dataset — $29" secondaryHref="/business-intelligence/sample" secondaryLabel="View Real Sample Data" /><p class="bi-note">Checkout and delivery are handled through Gumroad. No Tool Shed account required.</p></div></section>
+
+  <section class="bi-section" aria-labelledby="problem-title"><div class="bi-shell"><div class="bi-section-heading"><div><span class="bi-kicker">The research bottleneck</span><h2 id="problem-title">Prospecting Shouldn’t Start With Hours of Research.</h2><p>A raw directory entry creates work. It does not remove it.</p></div></div><ol class="bi-process"><li>Find the business and official website</li><li>Check identity, licensing, and decision-maker signals</li><li>Inspect reviews, digital presence, and conversion paths</li><li>Identify credible opportunity gaps</li><li>Choose a contact approach and relevant opener</li></ol><p class="bi-caveat">The Polk County pack performs much of this first-pass research before outreach begins. It does not replace buyer judgment or due diligence.</p></div></section>
+
+  <section class="bi-section bi-section--tint" aria-labelledby="receive-title"><div class="bi-shell"><div class="bi-section-heading"><div><span class="bi-kicker">What you receive</span><h2 id="receive-title">Two useful formats. No proprietary viewer.</h2></div></div><div class="bi-deliverables"><article class="bi-deliverable"><h3>Customer-ready PDF</h3><p>A readable intelligence packet built for review, context, and opportunity scanning.</p></article><article class="bi-deliverable"><h3>CSV dataset</h3><p>Use it for sorting, filtering, analysis, and CRM-import preparation in the tools you already use.</p></article></div></div></section>
+
+  <section class="bi-section" aria-labelledby="sample-title"><div class="bi-shell"><div class="bi-section-heading"><div><span class="bi-kicker">Real sample data</span><h2 id="sample-title">See the research structure before buying.</h2><p>These five genuine records come from the Polk County dataset. The complete paid dataset is not published here.</p></div><a class="bi-text-link" href="/business-intelligence/sample">Open the full sample page →</a></div><SampleDataTable records={sampleBusinesses} /></div></section>
+  <MethodologySection />
+  <section class="bi-final-cta"><div class="bi-shell"><span class="bi-kicker">Polk County, Florida</span><h2>Get 200+ researched businesses for $29.</h2><p>The purchase is one-time. Gumroad handles checkout and delivery.</p><ProductCTA label="Buy Polk County Intelligence — $29" secondaryHref="/business-intelligence/methodology" secondaryLabel="Review Methodology" /></div></section>
+  <section class="bi-section bi-section--tint"><div class="bi-shell"><p class="bi-disclaimer"><strong>Research disclaimer:</strong> Information is compiled from publicly available sources and provided for business research purposes. Business details and online signals can change. Buyers are responsible for verifying information before relying on it or conducting outreach. Purchase does not guarantee leads, responses, clients, revenue, or business outcomes.</p></div></section>
+</BusinessIntelligenceLayout>

@@ -1,0 +1,18 @@
+---
+import { GUMROAD_URL } from '../../lib/business-intelligence';
+
+interface Props {
+  label?: string;
+  primaryHref?: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+  compact?: boolean;
+}
+
+const { label = 'Get Polk County — $29', primaryHref = GUMROAD_URL, secondaryHref, secondaryLabel, compact = false } = Astro.props;
+---
+
+<div class:list={['bi-actions', { 'bi-actions--compact': compact }]}>
+  <a class="bi-button bi-button--primary" href={primaryHref}>{label}</a>
+  {secondaryHref && secondaryLabel && <a class="bi-button bi-button--secondary" href={secondaryHref}>{secondaryLabel}</a>}
+</div>
