@@ -1,0 +1,111 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { COMPARISONS, getComparison } from '../../data/comparisons';
+import { formatVerifiedDate } from '../../lib/tool-directory';
+
+export function getStaticPaths() {
+  return COMPARISONS.map((item) => ({ params: { slug: item.slug } }));
+}
+
+const comparison = getComparison(Astro.params.slug ?? '');
+if (!comparison) return Astro.redirect('/compare', 302);
+
+const reviewed = formatVerifiedDate(comparison.lastReviewed);
+const description = `${comparison.title}: ${comparison.job}`;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: comparison.title,
+  description,
+  dateModified: `${comparison.lastReviewed}T00:00:00.000Z`,
+};
+---
+<BaseLayout title={comparison.title} description={description} path={`/compare/${comparison.slug}`} jsonLd={jsonLd}>
+  <article class="wrapper compare-page">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/compare">Compare</a><span>/</span><span>{comparison.title}</span></nav>
+    <header>
+      <span class="eyebrow">{comparison.eyebrow}</span>
+      <h1 class="page-title">{comparison.title}</h1>
+      <p class="lead">{comparison.job}</p>
+      <p class="reviewed">Last reviewed {reviewed}. No benchmark scores. Confirm prices on the vendor sites below.</p>
+    </header>
+
+    <section>
+      <h2>In short</h2>
+      <p class="body">{comparison.summary}</p>
+    </section>
+
+    <section>
+      <h2>Comparison criteria</h2>
+      <div class="criteria">
+        {comparison.criteria.map((item) => (
+          <div>
+            <h3>{item.name}</h3>
+            <p>{item.notes}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section>
+      <h2>Who should pick which</h2>
+      <div class="picks">
+        {comparison.picks.map((pick) => (
+          <article>
+            <h3><a href={`/tools/${pick.toolSlug}`}>{pick.toolName}</a></h3>
+            <p>{pick.pick}</p>
+            <a href={`/tools/${pick.toolSlug}`}>Open the {pick.toolName} tool page →</a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section>
+      <h2>Cost caveats</h2>
+      <p class="body">{comparison.cost}</p>
+    </section>
+
+    <section>
+      <h2>Limitations of this comparison</h2>
+      <ul>{comparison.limitations.map((item) => <li>{item}</li>)}</ul>
+    </section>
+
+    <section>
+      <h2>Tool pages</h2>
+      <div class="tool-links">
+        {comparison.toolSlugs.map((slug) => <a href={`/tools/${slug}`}>/tools/{slug}</a>)}
+      </div>
+    </section>
+
+    <section>
+      <h2>Sources</h2>
+      <ul>
+        {comparison.sources.map((source) => (
+          <li><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></li>
+        ))}
+      </ul>
+    </section>
+
+    <p class="more"><a href="/compare">All comparisons</a> · <a href="/tasks">Start with a job</a> · <a href="/tools">Directory</a></p>
+  </article>
+</BaseLayout>
+<style>
+.compare-page{padding-top:3rem;padding-bottom:5rem;max-width:58rem}
+.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:2rem}
+.breadcrumbs a{color:#aaa69e;text-decoration:none}
+.lead{max-width:46rem;color:#d7d1c8;font-size:1.15rem;line-height:1.7}
+.reviewed{color:#9a948b;font-size:.88rem;padding:.8rem 1rem;border:1px dashed var(--color-border);border-radius:.5rem;background:#10110f}
+.compare-page section{margin:2.25rem 0}
+.body,.criteria p,.picks p,li{color:#aaa69e;line-height:1.7}
+.criteria,.picks{display:grid;gap:1rem}
+.criteria div,.picks article{padding:1.15rem;border:1px solid var(--color-border);border-radius:.6rem;background:#10110f}
+.criteria h3,.picks h3{margin:.1rem 0 .5rem;color:#f1eee7}
+.picks h3 a{color:#f1eee7;text-decoration:none}
+.picks article a{font-size:.85rem;font-weight:700}
+.tool-links{display:flex;flex-wrap:wrap;gap:.6rem}
+.tool-links a{padding:.45rem .7rem;border:1px solid var(--color-border);border-radius:.4rem;color:#e3dfd7;text-decoration:none;font-size:.85rem}
+.more{margin-top:2.5rem;color:#8f8b84}
+.more a{color:#e3dfd7}
+</style>

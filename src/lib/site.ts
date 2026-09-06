@@ -1,6 +1,8 @@
 export const SITE_NAME = 'The Tool Shed';
 export const SITE_DESCRIPTION =
-  'Write a prompt. Get a short video. AI Video Studio plus practical prompts, guides, and tools.';
+  'The Tool Shed helps people pick the right AI tools for a real job, understand the true cost, and put them to work — without the hype.';
+export const SITE_VALUE_PROP =
+  'Walk in with a task. Walk out with a tool (or stack), a clear cost picture, and a practical way to get the job done.';
 
 export function normalizeSlug(input: string): string {
   return input

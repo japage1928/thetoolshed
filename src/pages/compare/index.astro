@@ -1,0 +1,44 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { COMPARISONS } from '../../data/comparisons';
+
+const description = 'Compare AI tools by the job: writing assistants, coding/analysis, and research. No invented benchmark scores — check vendor pricing yourself.';
+---
+<BaseLayout title="Compare AI tools" description={description} path="/compare">
+  <div class="wrapper compare-index">
+    <header class="compare-hero">
+      <span class="eyebrow">COMPARE · AI TOOLS FOR REAL WORK</span>
+      <h1 class="page-title">Compare AI tools by the job</h1>
+      <p>These pages state the job, the criteria, and who should pick which. We do not invent scores. Confirm current prices on the vendor sites linked from each comparison.</p>
+    </header>
+    <section class="compare-grid" aria-label="Flagship comparisons">
+      {COMPARISONS.map((item) => (
+        <article class="compare-card">
+          <span class="eyebrow">{item.eyebrow}</span>
+          <h2><a href={`/compare/${item.slug}`}>{item.title}</a></h2>
+          <p>{item.job}</p>
+          <p class="compare-card__summary">{item.summary}</p>
+          <a class="compare-card__cta" href={`/compare/${item.slug}`}>Read comparison →</a>
+        </article>
+      ))}
+    </section>
+    <p class="compare-note">Need a starting point instead of a head-to-head? <a href="/tasks">Start with the job</a> or <a href="/tools">browse the directory</a>.</p>
+  </div>
+</BaseLayout>
+<style>
+.compare-index{padding-top:3rem;padding-bottom:5rem}
+.compare-hero{max-width:50rem;margin-bottom:2.25rem}
+.compare-hero p{color:var(--color-text-muted);font-size:1.05rem;line-height:1.7}
+.compare-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.compare-card{display:flex;flex-direction:column;padding:1.35rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}
+.compare-card h2{margin:.5rem 0;font-size:1.25rem}
+.compare-card h2 a{color:#f1eee7;text-decoration:none}
+.compare-card p{color:#aaa69e;line-height:1.55}
+.compare-card__summary{font-size:.9rem}
+.compare-card__cta{margin-top:auto;padding-top:1rem;font-weight:700;text-decoration:none}
+.compare-note{margin-top:2rem;color:#8f8b84}
+.compare-note a{color:#e3dfd7}
+@media(max-width:980px){.compare-grid{grid-template-columns:1fr}}
+</style>

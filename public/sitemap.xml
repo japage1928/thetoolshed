@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>https://thetoolshed.work/</loc></url>
 <url><loc>https://thetoolshed.work/tools</loc></url>
+<url><loc>https://thetoolshed.work/compare</loc></url>
+<url><loc>https://thetoolshed.work/compare/chatgpt-vs-claude-vs-grok</loc></url>
+<url><loc>https://thetoolshed.work/compare/chatgpt-vs-claude</loc></url>
+<url><loc>https://thetoolshed.work/compare/perplexity-vs-chatgpt</loc></url>
+<url><loc>https://thetoolshed.work/tasks</loc></url>
 <url><loc>https://thetoolshed.work/prompts</loc></url>
 <url><loc>https://thetoolshed.work/blog</loc></url>
 <url><loc>https://thetoolshed.work/ai-weekly/2026-08-31</loc></url>
@@ -9,6 +14,7 @@
 <url><loc>https://thetoolshed.work/how-to/shopify-store-grok-bot</loc></url>
 <url><loc>https://thetoolshed.work/how-to/manage-n8n-with-chatgpt</loc></url>
 <url><loc>https://thetoolshed.work/how-to/stop-wasting-money-on-ai-apis</loc></url>
+<url><loc>https://thetoolshed.work/news</loc></url>
 <url><loc>https://thetoolshed.work/privacy-policy</loc></url>
 <url><loc>https://thetoolshed.work/about</loc></url>
 </urlset>

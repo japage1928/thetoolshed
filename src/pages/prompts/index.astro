@@ -6,12 +6,12 @@ const items = await getPrompts();
 const categories = [...new Set(items.map((item) => item.category))].sort();
 ---
 
-<BaseLayout title="AI Prompts & Loops | The Tool Shed" description="A searchable library of practical AI prompts and iterative AI loops." path="/prompts">
+<BaseLayout title="AI Prompts & Loops | The Tool Shed" description="Practical prompts and loops for putting a chosen AI tool to work — the Use and Build step after you pick." path="/prompts">
   <div class="wrapper prompts-page">
     <header class="prompts-hero">
-      <span class="eyebrow">THE TOOL SHED</span>
+      <span class="eyebrow">USE / BUILD</span>
       <h1 class="page-title">AI Prompts &amp; Loops</h1>
-      <p>Practical prompts and repeatable AI systems designed to help you get better results from your AI tools.</p>
+      <p>Once you have a tool, these prompts and loops help you put it on a real job. No prompt-dump theater.</p>
     </header>
     <nav class="type-tabs" aria-label="Prompt type"><a class="active" href="/prompts">All</a><a href="/prompts?type=prompt">Prompts</a><a href="/prompts?type=loop">Loops</a></nav>
     {categories.length > 0 && <nav class="category-filters" aria-label="Categories"><a href="/prompts">All categories</a>{categories.map((category) => <a href={`#${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{category}</a>)}</nav>}

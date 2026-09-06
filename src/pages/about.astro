@@ -1,27 +1,29 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE_NAME } from '../lib/site';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_VALUE_PROP } from '../lib/site';
 ---
 
-<BaseLayout title="About" description={`About ${SITE_NAME}.`} path="/about">
+<BaseLayout title="About" description={`${SITE_DESCRIPTION}`} path="/about">
   <div class="wrapper section-page">
     <span class="eyebrow">About</span>
-    <h1 class="page-title">The Tool Shed</h1>
-    <p class="section-intro">A practical home for useful AI software, guides, prompts, and carefully selected tools.</p>
+    <h1 class="page-title">{SITE_NAME}</h1>
+    <p class="section-intro">{SITE_DESCRIPTION}</p>
+    <p class="section-intro">{SITE_VALUE_PROP}</p>
 
     <div class="about-grid">
       <section>
         <h2>What this is</h2>
         <p>
-          The Tool Shed is being built as a place to discover useful things without having to
-          dig through a pile of hype first.
+          A practical AI-tool workshop. You come in with a job. We help you pick a tool or stack,
+          see the cost caveats, and put it to work — without the brochure voice.
         </p>
       </section>
       <section>
-        <h2>What belongs here</h2>
+        <h2>How to use it</h2>
         <p>
-          Practical AI education, tested tools, useful news, and resources that are useful
-          enough to keep around.
+          Discover the job on <a href="/tasks">Tasks</a>, compare options on <a href="/compare">Compare</a>,
+          browse the <a href="/tools">directory</a>, then use <a href="/prompts">prompts</a> and
+          <a href="/how-to">how-to guides</a>. If we have not verified pricing or a pros list, the page says so.
         </p>
       </section>
     </div>
