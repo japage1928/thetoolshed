@@ -30,7 +30,7 @@ const jsonLd = {
   offers: { '@type': 'Offer', url: tool.pricing_url || tool.website_url, description: pricing },
 };
 ---
-<BaseLayout title={`${tool.name} | The Tool Shed`} description={description} path={`/tools/${tool.slug}`} jsonLd={jsonLd}>
+<BaseLayout title={tool.name} description={description} path={`/tools/${tool.slug}`} jsonLd={jsonLd}>
 <div class="wrapper tool-detail">
   <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/tools">AI Tools</a><span>/</span><a href={`/tools/category/${categorySlug(tool.category)}`}>{tool.category}</a><span>/</span><span>{tool.name}</span></nav>
   <article>
