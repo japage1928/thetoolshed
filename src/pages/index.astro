@@ -7,18 +7,14 @@ import { categorySlug, getDirectoryCategories, getDirectoryTools } from '../lib/
 import { COMPARISONS } from '../data/comparisons';
 import { TASKS } from '../data/tasks';
 import { SITE_DESCRIPTION, SITE_VALUE_PROP, slugifyCategory } from '../lib/site';
-import { taskRefs, tasksForCompare, tasksForTool } from '../lib/workshop-match';
+import { selectFinderTools, taskRefs, tasksForCompare, tasksForTool } from '../lib/workshop-match';
 
 const prompts = await getPrompts();
 const latestPosts = (await getPublishedPosts()).slice(0, 3);
 const featuredPrompts = prompts.filter((item) => item.featured).slice(0, 3);
 const categories = (await getDirectoryCategories()).slice(0, 8);
 const directoryTools = await getDirectoryTools();
-const finderToolSlugs = new Set(TASKS.flatMap((task) => taskRefs(task).toolSlugs));
-const finderCategorySlugs = new Set(TASKS.flatMap((task) => taskRefs(task).categorySlugs));
-const finderTools = directoryTools.filter((tool) => (
-  finderToolSlugs.has(tool.slug) || finderCategorySlugs.has(categorySlug(tool.category))
-)).slice(0, 16);
+const finderTools = selectFinderTools(directoryTools, TASKS, categorySlug);
 const homeTitle = 'Find the right AI tool for the job';
 ---
 <BaseLayout title={homeTitle} description={SITE_DESCRIPTION} path="/">
