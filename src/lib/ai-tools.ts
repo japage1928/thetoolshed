@@ -1,63 +1,139 @@
-export type AITool = { name: string; slug: string; description: string; category: string; bestFor: string; tags: string[]; url: string; affiliate?: boolean };
+/**
+ * Static seed / intelligence overlay. Live directory membership is Supabase
+ * `ai_tools` (see `tool-directory.ts`). This module is used to:
+ * - overlay verified workshop notes onto matching remote slugs
+ * - fall back locally when Supabase returns no rows
+ */
+import { TOOL_INTELLIGENCE } from '../data/tools/intelligence';
+import type { AITool } from './tool-schema';
 
-export const AI_TOOL_CATEGORIES = ['AI Assistants','AI Models','Coding & Development','App Builders','Image Generation','Video','Audio & Voice','Writing & Content','Research','Productivity','Automation','AI Agents','Marketing & SEO','Presentations','Design'] as const;
+export type { AITool, DirectoryTool, ToolSource, VerificationConfidence } from './tool-schema';
 
-export const AI_TOOLS: AITool[] = [
-  { name:'ChatGPT', slug:'chatgpt', category:'AI Assistants', bestFor:'General-purpose AI assistance', description:'A general-purpose AI assistant for writing, analysis, coding, research, and everyday tasks.', tags:['assistant','writing','coding','research'], url:'https://chatgpt.com' },
-  { name:'Claude', slug:'claude', category:'AI Assistants', bestFor:'Long-form thinking and writing', description:'An AI assistant for writing, analysis, reasoning, coding, and large-context work.', tags:['assistant','writing','reasoning','coding'], url:'https://claude.ai' },
-  { name:'Grok', slug:'grok', category:'AI Assistants', bestFor:'Conversational AI and current information', description:'An AI assistant from xAI for conversation, reasoning, research, and creative tasks.', tags:['assistant','research','reasoning'], url:'https://grok.com' },
-  { name:'Gemini', slug:'gemini', category:'AI Assistants', bestFor:'Google-connected AI assistance', description:'Google’s AI assistant for conversation, writing, analysis, research, and multimodal work.', tags:['assistant','google','research','multimodal'], url:'https://gemini.google.com' },
-  { name:'Microsoft Copilot', slug:'microsoft-copilot', category:'AI Assistants', bestFor:'AI assistance across Microsoft products', description:'Microsoft’s AI assistant for conversation, research, writing, productivity, and Microsoft 365 workflows.', tags:['assistant','microsoft','productivity'], url:'https://copilot.microsoft.com' },
-  { name:'Meta AI', slug:'meta-ai', category:'AI Assistants', bestFor:'Everyday AI across Meta products', description:'Meta’s consumer AI assistant for conversation, discovery, creative tasks, and image generation.', tags:['assistant','meta','images'], url:'https://www.meta.ai' },
-  { name:'Perplexity', slug:'perplexity', category:'Research', bestFor:'AI-powered web research', description:'An AI search and research platform designed to answer questions using web sources.', tags:['search','research','citations'], url:'https://www.perplexity.ai' },
-  { name:'NotebookLM', slug:'notebooklm', category:'Research', bestFor:'Researching your own sources', description:'A research assistant that works from documents and other sources you provide.', tags:['research','documents','notes'], url:'https://notebooklm.google.com' },
-  { name:'Poe', slug:'poe', category:'AI Assistants', bestFor:'Accessing multiple AI models in one place', description:'A platform for chatting with and exploring a range of AI models and bots.', tags:['assistant','models','chat'], url:'https://poe.com' },
-  { name:'DeepSeek', slug:'deepseek', category:'AI Models', bestFor:'Reasoning and coding', description:'An AI model and assistant platform known for reasoning and coding capabilities.', tags:['model','reasoning','coding','open'], url:'https://www.deepseek.com' },
-  { name:'Qwen', slug:'qwen', category:'AI Models', bestFor:'Open and multilingual AI', description:'Alibaba’s family of AI models covering language, reasoning, coding, and multimodal workloads.', tags:['model','open','multilingual','coding'], url:'https://qwen.ai' },
-  { name:'Mistral AI', slug:'mistral-ai', category:'AI Models', bestFor:'Open and efficient foundation models', description:'A European AI company offering open and commercial language models through its platform and APIs.', tags:['model','open','api','enterprise'], url:'https://mistral.ai' },
-  { name:'Llama', slug:'llama', category:'AI Models', bestFor:'Open-weight AI development', description:'Meta’s family of open-weight large language models used for research, applications, and local AI.', tags:['model','open-weight','llm','local-ai'], url:'https://www.llama.com' },
-  { name:'Hugging Face', slug:'hugging-face', category:'AI Models', bestFor:'Discovering open AI models', description:'A platform for finding, sharing, evaluating, and deploying machine learning models and datasets.', tags:['models','open-source','datasets','developer'], url:'https://huggingface.co' },
-  { name:'OpenRouter', slug:'openrouter', category:'AI Models', bestFor:'Accessing many models through one API', description:'A model-routing platform providing access to a broad range of AI models through a unified API.', tags:['models','api','developer','routing'], url:'https://openrouter.ai' },
-  { name:'Groq', slug:'groq', category:'AI Models', bestFor:'Fast AI inference', description:'An AI inference platform focused on very fast model execution through specialized hardware.', tags:['inference','api','developer','speed'], url:'https://groq.com' },
-  { name:'Kimi', slug:'kimi', category:'AI Models', bestFor:'Long-context reasoning, coding, and agentic work', description:'Moonshot AI’s Kimi model family, including Kimi K3, with multimodal capabilities, a 1M-token context window, long-horizon coding, knowledge work, and deep reasoning.', tags:['model','reasoning','coding','multimodal','agent','long-context'], url:'https://www.moonshot.ai' },
-  { name:'Replit', slug:'replit', category:'App Builders', bestFor:'Building and publishing apps with AI', description:'An AI-powered development environment for creating, editing, and deploying applications.', tags:['coding','app-builder','deployment','ai'], url:'https://replit.com/refer/johnp628?trackingContext=referral-banner', affiliate:true },
-  { name:'Polsia', slug:'polsia', category:'App Builders', bestFor:'Building AI-powered businesses and apps', description:'An AI-native platform for building and operating software products and businesses.', tags:['app-builder','business','ai-agent'], url:'https://polsia.com/?ref=A4GME9RG', affiliate:true },
-  { name:'Cursor', slug:'cursor', category:'Coding & Development', bestFor:'AI-assisted software development', description:'An AI-first code editor designed to help developers understand, write, and modify code.', tags:['coding','developer','editor'], url:'https://www.cursor.com' },
-  { name:'GitHub Copilot', slug:'github-copilot', category:'Coding & Development', bestFor:'AI pair programming', description:'An AI coding assistant integrated into development environments and GitHub workflows.', tags:['coding','developer','github','ide'], url:'https://github.com/features/copilot' },
-  { name:'Claude Code', slug:'claude-code', category:'Coding & Development', bestFor:'Agentic coding from the terminal', description:'Anthropic’s coding agent for working with codebases, files, tools, and development tasks.', tags:['coding','agent','terminal','developer'], url:'https://www.anthropic.com/claude-code' },
-  { name:'Windsurf', slug:'windsurf', category:'Coding & Development', bestFor:'Agentic coding in an AI IDE', description:'An AI-powered development environment with agentic coding and codebase assistance.', tags:['coding','ide','agent','developer'], url:'https://windsurf.com' },
-  { name:'Lovable', slug:'lovable', category:'App Builders', bestFor:'Rapid web app prototyping', description:'An AI-powered app builder for turning natural-language ideas into working web applications.', tags:['app-builder','web-app','prototype'], url:'https://lovable.dev' },
-  { name:'Bolt', slug:'bolt', category:'App Builders', bestFor:'Prompt-to-app development', description:'An AI development environment for generating and running web applications from natural language.', tags:['app-builder','coding','web-app'], url:'https://bolt.new' },
-  { name:'v0', slug:'v0', category:'App Builders', bestFor:'Generating modern web interfaces', description:'An AI interface and application generator focused on modern web development.', tags:['ui','coding','web-app'], url:'https://v0.dev' },
-  { name:'Midjourney', slug:'midjourney', category:'Image Generation', bestFor:'AI-generated visual concepts', description:'A generative AI platform focused on creating images and visual concepts from prompts.', tags:['images','art','creative'], url:'https://www.midjourney.com' },
-  { name:'Adobe Firefly', slug:'adobe-firefly', category:'Image Generation', bestFor:'Generative creative work', description:'Adobe’s generative AI tools for creating and editing images and creative assets.', tags:['images','design','adobe'], url:'https://firefly.adobe.com' },
-  { name:'Ideogram', slug:'ideogram', category:'Image Generation', bestFor:'Images with strong text rendering', description:'An image generation platform known for graphics and images with prominent text and typography.', tags:['images','text','design'], url:'https://ideogram.ai' },
-  { name:'Leonardo AI', slug:'leonardo-ai', category:'Image Generation', bestFor:'Creative image generation', description:'A generative AI platform for creating and editing images, designs, and creative assets.', tags:['images','design','creative'], url:'https://leonardo.ai' },
-  { name:'Recraft', slug:'recraft', category:'Image Generation', bestFor:'Design-focused image generation', description:'An AI design platform for generating and editing images, graphics, and visual assets.', tags:['images','design','graphics'], url:'https://www.recraft.ai' },
-  { name:'Runway', slug:'runway', category:'Video', bestFor:'Generative video creation', description:'A generative AI creative platform for producing and editing video and visual media.', tags:['video','generation','creative'], url:'https://runwayml.com' },
-  { name:'Kling AI', slug:'kling-ai', category:'Video', bestFor:'Generative video and motion', description:'An AI video generation platform for creating and transforming video from text and images.', tags:['video','generation','motion'], url:'https://klingai.com' },
-  { name:'Pika', slug:'pika', category:'Video', bestFor:'Creative AI video effects', description:'An AI video creation platform for generating and transforming short-form video content.', tags:['video','effects','generation'], url:'https://pika.art' },
-  { name:'Luma', slug:'luma', category:'Video', bestFor:'AI video and visual generation', description:'A generative AI platform with video creation and visual generation tools.', tags:['video','generation','creative'], url:'https://lumalabs.ai' },
-  { name:'Synthesia', slug:'synthesia', category:'Video', bestFor:'AI avatar and training videos', description:'A business video platform for creating presenter-led videos with AI avatars and voices.', tags:['video','avatars','training'], url:'https://www.synthesia.io' },
-  { name:'InVideo AI', slug:'invideo-ai', category:'Video', bestFor:'Prompt-to-video content', description:'An AI video creation platform for turning ideas and scripts into videos with media, voice, and editing.', tags:['video','marketing','social'], url:'https://invideo.io' },
-  { name:'HeyGen', slug:'heygen', category:'Video', bestFor:'AI avatar and presenter videos', description:'A video platform for creating AI avatar, presenter, translation, and marketing videos.', tags:['video','avatars','marketing'], url:'https://www.heygen.com' },
-  { name:'ElevenLabs', slug:'elevenlabs', category:'Audio & Voice', bestFor:'AI voice and speech', description:'A generative audio platform focused on realistic speech, voice tools, and audio creation.', tags:['voice','audio','tts'], url:'https://elevenlabs.io' },
-  { name:'Murf', slug:'murf', category:'Audio & Voice', bestFor:'AI voiceovers', description:'An AI voice platform for creating professional voiceovers and narrated content.', tags:['voice','voiceover','audio'], url:'https://murf.ai' },
-  { name:'Suno', slug:'suno', category:'Audio & Voice', bestFor:'AI music creation', description:'A generative music platform for creating songs and musical ideas with AI.', tags:['music','audio','creative'], url:'https://suno.com' },
-  { name:'Udio', slug:'udio', category:'Audio & Voice', bestFor:'AI music generation', description:'A generative music platform for creating original songs and compositions from prompts.', tags:['music','audio','generation'], url:'https://www.udio.com' },
-  { name:'Descript', slug:'descript', category:'Audio & Voice', bestFor:'Editing audio and video like text', description:'A media editor combining transcription, text-based editing, recording, and AI features.', tags:['video','audio','transcription'], url:'https://www.descript.com' },
-  { name:'Jasper', slug:'jasper', category:'Writing & Content', bestFor:'AI marketing content', description:'An AI platform focused on marketing content, brand voice, and content workflows.', tags:['writing','marketing','content'], url:'https://www.jasper.ai' },
-  { name:'Copy.ai', slug:'copy-ai', category:'Writing & Content', bestFor:'AI-assisted marketing workflows', description:'An AI platform for marketing content, sales workflows, and business automation.', tags:['writing','marketing','sales'], url:'https://www.copy.ai' },
-  { name:'Grammarly', slug:'grammarly', category:'Writing & Content', bestFor:'Writing improvement and AI assistance', description:'A writing assistant with grammar, clarity, rewriting, and generative AI features.', tags:['writing','editing','productivity'], url:'https://www.grammarly.com' },
-  { name:'Notion AI', slug:'notion-ai', category:'Productivity', bestFor:'AI inside notes and workspaces', description:'AI features integrated into Notion for writing, summarizing, searching, and workspace productivity.', tags:['productivity','notes','writing'], url:'https://www.notion.com/product/ai' },
-  { name:'Gamma', slug:'gamma', category:'Presentations', bestFor:'AI-generated presentations and documents', description:'An AI workspace for creating presentations, documents, and visual content quickly.', tags:['presentations','documents','productivity'], url:'https://gamma.app' },
-  { name:'Napkin AI', slug:'napkin-ai', category:'Presentations', bestFor:'Turning ideas into visual diagrams', description:'An AI visual storytelling tool that turns text and ideas into diagrams, graphics, and visual explanations.', tags:['diagrams','visuals','presentations'], url:'https://www.napkin.ai' },
-  { name:'Zapier', slug:'zapier', category:'Automation', bestFor:'Connecting apps and automating workflows', description:'An automation platform that connects apps and services to automate repetitive work.', tags:['automation','integrations','workflow'], url:'https://zapier.com' },
-  { name:'Make', slug:'make', category:'Automation', bestFor:'Visual workflow automation', description:'A visual automation platform for connecting services and building multi-step workflows.', tags:['automation','workflow','integrations'], url:'https://www.make.com' },
-  { name:'n8n', slug:'n8n', category:'Automation', bestFor:'Flexible AI and workflow automation', description:'A workflow automation platform suited to programmable automations and AI workflows.', tags:['automation','workflow','ai','developer'], url:'https://n8n.io' },
-  { name:'Manus', slug:'manus', category:'AI Agents', bestFor:'Autonomous multi-step tasks', description:'An AI agent platform designed to carry out multi-step research, analysis, and computer-based tasks.', tags:['agent','automation','research'], url:'https://manus.im' },
-  { name:'Genspark', slug:'genspark', category:'AI Agents', bestFor:'AI-powered research and task execution', description:'An AI workspace combining search, research, content generation, and agent-style task execution.', tags:['agent','research','search'], url:'https://www.genspark.ai' },
-  { name:'Zapier Agents', slug:'zapier-agents', category:'AI Agents', bestFor:'Connecting AI agents to business workflows', description:'AI agents from Zapier designed to work with apps and automate business tasks.', tags:['agents','automation','business'], url:'https://zapier.com/agents' },
-  { name:'HubSpot AI', slug:'hubspot-ai', category:'Marketing & SEO', bestFor:'AI-assisted marketing and CRM work', description:'AI features across HubSpot for marketing, sales, customer service, content, and CRM workflows.', tags:['marketing','crm','sales'], url:'https://www.hubspot.com/artificial-intelligence' },
-  { name:'Canva', slug:'canva', category:'Design', bestFor:'Fast visual content creation', description:'A visual design platform with AI features for presentations, graphics, social content, and more.', tags:['design','social','presentations'], url:'https://www.canva.com' },
+export const AI_TOOL_CATEGORIES = [
+  'AI Assistants',
+  'AI Models',
+  'Coding & Development',
+  'App Builders',
+  'Image Generation',
+  'Video',
+  'Audio & Voice',
+  'Writing & Content',
+  'Research',
+  'Productivity',
+  'Automation',
+  'AI Agents',
+  'Marketing & SEO',
+  'Presentations',
+  'Design',
+] as const;
+
+type ToolSeed = {
+  name: string;
+  slug: string;
+  description: string;
+  category: string;
+  bestFor: string;
+  tags: string[];
+  url: string;
+  company: string;
+  affiliate?: boolean;
+};
+
+const TOOL_SEEDS: ToolSeed[] = [
+  { name: 'ChatGPT', slug: 'chatgpt', company: 'OpenAI', category: 'AI Assistants', bestFor: 'General-purpose AI assistance', description: 'A general-purpose AI assistant for writing, analysis, coding, research, and everyday tasks.', tags: ['assistant', 'writing', 'coding', 'research'], url: 'https://chatgpt.com' },
+  { name: 'Claude', slug: 'claude', company: 'Anthropic', category: 'AI Assistants', bestFor: 'Long-form thinking and writing', description: 'An AI assistant for writing, analysis, reasoning, coding, and large-context work.', tags: ['assistant', 'writing', 'reasoning', 'coding'], url: 'https://claude.ai' },
+  { name: 'Grok', slug: 'grok', company: 'xAI', category: 'AI Assistants', bestFor: 'Conversational AI and current information', description: 'An AI assistant from xAI for conversation, reasoning, research, and creative tasks.', tags: ['assistant', 'research', 'reasoning'], url: 'https://grok.com' },
+  { name: 'Gemini', slug: 'gemini', company: 'Google', category: 'AI Assistants', bestFor: 'Google-connected AI assistance', description: 'Google’s AI assistant for conversation, writing, analysis, research, and multimodal work.', tags: ['assistant', 'google', 'research', 'multimodal'], url: 'https://gemini.google.com' },
+  { name: 'Microsoft Copilot', slug: 'microsoft-copilot', company: 'Microsoft', category: 'AI Assistants', bestFor: 'AI assistance across Microsoft products', description: 'Microsoft’s AI assistant for conversation, research, writing, productivity, and Microsoft 365 workflows.', tags: ['assistant', 'microsoft', 'productivity'], url: 'https://copilot.microsoft.com' },
+  { name: 'Meta AI', slug: 'meta-ai', company: 'Meta', category: 'AI Assistants', bestFor: 'Everyday AI across Meta products', description: 'Meta’s consumer AI assistant for conversation, discovery, creative tasks, and image generation.', tags: ['assistant', 'meta', 'images'], url: 'https://www.meta.ai' },
+  { name: 'Perplexity', slug: 'perplexity', company: 'Perplexity', category: 'Research', bestFor: 'AI-powered web research', description: 'An AI search and research platform designed to answer questions using web sources.', tags: ['search', 'research', 'citations'], url: 'https://www.perplexity.ai' },
+  { name: 'NotebookLM', slug: 'notebooklm', company: 'Google', category: 'Research', bestFor: 'Researching your own sources', description: 'A research assistant that works from documents and other sources you provide.', tags: ['research', 'documents', 'notes'], url: 'https://notebooklm.google.com' },
+  { name: 'Poe', slug: 'poe', company: 'Quora', category: 'AI Assistants', bestFor: 'Accessing multiple AI models in one place', description: 'A platform for chatting with and exploring a range of AI models and bots.', tags: ['assistant', 'models', 'chat'], url: 'https://poe.com' },
+  { name: 'DeepSeek', slug: 'deepseek', company: 'DeepSeek', category: 'AI Models', bestFor: 'Reasoning and coding', description: 'An AI model and assistant platform known for reasoning and coding capabilities.', tags: ['model', 'reasoning', 'coding', 'open'], url: 'https://www.deepseek.com' },
+  { name: 'Qwen', slug: 'qwen', company: 'Alibaba', category: 'AI Models', bestFor: 'Open and multilingual AI', description: 'Alibaba’s family of AI models covering language, reasoning, coding, and multimodal workloads.', tags: ['model', 'open', 'multilingual', 'coding'], url: 'https://qwen.ai' },
+  { name: 'Mistral AI', slug: 'mistral-ai', company: 'Mistral AI', category: 'AI Models', bestFor: 'Open and efficient foundation models', description: 'A European AI company offering open and commercial language models through its platform and APIs.', tags: ['model', 'open', 'api', 'enterprise'], url: 'https://mistral.ai' },
+  { name: 'Llama', slug: 'llama', company: 'Meta', category: 'AI Models', bestFor: 'Open-weight AI development', description: 'Meta’s family of open-weight large language models used for research, applications, and local AI.', tags: ['model', 'open-weight', 'llm', 'local-ai'], url: 'https://www.llama.com' },
+  { name: 'Hugging Face', slug: 'hugging-face', company: 'Hugging Face', category: 'AI Models', bestFor: 'Discovering open AI models', description: 'A platform for finding, sharing, evaluating, and deploying machine learning models and datasets.', tags: ['models', 'open-source', 'datasets', 'developer'], url: 'https://huggingface.co' },
+  { name: 'OpenRouter', slug: 'openrouter', company: 'OpenRouter', category: 'AI Models', bestFor: 'Accessing many models through one API', description: 'A model-routing platform providing access to a broad range of AI models through a unified API.', tags: ['models', 'api', 'developer', 'routing'], url: 'https://openrouter.ai' },
+  { name: 'Groq', slug: 'groq', company: 'Groq', category: 'AI Models', bestFor: 'Fast AI inference', description: 'An AI inference platform focused on very fast model execution through specialized hardware.', tags: ['inference', 'api', 'developer', 'speed'], url: 'https://groq.com' },
+  { name: 'Kimi', slug: 'kimi', company: 'Moonshot AI', category: 'AI Models', bestFor: 'Long-context reasoning, coding, and agentic work', description: 'Moonshot AI’s Kimi model family, including Kimi K3, with multimodal capabilities, a 1M-token context window, long-horizon coding, knowledge work, and deep reasoning.', tags: ['model', 'reasoning', 'coding', 'multimodal', 'agent', 'long-context'], url: 'https://www.moonshot.ai' },
+  { name: 'Replit', slug: 'replit', company: 'Replit', category: 'App Builders', bestFor: 'Building and publishing apps with AI', description: 'An AI-powered development environment for creating, editing, and deploying applications.', tags: ['coding', 'app-builder', 'deployment', 'ai'], url: 'https://replit.com/refer/johnp628?trackingContext=referral-banner', affiliate: true },
+  { name: 'Polsia', slug: 'polsia', company: 'Polsia', category: 'App Builders', bestFor: 'Building AI-powered businesses and apps', description: 'An AI-native platform for building and operating software products and businesses.', tags: ['app-builder', 'business', 'ai-agent'], url: 'https://polsia.com/?ref=A4GME9RG', affiliate: true },
+  { name: 'Cursor', slug: 'cursor', company: 'Anysphere', category: 'Coding & Development', bestFor: 'AI-assisted software development', description: 'An AI-first code editor designed to help developers understand, write, and modify code.', tags: ['coding', 'developer', 'editor'], url: 'https://www.cursor.com' },
+  { name: 'GitHub Copilot', slug: 'github-copilot', company: 'GitHub', category: 'Coding & Development', bestFor: 'AI pair programming', description: 'An AI coding assistant integrated into development environments and GitHub workflows.', tags: ['coding', 'developer', 'github', 'ide'], url: 'https://github.com/features/copilot' },
+  { name: 'Claude Code', slug: 'claude-code', company: 'Anthropic', category: 'Coding & Development', bestFor: 'Agentic coding from the terminal', description: 'Anthropic’s coding agent for working with codebases, files, tools, and development tasks.', tags: ['coding', 'agent', 'terminal', 'developer'], url: 'https://www.anthropic.com/claude-code' },
+  { name: 'Windsurf', slug: 'windsurf', company: 'Windsurf', category: 'Coding & Development', bestFor: 'Agentic coding in an AI IDE', description: 'An AI-powered development environment with agentic coding and codebase assistance.', tags: ['coding', 'ide', 'agent', 'developer'], url: 'https://windsurf.com' },
+  { name: 'Lovable', slug: 'lovable', company: 'Lovable', category: 'App Builders', bestFor: 'Rapid web app prototyping', description: 'An AI-powered app builder for turning natural-language ideas into working web applications.', tags: ['app-builder', 'web-app', 'prototype'], url: 'https://lovable.dev' },
+  { name: 'Bolt', slug: 'bolt', company: 'StackBlitz', category: 'App Builders', bestFor: 'Prompt-to-app development', description: 'An AI development environment for generating and running web applications from natural language.', tags: ['app-builder', 'coding', 'web-app'], url: 'https://bolt.new' },
+  { name: 'v0', slug: 'v0', company: 'Vercel', category: 'App Builders', bestFor: 'Generating modern web interfaces', description: 'An AI interface and application generator focused on modern web development.', tags: ['ui', 'coding', 'web-app'], url: 'https://v0.dev' },
+  { name: 'Midjourney', slug: 'midjourney', company: 'Midjourney', category: 'Image Generation', bestFor: 'AI-generated visual concepts', description: 'A generative AI platform focused on creating images and visual concepts from prompts.', tags: ['images', 'art', 'creative'], url: 'https://www.midjourney.com' },
+  { name: 'Adobe Firefly', slug: 'adobe-firefly', company: 'Adobe', category: 'Image Generation', bestFor: 'Generative creative work', description: 'Adobe’s generative AI tools for creating and editing images and creative assets.', tags: ['images', 'design', 'adobe'], url: 'https://firefly.adobe.com' },
+  { name: 'Ideogram', slug: 'ideogram', company: 'Ideogram', category: 'Image Generation', bestFor: 'Images with strong text rendering', description: 'An image generation platform known for graphics and images with prominent text and typography.', tags: ['images', 'text', 'design'], url: 'https://ideogram.ai' },
+  { name: 'Leonardo AI', slug: 'leonardo-ai', company: 'Leonardo', category: 'Image Generation', bestFor: 'Creative image generation', description: 'A generative AI platform for creating and editing images, designs, and creative assets.', tags: ['images', 'design', 'creative'], url: 'https://leonardo.ai' },
+  { name: 'Recraft', slug: 'recraft', company: 'Recraft', category: 'Image Generation', bestFor: 'Design-focused image generation', description: 'An AI design platform for generating and editing images, graphics, and visual assets.', tags: ['images', 'design', 'graphics'], url: 'https://www.recraft.ai' },
+  { name: 'Runway', slug: 'runway', company: 'Runway', category: 'Video', bestFor: 'Generative video creation', description: 'A generative AI creative platform for producing and editing video and visual media.', tags: ['video', 'generation', 'creative'], url: 'https://runwayml.com' },
+  { name: 'Kling AI', slug: 'kling-ai', company: 'Kuaishou', category: 'Video', bestFor: 'Generative video and motion', description: 'An AI video generation platform for creating and transforming video from text and images.', tags: ['video', 'generation', 'motion'], url: 'https://klingai.com' },
+  { name: 'Pika', slug: 'pika', company: 'Pika', category: 'Video', bestFor: 'Creative AI video effects', description: 'An AI video creation platform for generating and transforming short-form video content.', tags: ['video', 'effects', 'generation'], url: 'https://pika.art' },
+  { name: 'Luma', slug: 'luma', company: 'Luma AI', category: 'Video', bestFor: 'AI video and visual generation', description: 'A generative AI platform with video creation and visual generation tools.', tags: ['video', 'generation', 'creative'], url: 'https://lumalabs.ai' },
+  { name: 'Synthesia', slug: 'synthesia', company: 'Synthesia', category: 'Video', bestFor: 'AI avatar and training videos', description: 'A business video platform for creating presenter-led videos with AI avatars and voices.', tags: ['video', 'avatars', 'training'], url: 'https://www.synthesia.io' },
+  { name: 'InVideo AI', slug: 'invideo-ai', company: 'InVideo', category: 'Video', bestFor: 'Prompt-to-video content', description: 'An AI video creation platform for turning ideas and scripts into videos with media, voice, and editing.', tags: ['video', 'marketing', 'social'], url: 'https://invideo.io' },
+  { name: 'HeyGen', slug: 'heygen', company: 'HeyGen', category: 'Video', bestFor: 'AI avatar and presenter videos', description: 'A video platform for creating AI avatar, presenter, translation, and marketing videos.', tags: ['video', 'avatars', 'marketing'], url: 'https://www.heygen.com' },
+  { name: 'ElevenLabs', slug: 'elevenlabs', company: 'ElevenLabs', category: 'Audio & Voice', bestFor: 'AI voice and speech', description: 'A generative audio platform focused on realistic speech, voice tools, and audio creation.', tags: ['voice', 'audio', 'tts'], url: 'https://elevenlabs.io' },
+  { name: 'Murf', slug: 'murf', company: 'Murf', category: 'Audio & Voice', bestFor: 'AI voiceovers', description: 'An AI voice platform for creating professional voiceovers and narrated content.', tags: ['voice', 'voiceover', 'audio'], url: 'https://murf.ai' },
+  { name: 'Suno', slug: 'suno', company: 'Suno', category: 'Audio & Voice', bestFor: 'AI music creation', description: 'A generative music platform for creating songs and musical ideas with AI.', tags: ['music', 'audio', 'creative'], url: 'https://suno.com' },
+  { name: 'Udio', slug: 'udio', company: 'Udio', category: 'Audio & Voice', bestFor: 'AI music generation', description: 'A generative music platform for creating original songs and compositions from prompts.', tags: ['music', 'audio', 'generation'], url: 'https://www.udio.com' },
+  { name: 'Descript', slug: 'descript', company: 'Descript', category: 'Audio & Voice', bestFor: 'Editing audio and video like text', description: 'A media editor combining transcription, text-based editing, recording, and AI features.', tags: ['video', 'audio', 'transcription'], url: 'https://www.descript.com' },
+  { name: 'Jasper', slug: 'jasper', company: 'Jasper', category: 'Writing & Content', bestFor: 'AI marketing content', description: 'An AI platform focused on marketing content, brand voice, and content workflows.', tags: ['writing', 'marketing', 'content'], url: 'https://www.jasper.ai' },
+  { name: 'Copy.ai', slug: 'copy-ai', company: 'Copy.ai', category: 'Writing & Content', bestFor: 'AI-assisted marketing workflows', description: 'An AI platform for marketing content, sales workflows, and business automation.', tags: ['writing', 'marketing', 'sales'], url: 'https://www.copy.ai' },
+  { name: 'Grammarly', slug: 'grammarly', company: 'Grammarly', category: 'Writing & Content', bestFor: 'Writing improvement and AI assistance', description: 'A writing assistant with grammar, clarity, rewriting, and generative AI features.', tags: ['writing', 'editing', 'productivity'], url: 'https://www.grammarly.com' },
+  { name: 'Notion AI', slug: 'notion-ai', company: 'Notion', category: 'Productivity', bestFor: 'AI inside notes and workspaces', description: 'AI features integrated into Notion for writing, summarizing, searching, and workspace productivity.', tags: ['productivity', 'notes', 'writing'], url: 'https://www.notion.com/product/ai' },
+  { name: 'Gamma', slug: 'gamma', company: 'Gamma', category: 'Presentations', bestFor: 'AI-generated presentations and documents', description: 'An AI workspace for creating presentations, documents, and visual content quickly.', tags: ['presentations', 'documents', 'productivity'], url: 'https://gamma.app' },
+  { name: 'Napkin AI', slug: 'napkin-ai', company: 'Napkin', category: 'Presentations', bestFor: 'Turning ideas into visual diagrams', description: 'An AI visual storytelling tool that turns text and ideas into diagrams, graphics, and visual explanations.', tags: ['diagrams', 'visuals', 'presentations'], url: 'https://www.napkin.ai' },
+  { name: 'Zapier', slug: 'zapier', company: 'Zapier', category: 'Automation', bestFor: 'Connecting apps and automating workflows', description: 'An automation platform that connects apps and services to automate repetitive work.', tags: ['automation', 'integrations', 'workflow'], url: 'https://zapier.com' },
+  { name: 'Make', slug: 'make', company: 'Make', category: 'Automation', bestFor: 'Visual workflow automation', description: 'A visual automation platform for connecting services and building multi-step workflows.', tags: ['automation', 'workflow', 'integrations'], url: 'https://www.make.com' },
+  { name: 'n8n', slug: 'n8n', company: 'n8n', category: 'Automation', bestFor: 'Flexible AI and workflow automation', description: 'A workflow automation platform suited to programmable automations and AI workflows.', tags: ['automation', 'workflow', 'ai', 'developer'], url: 'https://n8n.io' },
+  { name: 'Manus', slug: 'manus', company: 'Manus', category: 'AI Agents', bestFor: 'Autonomous multi-step tasks', description: 'An AI agent platform designed to carry out multi-step research, analysis, and computer-based tasks.', tags: ['agent', 'automation', 'research'], url: 'https://manus.im' },
+  { name: 'Genspark', slug: 'genspark', company: 'Genspark', category: 'AI Agents', bestFor: 'AI-powered research and task execution', description: 'An AI workspace combining search, research, content generation, and agent-style task execution.', tags: ['agent', 'research', 'search'], url: 'https://www.genspark.ai' },
+  { name: 'Zapier Agents', slug: 'zapier-agents', company: 'Zapier', category: 'AI Agents', bestFor: 'Connecting AI agents to business workflows', description: 'AI agents from Zapier designed to work with apps and automate business tasks.', tags: ['agents', 'automation', 'business'], url: 'https://zapier.com/agents' },
+  { name: 'HubSpot AI', slug: 'hubspot-ai', company: 'HubSpot', category: 'Marketing & SEO', bestFor: 'AI-assisted marketing and CRM work', description: 'AI features across HubSpot for marketing, sales, customer service, content, and CRM workflows.', tags: ['marketing', 'crm', 'sales'], url: 'https://www.hubspot.com/artificial-intelligence' },
+  { name: 'Canva', slug: 'canva', company: 'Canva', category: 'Design', bestFor: 'Fast visual content creation', description: 'A visual design platform with AI features for presentations, graphics, social content, and more.', tags: ['design', 'social', 'presentations'], url: 'https://www.canva.com' },
 ];
+
+function hydrateTool(seed: ToolSeed): AITool {
+  const overlay = TOOL_INTELLIGENCE[seed.slug] ?? {};
+  return {
+    name: seed.name,
+    slug: seed.slug,
+    description: seed.description,
+    category: seed.category,
+    bestFor: seed.bestFor,
+    tags: seed.tags,
+    url: seed.url,
+    company: overlay.company ?? seed.company,
+    primary_use_cases: overlay.primary_use_cases ?? [seed.bestFor],
+    free_tier: overlay.free_tier ?? null,
+    pricing_summary: overlay.pricing_summary,
+    pricing_url: overlay.pricing_url ?? seed.url,
+    api_available: overlay.api_available ?? null,
+    strengths: overlay.strengths ?? [],
+    weaknesses: overlay.weaknesses ?? [],
+    best_fit: overlay.best_fit ?? [],
+    poor_fit: overlay.poor_fit ?? [],
+    alternatives: overlay.alternatives ?? [],
+    limitations: overlay.limitations ?? [],
+    affiliate: seed.affiliate,
+    last_verified_at: overlay.last_verified_at ?? null,
+    verification_confidence: overlay.verification_confidence ?? 'unverified',
+    sources: overlay.sources ?? [{ label: `${seed.name} website`, url: seed.url }],
+  };
+}
+
+export const AI_TOOLS: AITool[] = TOOL_SEEDS.map(hydrateTool);
+
+export function getCatalogTool(slug: string): AITool | undefined {
+  return AI_TOOLS.find((tool) => tool.slug === slug);
+}
+
+export function getCatalogCategories(): string[] {
+  return [...AI_TOOL_CATEGORIES];
+}
