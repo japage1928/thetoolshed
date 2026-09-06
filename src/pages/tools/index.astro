@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { categorySlug, getDirectoryCategories, getDirectoryTools } from '../../lib/tool-directory';
+import ToolCard from '../../components/ToolCard.astro';
+import { getDirectoryCategories, getDirectoryTools } from '../../lib/tool-directory';
+import { COMPARISONS } from '../../data/comparisons';
+import { TASKS } from '../../data/tasks';
 
 const tools = await getDirectoryTools();
 const categories = await getDirectoryCategories();
@@ -24,7 +27,7 @@ const jsonLd = {
 ---
 
 <BaseLayout title="Find the right AI tool" description={description} path="/tools" {jsonLd}>
-  <div class="wrapper directory-page">
+  <div class="wrapper directory-page" data-directory>
     <header class="directory-hero">
       <span class="eyebrow">DISCOVER · AI TOOLS FOR REAL WORK</span>
       <h1 class="page-title">Find the right AI tool for the job.</h1>
@@ -37,85 +40,49 @@ const jsonLd = {
         <input id="tool-search" type="search" placeholder="Search tools, jobs, or categories…" autocomplete="off" />
       </label>
       <nav class="category-links" aria-label="AI tool categories">
-        {categories.map((category) => <a href={`/tools/category/${categorySlug(category)}`}>{category}</a>)}
+        <a class="tool-filter is-active" href="/tools" data-category="All">All</a>
+        {categories.map((category) => <a class="tool-filter" href={`/tools/category/${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} data-category={category}>{category}</a>)}
       </nav>
     </section>
 
-    <div class="directory-meta"><span><strong id="tool-count">{tools.length}</strong> tools</span><a href="/compare">Popular comparisons →</a></div>
+    <div class="directory-meta">
+      <span><strong id="tool-count">{tools.length}</strong> tools</span>
+      <a href="/compare">Popular comparisons →</a>
+    </div>
 
-    <section class="tool-grid" id="tool-grid" aria-label="AI tools">
-      {tools.map((tool) => {
-        const domain = new URL(tool.website_url).hostname.replace(/^www\./, '');
-        const iconUrl = tool.icon_url || `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-        return (
-          <article class="tool-card" data-search={`${tool.name} ${tool.description} ${tool.category} ${tool.best_for} ${tool.tags.join(' ')} ${tool.company ?? ''}`.toLowerCase()}>
-            <div class="tool-card__topline">
-              <span class="tool-card__category">{tool.category}</span>
-              {tool.is_affiliate && <span class="tool-card__badge">Partner</span>}
-              {tool.verification_confidence === 'unverified' && <span class="tool-card__unverified">Unverified notes</span>}
-            </div>
-            <h2 class="tool-name"><img src={iconUrl} alt="" width="32" height="32" loading="lazy" />{tool.name}</h2>
-            <p>{tool.description}</p>
-            <div class="tool-card__best"><strong>Best for:</strong> {tool.best_for}</div>
-            <div class="tool-card__tags">{tool.tags.slice(0, 4).map((tag) => <span>{tag}</span>)}</div>
-            <a class="tool-card__link" href={`/tools/${tool.slug}`}>{tool.name} <span aria-hidden="true">→</span></a>
-          </article>
-        );
-      })}
+    <section class="dense-grid" id="tool-grid" aria-label="AI tools">
+      {tools.map((tool) => <ToolCard tool={tool} />)}
     </section>
-    <p class="tools-empty" id="tools-empty" hidden>No tools match that search.</p>
+
+    <div class="tools-empty" id="tools-empty" hidden>
+      <p>No tools match that search.</p>
+      <p>Try a written compare or start from a job instead.</p>
+      <div class="empty-links">
+        {COMPARISONS.slice(0, 3).map((item) => <a class="shed-chip" href={`/compare/${item.slug}`}>{item.title}</a>)}
+        {TASKS.slice(0, 3).map((task) => <a class="shed-chip" href={`/tasks#${task.slug}`}>{task.label}</a>)}
+      </div>
+    </div>
     <p class="tools-disclosure">Some Tool Shed links may be affiliate links. When they are, we may earn a commission if you use the link to sign up or purchase. This does not change the price you pay. Pricing on tool pages is labeled when we have not verified it.</p>
   </div>
 </BaseLayout>
 
 <style>
-  .directory-page{padding-top:3rem;padding-bottom:5rem}
-  .directory-hero{max-width:54rem;margin-bottom:2rem}
-  .directory-hero p{max-width:42rem;color:var(--color-text-muted);font-size:1.05rem;line-height:1.7}
-  .directory-controls{border:1px solid var(--color-border);background:rgba(13,13,12,.82);border-radius:.65rem;padding:1rem;margin-bottom:1.25rem}
-  .tools-search input{width:100%;box-sizing:border-box;border:1px solid #3a342c;background:#080909;color:var(--color-text);border-radius:.4rem;padding:.8rem .9rem;outline:none}
+  .directory-page{padding-top:2.2rem;padding-bottom:4rem}
+  .directory-hero{max-width:54rem;margin-bottom:1.25rem}
+  .directory-hero p{max-width:42rem;color:var(--color-text-muted);font-size:1.02rem;line-height:1.6}
+  .directory-controls{border:1px solid var(--color-border);background:rgba(13,13,12,.82);border-radius:.65rem;padding:.75rem;margin-bottom:.85rem;position:sticky;top:.65rem;z-index:5;backdrop-filter:blur(12px)}
+  .tools-search input{width:100%;box-sizing:border-box;border:1px solid #3a342c;background:#080909;color:var(--color-text);border-radius:.4rem;padding:.7rem .8rem;outline:none}
   .tools-search input:focus{border-color:var(--shed-blue);box-shadow:0 0 0 3px rgba(23,140,255,.12)}
-  .category-links{display:flex;gap:.55rem;flex-wrap:wrap;margin:.75rem 0 0}
-  .category-links a{padding:.45rem .65rem;border:1px solid var(--color-border);border-radius:999px;color:#d8d3cb;text-decoration:none;font-size:.72rem;font-weight:700}
-  .category-links a:hover,.category-links a:focus-visible{border-color:#5b6f8d;color:#fff}
-  .directory-meta{display:flex;justify-content:space-between;gap:1rem;color:#77736d;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 1rem}
+  .category-links{display:flex;gap:.4rem;flex-wrap:wrap;margin:.65rem 0 0}
+  .directory-meta{display:flex;justify-content:space-between;gap:1rem;color:#77736d;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 .75rem}
   .directory-meta strong{color:#d7d1c8}
   .directory-meta a{color:#aaa69e;text-decoration:none}
-  .tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
-  .tool-card{display:flex;flex-direction:column;min-height:17rem;padding:1.15rem;border:1px solid var(--color-border);border-radius:.6rem;background:linear-gradient(145deg,#11110f,#0b0c0c)}
-  .tool-card__topline{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap}
-  .tool-card__category{color:var(--shed-blue);font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
-  .tool-card__badge{color:#d9b27b;border:1px solid rgba(200,139,75,.35);background:rgba(154,93,47,.12);border-radius:999px;padding:.2rem .45rem;font-size:.62rem;text-transform:uppercase}
-  .tool-card__unverified{color:#8f8b84;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em}
-  .tool-name{display:flex;align-items:center;gap:.65rem;margin:.7rem 0 .45rem;color:#f1eee7;font-size:1.25rem}
-  .tool-name img{width:32px;height:32px;border-radius:7px;background:#fff;padding:3px;box-sizing:border-box}
-  .tool-card p{color:#aaa69e;line-height:1.55;font-size:.9rem;margin:0}
-  .tool-card__best{margin-top:.8rem;color:#c7c2ba;font-size:.78rem;line-height:1.45}
-  .tool-card__tags{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:auto;padding-top:1rem}
-  .tool-card__tags span{color:#77736d;background:#151412;border:1px solid #29251f;border-radius:.25rem;padding:.18rem .38rem;font-size:.65rem}
-  .tool-card__link{display:flex;justify-content:space-between;margin-top:.85rem;padding-top:.75rem;border-top:1px solid #25221e;color:#e9eef2;text-decoration:none;font-size:.82rem;font-weight:700}
-  .tools-empty{padding:3rem 1rem;text-align:center;color:var(--color-text-muted);border:1px dashed var(--color-border);border-radius:.6rem;margin-top:1rem}
-  .tools-disclosure{max-width:48rem;margin:2.5rem auto 0;color:#6f6b65;font-size:.72rem;line-height:1.6;text-align:center}
-  .tool-card[hidden]{display:none!important}
-  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-  @media(max-width:980px){.tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  @media(max-width:640px){.tool-grid{grid-template-columns:1fr}}
+  .tools-empty{padding:1.4rem 1rem;text-align:center;color:var(--color-text-muted);border:1px dashed var(--color-border);border-radius:.6rem;margin-top:.75rem;background:#10110f}
+  .tools-empty p{margin:.25rem 0}
+  .empty-links{display:flex;flex-wrap:wrap;justify-content:center;gap:.45rem;margin-top:.8rem}
+  .tools-disclosure{max-width:48rem;margin:2rem auto 0;color:#6f6b65;font-size:.72rem;line-height:1.6;text-align:center}
+  @media(max-width:640px){.directory-controls{position:static}}
 </style>
 <script>
-const search=document.querySelector<HTMLInputElement>('#tool-search');
-const cards=Array.from(document.querySelectorAll<HTMLElement>('.tool-card'));
-const count=document.querySelector<HTMLElement>('#tool-count');
-const empty=document.querySelector<HTMLElement>('#tools-empty');
-function render(){
-  const query=(search?.value??'').trim().toLowerCase();
-  let visible=0;
-  cards.forEach((card)=>{
-    const matches=!query||(card.dataset.search??'').includes(query);
-    card.hidden=!matches;
-    if(matches) visible++;
-  });
-  if(count) count.textContent=String(visible);
-  if(empty) empty.hidden=visible!==0;
-}
-search?.addEventListener('input',render);
+  import '../../scripts/directory-filter.ts';
 </script>

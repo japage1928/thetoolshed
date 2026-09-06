@@ -1,0 +1,457 @@
+/* Shared workshop interactivity: dense cards, playful motion, no hype theater. */
+
+:root {
+  --workshop-gap: 0.62rem;
+  --workshop-pad: 0.82rem;
+  --workshop-radius: 0.55rem;
+  --workshop-wood: #c88b4b;
+  --workshop-wood-soft: rgba(200, 139, 75, 0.16);
+  --workshop-blue-soft: rgba(23, 140, 255, 0.14);
+}
+
+.shed-card,
+.shed-chip,
+.shed-btn,
+.hero-button,
+.path-card,
+.tool-card,
+.compare-card,
+.task-card,
+.finder-tile,
+.resource-panel,
+.db-post-card {
+  transition:
+    transform 0.16s cubic-bezier(0.2, 1.45, 0.32, 1),
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.shed-card,
+.tool-card,
+.compare-card,
+.task-card,
+.finder-tile,
+.path-card,
+.resource-panel,
+.db-post-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--workshop-radius);
+  background: linear-gradient(165deg, #151310 0%, #0c0d0c 78%);
+}
+
+.shed-card:hover,
+.shed-card:focus-within,
+.tool-card:hover,
+.tool-card:focus-within,
+.compare-card:hover,
+.compare-card:focus-within,
+.task-card:hover,
+.task-card:focus-within,
+.finder-tile:hover,
+.finder-tile:focus-within,
+.path-card:hover,
+.path-card:focus-within,
+.resource-panel:hover,
+.resource-panel:focus-within,
+.db-post-card:hover {
+  transform: translateY(-3px) rotate(-0.28deg);
+  border-color: #b9854d;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(200, 139, 75, 0.18);
+}
+
+.shed-card:active,
+.tool-card:active,
+.compare-card:active,
+.task-card:active,
+.finder-tile:active,
+.path-card:active,
+.shed-chip:active,
+.shed-btn:active,
+.hero-button:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.shed-chip,
+.tool-filter,
+.category-links a,
+.task-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: #e9e4d8;
+  background: #12110e;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.shed-chip:hover,
+.tool-filter:hover,
+.category-links a:hover,
+.task-chip:hover {
+  transform: translateY(-2px) rotate(-1.2deg);
+  border-color: var(--workshop-wood);
+  color: #fff;
+  background: #1a1610;
+}
+
+.shed-chip:focus-visible,
+.tool-filter:focus-visible,
+.category-links a:focus-visible,
+.task-chip:focus-visible,
+.shed-btn:focus-visible,
+.hero-button:focus-visible,
+.tools-search input:focus-visible,
+.compare-picker select:focus-visible,
+.compare-picker input:focus-visible {
+  outline: 2px solid var(--shed-blue);
+  outline-offset: 2px;
+}
+
+.shed-chip.is-active,
+.tool-filter.is-active,
+.category-links a.is-active,
+.task-chip.is-active,
+.stage-rail a.is-active {
+  border-color: var(--shed-blue);
+  color: #fff;
+  background: var(--workshop-blue-soft);
+  box-shadow: 0 0 0 3px rgba(23, 140, 255, 0.1);
+  transform: none;
+}
+
+.shed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #55504a;
+  border-radius: 0.42rem;
+  background: #12110e;
+  color: #f1eee7;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.shed-btn:hover {
+  border-color: var(--workshop-wood);
+  color: #fff;
+}
+
+.shed-btn--primary {
+  background: var(--shed-blue);
+  border-color: var(--shed-blue);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(23, 140, 255, 0.22);
+}
+
+.hero-button {
+  border-radius: 0.42rem;
+}
+
+.hero-button:hover {
+  transform: translateY(-2px) rotate(-0.4deg);
+}
+
+.hero-button--primary:hover {
+  box-shadow: 0 8px 22px rgba(23, 140, 255, 0.28);
+}
+
+.site-header__mark {
+  transition: transform 0.18s cubic-bezier(0.2, 1.45, 0.32, 1), box-shadow 0.18s ease;
+}
+
+.site-header__brand:hover .site-header__mark {
+  transform: rotate(-8deg) scale(1.06);
+  box-shadow: 0 0 16px rgba(23, 140, 255, 0.35);
+}
+
+.badge,
+.tool-card__badge,
+.unverified-badge,
+.reviewed-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.14rem 0.42rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tool-card__badge {
+  color: #d9b27b;
+  border: 1px solid rgba(200, 139, 75, 0.35);
+  background: rgba(154, 93, 47, 0.12);
+}
+
+.reviewed-badge {
+  color: #9ec9a6;
+  border: 1px solid rgba(95, 191, 116, 0.28);
+  background: rgba(47, 109, 60, 0.14);
+}
+
+.unverified-badge,
+.tool-card__unverified {
+  color: #c4b49a;
+  border: 1px solid rgba(200, 139, 75, 0.28);
+  background: rgba(154, 93, 47, 0.08);
+  border-radius: 999px;
+  padding: 0.14rem 0.42rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.dense-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--workshop-gap);
+}
+
+.dense-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tool-card,
+.finder-tile,
+.compare-card,
+.task-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--workshop-pad);
+  min-height: 0;
+}
+
+.tool-card__topline,
+.tile-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tool-card__marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  justify-content: flex-end;
+}
+
+.tool-card__category {
+  color: var(--shed-blue);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.tool-name,
+.finder-tile strong,
+.compare-card h2,
+.compare-card h3,
+.task-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.45rem 0 0.28rem;
+  color: #f1eee7;
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.tool-name img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #fff;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.tool-card p,
+.compare-card p,
+.task-card p,
+.finder-tile p,
+.finder-tile > span:last-child {
+  color: #aaa69e;
+  line-height: 1.45;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.tool-card__best {
+  margin-top: 0.45rem;
+  color: #c7c2ba;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.tool-card__tags {
+  display: flex;
+  gap: 0.28rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.65rem;
+}
+
+.tool-card__tags span {
+  color: #77736d;
+  background: #151412;
+  border: 1px solid #29251f;
+  border-radius: 0.25rem;
+  padding: 0.12rem 0.32rem;
+  font-size: 0.62rem;
+}
+
+.tool-card__link,
+.compare-card__cta,
+.task-card__cta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid #25221e;
+  color: #e9eef2;
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tool-card[hidden],
+.finder-tile[hidden],
+.compare-card[hidden],
+.task-card[hidden] {
+  display: none !important;
+}
+
+.finder-tile {
+  color: inherit;
+  text-decoration: none;
+  gap: 0.28rem;
+}
+
+.finder-tile strong {
+  margin: 0.15rem 0;
+}
+
+.kind-pill {
+  color: var(--workshop-wood);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.stage-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.stage-rail a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.62rem;
+  border: 1px solid #3a342c;
+  border-radius: 999px;
+  color: #c7c2ba;
+  text-decoration: none;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage-rail a:hover,
+.stage-rail a:focus-visible {
+  color: #fff;
+  border-color: var(--shed-blue);
+}
+
+.stage-rail__dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #5a534b;
+}
+
+.stage-rail a.is-active .stage-rail__dot,
+.stage-rail a:hover .stage-rail__dot {
+  background: var(--workshop-wood);
+  box-shadow: 0 0 8px rgba(200, 139, 75, 0.6);
+}
+
+@media (max-width: 1080px) {
+  .dense-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .dense-grid,
+  .dense-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .dense-grid,
+  .dense-grid--3 { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shed-card,
+  .shed-chip,
+  .shed-btn,
+  .hero-button,
+  .path-card,
+  .tool-card,
+  .compare-card,
+  .task-card,
+  .finder-tile,
+  .resource-panel,
+  .db-post-card,
+  .tool-filter,
+  .category-links a,
+  .task-chip,
+  .site-header__mark {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

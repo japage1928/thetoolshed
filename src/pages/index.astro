@@ -1,17 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import EmailCapture from '../components/EmailCapture.astro';
+import ToolCard from '../components/ToolCard.astro';
 import { getPublishedPosts, getPrompts } from '../lib/supabase';
-import { getDirectoryCategories } from '../lib/tool-directory';
+import { categorySlug, getDirectoryCategories, getDirectoryTools } from '../lib/tool-directory';
 import { COMPARISONS } from '../data/comparisons';
 import { TASKS } from '../data/tasks';
 import { SITE_DESCRIPTION, SITE_VALUE_PROP, slugifyCategory } from '../lib/site';
+import { taskRefs, tasksForCompare, tasksForTool } from '../lib/workshop-match';
 
 const prompts = await getPrompts();
 const latestPosts = (await getPublishedPosts()).slice(0, 3);
 const featuredPrompts = prompts.filter((item) => item.featured).slice(0, 3);
 const categories = (await getDirectoryCategories()).slice(0, 8);
-const starterTasks = TASKS.slice(0, 8);
+const directoryTools = await getDirectoryTools();
+const finderToolSlugs = new Set(TASKS.flatMap((task) => taskRefs(task).toolSlugs));
+const finderCategorySlugs = new Set(TASKS.flatMap((task) => taskRefs(task).categorySlugs));
+const finderTools = directoryTools.filter((tool) => (
+  finderToolSlugs.has(tool.slug) || finderCategorySlugs.has(categorySlug(tool.category))
+)).slice(0, 16);
 const homeTitle = 'Find the right AI tool for the job';
 ---
 <BaseLayout title={homeTitle} description={SITE_DESCRIPTION} path="/">
@@ -33,11 +40,17 @@ const homeTitle = 'Find the right AI tool for the job';
       <a class="hero-button" href="/compare">Compare AI tools</a>
       <a class="hero-button" href="/tasks">Start with the job</a>
     </div>
-    <p class="shed-hero__path" aria-label="How the shed is organized">Discover → Compare → Use → Build → Scale</p>
+    <nav class="stage-rail" aria-label="How the shed is organized">
+      <a href="#task-finder" data-stage="discover" class="is-active"><span class="stage-rail__dot" aria-hidden="true"></span>Discover</a>
+      <a href="#compare-heading" data-stage="compare"><span class="stage-rail__dot" aria-hidden="true"></span>Compare</a>
+      <a href="#use-heading" data-stage="use"><span class="stage-rail__dot" aria-hidden="true"></span>Use</a>
+      <a href="#use-heading" data-stage="build"><span class="stage-rail__dot" aria-hidden="true"></span>Build</a>
+      <a href="/how-to/stop-wasting-money-on-ai-apis" data-stage="scale"><span class="stage-rail__dot" aria-hidden="true"></span>Scale</a>
+    </nav>
   </div>
 </section>
 
-<section class="home-section" aria-labelledby="path-heading">
+<section class="home-section home-section--tight" aria-labelledby="path-heading">
   <div class="wrapper">
     <div class="section-heading">
       <div>
@@ -46,16 +59,16 @@ const homeTitle = 'Find the right AI tool for the job';
       </div>
     </div>
     <div class="path-grid">
-      <a class="path-card" href="/tasks"><span class="eyebrow">Discover</span><strong>Start with the job</strong><p>Name the task. We point you at tools and compares that fit it.</p></a>
-      <a class="path-card" href="/compare"><span class="eyebrow">Compare</span><strong>See the real differences</strong><p>Who should pick which — without invented scores.</p></a>
-      <a class="path-card" href="/prompts"><span class="eyebrow">Use</span><strong>Put it to work</strong><p>Prompts and loops for the tool you actually chose.</p></a>
-      <a class="path-card" href="/how-to"><span class="eyebrow">Build</span><strong>Make the workflow stick</strong><p>Guides for n8n, APIs, and jobs that have a kill switch.</p></a>
-      <a class="path-card" href="/how-to/stop-wasting-money-on-ai-apis"><span class="eyebrow">Scale</span><strong>Watch the meter</strong><p>Cost caveats and vendor links — not a second product pitch.</p></a>
+      <a class="path-card" href="/tasks"><span class="path-card__num" aria-hidden="true">01</span><span class="eyebrow">Discover</span><strong>Start with the job</strong><p>Name the task. We point you at tools and compares that fit it.</p></a>
+      <a class="path-card" href="/compare"><span class="path-card__num" aria-hidden="true">02</span><span class="eyebrow">Compare</span><strong>See the real differences</strong><p>Who should pick which — without invented scores.</p></a>
+      <a class="path-card" href="/prompts"><span class="path-card__num" aria-hidden="true">03</span><span class="eyebrow">Use</span><strong>Put it to work</strong><p>Prompts and loops for the tool you actually chose.</p></a>
+      <a class="path-card" href="/how-to"><span class="path-card__num" aria-hidden="true">04</span><span class="eyebrow">Build</span><strong>Make the workflow stick</strong><p>Guides for n8n, APIs, and jobs that have a kill switch.</p></a>
+      <a class="path-card" href="/how-to/stop-wasting-money-on-ai-apis"><span class="path-card__num" aria-hidden="true">05</span><span class="eyebrow">Scale</span><strong>Watch the meter</strong><p>Cost caveats and vendor links — not a second product pitch.</p></a>
     </div>
   </div>
 </section>
 
-<section class="home-section home-section--resources" aria-labelledby="tasks-heading">
+<section class="home-section home-section--tight home-section--resources" aria-labelledby="tasks-heading" id="task-finder" data-task-finder>
   <div class="wrapper">
     <div class="section-heading">
       <div>
@@ -64,13 +77,48 @@ const homeTitle = 'Find the right AI tool for the job';
       </div>
       <a href="/tasks">All tasks →</a>
     </div>
-    <div class="task-chip-row">
-      {starterTasks.map((task) => <a class="task-chip" href={task.href}>{task.label}</a>)}
+    <div class="finder-chip-grid" role="group" aria-label="Task finder">
+      {TASKS.map((task) => {
+        const refs = taskRefs(task);
+        const peek = [...refs.toolSlugs, ...refs.compareSlugs].slice(0, 3);
+        return (
+          <a
+            class="finder-chip"
+            href={`/tasks#${task.slug}`}
+            data-task={task.slug}
+            data-label={task.label}
+            aria-pressed="false"
+          >
+            <span class="kind-pill">{task.kind}</span>
+            <strong>{task.label}</strong>
+            <span class="line-clamp-2">{task.job}</span>
+            {peek.length > 0 && <em>{peek.join(' · ')}</em>}
+          </a>
+        );
+      })}
+    </div>
+    <div class="finder-stage" data-finder-stage>
+      <div class="finder-stage__bar">
+        <p class="finder-status" data-finder-status aria-live="polite">Popular compares are up. Pick a job to highlight matching tools.</p>
+        <a class="shed-btn" data-finder-more href="/tasks">Open tasks hub →</a>
+      </div>
+      <div class="dense-grid dense-grid--3" data-finder-results>
+        {COMPARISONS.map((item) => (
+          <a class="finder-tile" href={`/compare/${item.slug}`} data-kind="compare" data-tasks={tasksForCompare(item.slug, TASKS).join(' ')}>
+            <span class="eyebrow">{item.eyebrow}</span>
+            <strong>{item.title}</strong>
+            <span class="line-clamp-2">{item.job}</span>
+          </a>
+        ))}
+        {finderTools.map((tool) => (
+          <ToolCard tool={tool} taskSlugs={tasksForTool(tool.slug, categorySlug(tool.category), TASKS)} />
+        ))}
+      </div>
     </div>
   </div>
 </section>
 
-<section class="home-section" aria-labelledby="compare-heading">
+<section class="home-section home-section--tight" aria-labelledby="compare-heading">
   <div class="wrapper">
     <div class="section-heading">
       <div>
@@ -79,20 +127,20 @@ const homeTitle = 'Find the right AI tool for the job';
       </div>
       <a href="/compare">All compares →</a>
     </div>
-    <div class="resource-grid resource-grid--three">
+    <div class="dense-grid dense-grid--3">
       {COMPARISONS.map((item) => (
-        <article class="resource-panel">
+        <article class="compare-card">
           <span class="eyebrow">{item.eyebrow}</span>
           <h3>{item.title}</h3>
-          <p>{item.job}</p>
-          <a class="resource-panel__cta" href={`/compare/${item.slug}`}>Read the comparison →</a>
+          <p class="line-clamp-2">{item.job}</p>
+          <a class="compare-card__cta" href={`/compare/${item.slug}`}>Read the comparison →</a>
         </article>
       ))}
     </div>
   </div>
 </section>
 
-<section class="home-section home-section--resources" aria-labelledby="directory-heading">
+<section class="home-section home-section--tight home-section--resources" aria-labelledby="directory-heading">
   <div class="wrapper">
     <div class="section-heading">
       <div>
@@ -107,7 +155,7 @@ const homeTitle = 'Find the right AI tool for the job';
   </div>
 </section>
 
-<section class="home-section" aria-labelledby="use-heading">
+<section class="home-section home-section--tight" aria-labelledby="use-heading">
   <div class="wrapper">
     <div class="section-heading">
       <div>
@@ -139,19 +187,19 @@ const homeTitle = 'Find the right AI tool for the job';
   </div>
 </section>
 
-{latestPosts.length > 0 && <section class="home-section home-section--latest" aria-labelledby="latest-heading">
+{latestPosts.length > 0 && <section class="home-section home-section--tight home-section--latest" aria-labelledby="latest-heading">
   <div class="wrapper">
     <div class="section-heading">
       <div><span class="eyebrow">From the bench</span><h2 id="latest-heading">Latest from the blog</h2></div>
       <a href="/blog">View all →</a>
     </div>
-    <div class="blog-index__grid">{latestPosts.map((post) => <article class="db-post-card"><span class="eyebrow">{post.category || 'Article'}</span><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p>{post.excerpt}</p><a class="db-post-card__link" href={`/blog/${post.slug}`}>Read article →</a></article>)}</div>
+    <div class="blog-index__grid">{latestPosts.map((post) => <article class="db-post-card"><span class="eyebrow">{post.category || 'Article'}</span><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p class="line-clamp-2">{post.excerpt}</p><a class="db-post-card__link" href={`/blog/${post.slug}`}>Read article →</a></article>)}</div>
   </div>
 </section>}
 
-<section class="home-section"><div class="wrapper"><EmailCapture source="homepage" heading="Get useful AI tool notes, not a hype digest." description="Practical finds, cost caveats, and prompts when they are worth a slot in your inbox. No daily assault." buttonLabel="Join the list" /></div></section>
+<section class="home-section home-section--tight"><div class="wrapper"><EmailCapture source="homepage" heading="Get useful AI tool notes, not a hype digest." description="Practical finds, cost caveats, and prompts when they are worth a slot in your inbox. No daily assault." buttonLabel="Join the list" /></div></section>
 
-<section class="home-section home-section--x" aria-labelledby="x-heading">
+<section class="home-section home-section--tight home-section--x" aria-labelledby="x-heading">
   <div class="wrapper x-callout">
     <div>
       <span class="eyebrow">Follow the builder</span>
@@ -164,32 +212,45 @@ const homeTitle = 'Find the right AI tool for the job';
 </div>
 </BaseLayout>
 <style>
+.home-section--tight{padding:2rem 0}
 .shed-hero__value{max-width:38rem;margin:.7rem 0 0;color:#d7d1c8;font-size:1rem;line-height:1.6}
-.shed-hero__path{margin:1.2rem 0 0;color:#9a948b;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
-.path-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.75rem}
-.path-card{display:grid;gap:.4rem;padding:1.1rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f;color:inherit;text-decoration:none}
-.path-card strong{color:#f1eee7}
-.path-card p{margin:0;color:#aaa69e;font-size:.88rem;line-height:1.5}
-.task-chip-row,.category-chip-row{display:flex;flex-wrap:wrap;gap:.6rem}
-.task-chip{padding:.55rem .85rem;border:1px solid var(--color-border);border-radius:999px;color:#e9e4d8;text-decoration:none;font-size:.85rem;font-weight:650;background:#10110f}
-.task-chip:hover{border-color:var(--shed-blue);color:#fff}
-.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
-.resource-grid--three{grid-template-columns:repeat(3,minmax(0,1fr))}
-.resource-panel{padding:1.4rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}
-.resource-panel h3{margin:.5rem 0}
-.resource-panel p{color:#aaa69e;line-height:1.55}
-.resource-panel ul{margin:1rem 0;padding-left:1.1rem}
-.resource-panel li{margin:.45rem 0}
+.path-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.62rem}
+.path-card{display:grid;gap:.28rem;padding:.85rem;color:inherit;text-decoration:none}
+.path-card__num{color:var(--workshop-wood);font-size:.68rem;font-weight:800;letter-spacing:.08em}
+.path-card strong{color:#f1eee7;font-size:.95rem}
+.path-card p{margin:0;color:#aaa69e;font-size:.8rem;line-height:1.4}
+.finder-chip-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.62rem}
+.finder-chip{display:grid;gap:.28rem;padding:.75rem .8rem;border:1px solid var(--color-border);border-radius:.55rem;background:#10110f;color:inherit;text-decoration:none}
+.finder-chip strong{color:#f1eee7;font-size:.92rem}
+.finder-chip span:not(.kind-pill){color:#aaa69e;font-size:.78rem;line-height:1.4}
+.finder-chip em{color:#8f8b84;font-size:.68rem;font-style:normal}
+.finder-chip:hover,.finder-chip:focus-visible{transform:translateY(-3px) rotate(-0.4deg);border-color:#b9854d}
+.finder-chip.is-active{border-color:var(--shed-blue);background:rgba(23,140,255,.1);box-shadow:0 0 0 3px rgba(23,140,255,.1)}
+.finder-stage{margin-top:1rem}
+.finder-stage__bar{display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:.7rem}
+.finder-status{margin:0;color:#9a948b;font-size:.82rem}
+.category-chip-row{display:flex;flex-wrap:wrap;gap:.45rem}
+.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.62rem}
+.resource-panel{padding:.95rem}
+.resource-panel h3{margin:.4rem 0}
+.resource-panel p{color:#aaa69e;line-height:1.5;font-size:.9rem}
+.resource-panel ul{margin:.7rem 0;padding-left:1.1rem}
+.resource-panel li{margin:.3rem 0}
 .resource-panel a{color:#f1eee7}
-.resource-panel__cta{display:inline-block;margin-top:.5rem;font-weight:700;text-decoration:none}
-.x-callout{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.5rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}
+.resource-panel__cta{display:inline-block;margin-top:.35rem;font-weight:700;text-decoration:none}
+.x-callout{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.15rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}
 .x-callout p{color:#aaa69e;max-width:42rem}
-.db-post-card{padding:1.25rem;border:1px solid var(--color-border);border-radius:.6rem;background:#0f100f}
-.db-post-card h3{margin:.5rem 0}
+.db-post-card{padding:1rem}
+.db-post-card h3{margin:.4rem 0;font-size:1.05rem}
 .db-post-card h3 a{color:#f1eee7;text-decoration:none}
-.db-post-card p{color:#aaa69e;line-height:1.55}
+.db-post-card p{color:#aaa69e;line-height:1.5}
 .db-post-card__link{font-size:.8rem;font-weight:700;text-decoration:none}
 .db-post-card__link:hover{text-decoration:underline}
-@media(max-width:980px){.path-grid,.resource-grid--three{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.resource-grid,.path-grid,.resource-grid--three{grid-template-columns:1fr}.x-callout{align-items:flex-start;flex-direction:column}}
+.finder-stage .tool-card{min-height:0}
+@media(max-width:980px){.path-grid,.finder-chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.resource-grid,.path-grid,.finder-chip-grid{grid-template-columns:1fr}.x-callout,.finder-stage__bar{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.finder-chip:hover,.finder-chip:focus-visible{transform:none}}
 </style>
+<script>
+  import '../scripts/task-finder.ts';
+</script>

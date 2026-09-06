@@ -2,42 +2,68 @@
 export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { TASKS } from '../../data/tasks';
+import { TASKS, TASK_KINDS } from '../../data/tasks';
+import { taskRefs } from '../../lib/workshop-match';
 
 const description = 'Start with the job: write content, research a topic, build an app, automate a workflow, or cut AI API cost. Each task points to tools and comparisons.';
 ---
 <BaseLayout title="Start with the job" description={description} path="/tasks">
-  <div class="wrapper tasks-page">
+  <div class="wrapper tasks-page" data-task-hub>
     <header class="tasks-hero">
       <span class="eyebrow">DISCOVER · AI TOOLS FOR REAL WORK</span>
       <h1 class="page-title">Start with the job</h1>
-      <p>Walk in with a task. These chips point at tools and comparisons — not a product pitch. Confirm cost on the vendor site before you subscribe.</p>
+      <p>Walk in with a task. These cards point at tools and comparisons — not a product pitch. Confirm cost on the vendor site before you subscribe.</p>
     </header>
-    <section class="task-grid" aria-label="Starter jobs">
-      {TASKS.map((task) => (
-        <article class="task-card" id={task.slug}>
-          <h2><a href={task.href}>{task.label}</a></h2>
-          <p>{task.job}</p>
-          <ul>
-            {task.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-          </ul>
-        </article>
-      ))}
+    <div class="task-filters" role="group" aria-label="Filter jobs">
+      <button type="button" class="shed-chip is-active" data-kind="All" aria-pressed="true">All</button>
+      {TASK_KINDS.map((kind) => <button type="button" class="shed-chip" data-kind={kind} aria-pressed="false">{kind}</button>)}
+    </div>
+    <p class="hub-status" data-hub-status aria-live="polite">{TASKS.length} jobs</p>
+    <section class="dense-grid dense-grid--3" aria-label="Starter jobs">
+      {TASKS.map((task) => {
+        const refs = taskRefs(task);
+        const compares = task.links.filter((link) => link.href.startsWith('/compare'));
+        const tools = task.links.filter((link) => link.href.startsWith('/tools/') && !link.href.startsWith('/tools/category/'));
+        const howTo = task.links.filter((link) => link.href.startsWith('/how-to'));
+        return (
+          <details class="task-card" id={task.slug} data-kind={task.kind}>
+            <summary>
+              <span class="kind-pill">{task.kind}</span>
+              <h2>{task.label}</h2>
+              <p>{task.job}</p>
+            </summary>
+            <div class="task-card__body">
+              <p class="next-label">Next actions</p>
+              <div class="next-actions">
+                {compares.map((link) => <a class="shed-chip" href={link.href}>Compare: {link.label}</a>)}
+                {tools.map((link) => <a class="shed-chip" href={link.href}>Tool: {link.label}</a>)}
+                {howTo.map((link) => <a class="shed-chip" href={link.href}>How-to: {link.label}</a>)}
+                {refs.categorySlugs.map((slug) => <a class="shed-chip" href={`/tools/category/${slug}`}>Directory</a>)}
+              </div>
+              <a class="task-card__cta" href={task.href}>Open the recommended starting point →</a>
+            </div>
+          </details>
+        );
+      })}
     </section>
   </div>
 </BaseLayout>
 <style>
-.tasks-page{padding-top:3rem;padding-bottom:5rem}
-.tasks-hero{max-width:50rem;margin-bottom:2.25rem}
-.tasks-hero p{color:var(--color-text-muted);font-size:1.05rem;line-height:1.7}
-.task-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
-.task-card{padding:1.25rem;border:1px solid var(--color-border);border-radius:.7rem;background:#0f100f}
-.task-card h2{margin:.15rem 0 .5rem;font-size:1.15rem}
-.task-card h2 a{color:#f1eee7;text-decoration:none}
-.task-card p{color:#aaa69e;line-height:1.55;min-height:3.2rem}
-.task-card ul{margin:1rem 0 0;padding-left:1.1rem}
-.task-card li{margin:.35rem 0}
-.task-card li a{color:#d8d3cb}
-@media(max-width:980px){.task-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:640px){.task-grid{grid-template-columns:1fr}}
+.tasks-page{padding-top:2.2rem;padding-bottom:4rem}
+.tasks-hero{max-width:50rem;margin-bottom:1.1rem}
+.tasks-hero p{color:var(--color-text-muted);font-size:1.02rem;line-height:1.6}
+.task-filters{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.55rem}
+.hub-status{margin:0 0 .75rem;color:#8f8b84;font-size:.8rem}
+.task-card{padding:0}
+.task-card summary{list-style:none;padding:.85rem;cursor:pointer}
+.task-card summary::-webkit-details-marker{display:none}
+.task-card h2{margin:.28rem 0 .2rem;font-size:1.02rem}
+.task-card p{min-height:0}
+.task-card__body{padding:0 .85rem .85rem}
+.next-label{margin:0 0 .4rem;color:#8f8b84;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.next-actions{display:flex;flex-wrap:wrap;gap:.35rem}
+.task-card[open]{border-color:#b9854d}
 </style>
+<script>
+  import '../../scripts/task-hub.ts';
+</script>

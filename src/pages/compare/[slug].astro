@@ -23,7 +23,7 @@ const jsonLd = {
 };
 ---
 <BaseLayout title={comparison.title} description={description} path={`/compare/${comparison.slug}`} jsonLd={jsonLd}>
-  <article class="wrapper compare-page">
+  <article class="wrapper compare-page" data-compare-page>
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/compare">Compare</a><span>/</span><span>{comparison.title}</span></nav>
     <header>
       <span class="eyebrow">{comparison.eyebrow}</span>
@@ -32,12 +32,19 @@ const jsonLd = {
       <p class="reviewed">Last reviewed {reviewed}. No benchmark scores. Confirm prices on the vendor sites below.</p>
     </header>
 
-    <section>
+    <nav class="compare-sticky" aria-label="On this page">
+      <a href="#summary" data-compare-jump class="is-active">In short</a>
+      <a href="#criteria" data-compare-jump>Criteria</a>
+      <a href="#picks" data-compare-jump>Who should pick</a>
+      <a href="#cost" data-compare-jump>Cost</a>
+    </nav>
+
+    <section id="summary">
       <h2>In short</h2>
       <p class="body">{comparison.summary}</p>
     </section>
 
-    <section>
+    <section id="criteria">
       <h2>Comparison criteria</h2>
       <div class="criteria">
         {comparison.criteria.map((item) => (
@@ -49,11 +56,16 @@ const jsonLd = {
       </div>
     </section>
 
-    <section>
+    <section id="picks">
       <h2>Who should pick which</h2>
+      <div class="pick-tabs" role="tablist" aria-label="Who should pick which">
+        {comparison.picks.map((pick) => (
+          <button type="button" class="shed-chip" role="tab" data-pick-tab={pick.toolSlug} aria-selected="false">{pick.toolName}</button>
+        ))}
+      </div>
       <div class="picks">
         {comparison.picks.map((pick) => (
-          <article>
+          <article data-pick-panel={pick.toolSlug}>
             <h3><a href={`/tools/${pick.toolSlug}`}>{pick.toolName}</a></h3>
             <p>{pick.pick}</p>
             <a href={`/tools/${pick.toolSlug}`}>Open the {pick.toolName} tool page →</a>
@@ -62,7 +74,7 @@ const jsonLd = {
       </div>
     </section>
 
-    <section>
+    <section id="cost">
       <h2>Cost caveats</h2>
       <p class="body">{comparison.cost}</p>
     </section>
@@ -92,20 +104,29 @@ const jsonLd = {
   </article>
 </BaseLayout>
 <style>
-.compare-page{padding-top:3rem;padding-bottom:5rem;max-width:58rem}
-.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:2rem}
+.compare-page{padding-top:2.2rem;padding-bottom:4rem;max-width:58rem}
+.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:1.4rem}
 .breadcrumbs a{color:#aaa69e;text-decoration:none}
-.lead{max-width:46rem;color:#d7d1c8;font-size:1.15rem;line-height:1.7}
-.reviewed{color:#9a948b;font-size:.88rem;padding:.8rem 1rem;border:1px dashed var(--color-border);border-radius:.5rem;background:#10110f}
-.compare-page section{margin:2.25rem 0}
-.body,.criteria p,.picks p,li{color:#aaa69e;line-height:1.7}
-.criteria,.picks{display:grid;gap:1rem}
-.criteria div,.picks article{padding:1.15rem;border:1px solid var(--color-border);border-radius:.6rem;background:#10110f}
-.criteria h3,.picks h3{margin:.1rem 0 .5rem;color:#f1eee7}
+.lead{max-width:46rem;color:#d7d1c8;font-size:1.1rem;line-height:1.6}
+.reviewed{color:#9a948b;font-size:.85rem;padding:.65rem .8rem;border:1px dashed var(--color-border);border-radius:.5rem;background:#10110f}
+.compare-sticky{position:sticky;top:.55rem;z-index:4;display:flex;flex-wrap:wrap;gap:.4rem;padding:.45rem;margin:1.1rem 0;border:1px solid var(--color-border);border-radius:.55rem;background:rgba(13,13,12,.88);backdrop-filter:blur(12px)}
+.compare-sticky a{padding:.32rem .6rem;border-radius:999px;color:#c7c2ba;text-decoration:none;font-size:.75rem;font-weight:700}
+.compare-sticky a.is-active,.compare-sticky a:hover{color:#fff;background:rgba(23,140,255,.1)}
+.compare-page section{margin:1.6rem 0}
+.body,.criteria p,.picks p,li{color:#aaa69e;line-height:1.6}
+.criteria{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.62rem}
+.pick-tabs{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.7rem}
+.picks{display:grid;gap:.62rem}
+.criteria div,.picks article{padding:.85rem;border:1px solid var(--color-border);border-radius:.55rem;background:#10110f}
+.criteria h3,.picks h3{margin:.1rem 0 .4rem;color:#f1eee7;font-size:1rem}
 .picks h3 a{color:#f1eee7;text-decoration:none}
 .picks article a{font-size:.85rem;font-weight:700}
-.tool-links{display:flex;flex-wrap:wrap;gap:.6rem}
-.tool-links a{padding:.45rem .7rem;border:1px solid var(--color-border);border-radius:.4rem;color:#e3dfd7;text-decoration:none;font-size:.85rem}
-.more{margin-top:2.5rem;color:#8f8b84}
+.tool-links{display:flex;flex-wrap:wrap;gap:.45rem}
+.tool-links a{padding:.4rem .65rem;border:1px solid var(--color-border);border-radius:.4rem;color:#e3dfd7;text-decoration:none;font-size:.82rem}
+.more{margin-top:1.8rem;color:#8f8b84}
 .more a{color:#e3dfd7}
+@media(max-width:700px){.criteria{grid-template-columns:1fr}.compare-sticky{position:static}}
 </style>
+<script>
+  import '../../scripts/compare-page.ts';
+</script>
