@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ToolCard from '../../components/ToolCard.astro';
+import WorkshopArt from '../../components/WorkshopArt.astro';
 import { getDirectoryCategories, getDirectoryTools } from '../../lib/tool-directory';
 import { COMPARISONS } from '../../data/comparisons';
 import { TASKS } from '../../data/tasks';
@@ -31,7 +32,8 @@ const jsonLd = {
     <header class="directory-hero">
       <span class="eyebrow">DISCOVER · AI TOOLS FOR REAL WORK</span>
       <h1 class="page-title">Find the right AI tool for the job.</h1>
-      <p>Browse {tools.length} tools, grouped by what they help you do. Compare when you are choosing. Check vendor pricing before you spend.</p>
+      <p>Browse {tools.length} tools, grouped by what they help you do. Compare when you are choosing. Check vendor pricing before you spend. Each card shows a public favicon mark — initials if the mark is missing.</p>
+      <div class="directory-hero__art"><WorkshopArt variant="bench" /></div>
     </header>
 
     <section class="directory-controls" aria-label="Tool directory search and categories">
@@ -47,7 +49,10 @@ const jsonLd = {
 
     <div class="directory-meta">
       <span><strong id="tool-count">{tools.length}</strong> tools</span>
-      <a href="/compare">Popular comparisons →</a>
+      <span class="directory-meta__links">
+        <a href="/compare">Popular comparisons →</a>
+        <a href="/pricing">Pricing notes →</a>
+      </span>
     </div>
 
     <section class="dense-grid" id="tool-grid" aria-label="AI tools">
@@ -69,6 +74,7 @@ const jsonLd = {
 <style>
   .directory-page{padding-top:2.2rem;padding-bottom:4rem}
   .directory-hero{max-width:54rem;margin-bottom:1.25rem}
+  .directory-hero__art{max-width:22rem;margin-top:1rem}
   .directory-hero p{max-width:42rem;color:var(--color-text-muted);font-size:1.02rem;line-height:1.6}
   .directory-controls{border:1px solid var(--color-border);background:rgba(13,13,12,.82);border-radius:.65rem;padding:.75rem;margin-bottom:.85rem;position:sticky;top:.65rem;z-index:5;backdrop-filter:blur(12px)}
   .tools-search input{width:100%;box-sizing:border-box;border:1px solid #3a342c;background:#080909;color:var(--color-text);border-radius:.4rem;padding:.7rem .8rem;outline:none}
@@ -77,6 +83,7 @@ const jsonLd = {
   .directory-meta{display:flex;justify-content:space-between;gap:1rem;color:#77736d;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 .75rem}
   .directory-meta strong{color:#d7d1c8}
   .directory-meta a{color:#aaa69e;text-decoration:none}
+  .directory-meta__links{display:flex;flex-wrap:wrap;gap:.75rem}
   .tools-empty{padding:1.4rem 1rem;text-align:center;color:var(--color-text-muted);border:1px dashed var(--color-border);border-radius:.6rem;margin-top:.75rem;background:#10110f}
   .tools-empty p{margin:.25rem 0}
   .empty-links{display:flex;flex-wrap:wrap;justify-content:center;gap:.45rem;margin-top:.8rem}

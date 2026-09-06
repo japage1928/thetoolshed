@@ -112,6 +112,12 @@
   status = 301
   force = true
 
+[[redirects]]
+  from = "/tools/cost-calculator"
+  to = "/pricing/calculator"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]

@@ -1,0 +1,32 @@
+---
+import { toolIconSrc, toolInitials, toolMarkAlt } from '../lib/tool-mark';
+
+interface Props {
+  name: string;
+  websiteUrl: string;
+  iconUrl?: string | null;
+  size?: number;
+  lazy?: boolean;
+  decorative?: boolean;
+  class?: string;
+}
+
+const { name, websiteUrl, iconUrl = null, size = 28, lazy = true, decorative = false, class: className } = Astro.props;
+const src = toolIconSrc(websiteUrl, iconUrl, size >= 56 ? 128 : 64);
+const initials = toolInitials(name);
+const alt = decorative ? '' : toolMarkAlt(name);
+---
+<span class:list={['tool-mark', className]} data-tool-mark style={`--mark-size:${size}px`}>
+  <span class="tool-mark__fallback" aria-hidden="true">{initials}</span>
+  {src && (
+    <img
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      loading={lazy ? 'lazy' : 'eager'}
+      decoding="async"
+      data-tool-mark-img
+    />
+  )}
+</span>

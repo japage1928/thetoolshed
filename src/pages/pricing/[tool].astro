@@ -1,0 +1,88 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolMark from '../../components/ToolMark.astro';
+import WorkshopArt from '../../components/WorkshopArt.astro';
+import { PRICING_GUIDES, getPricingGuide } from '../../data/pricing';
+import { getCatalogTool } from '../../lib/ai-tools';
+import { formatVerifiedDate } from '../../lib/tool-directory';
+
+export function getStaticPaths() {
+  return PRICING_GUIDES.map((guide) => ({ params: { tool: guide.slug } }));
+}
+
+const guide = getPricingGuide(Astro.params.tool ?? '');
+if (!guide) return Astro.redirect('/pricing', 302);
+
+const tool = getCatalogTool(guide.toolSlug);
+const reviewed = formatVerifiedDate(guide.lastReviewed);
+const description = `${guide.name} pricing notes: public plan structure, vendor links, and a calculator you fill. No invented dollar amounts.`;
+---
+<BaseLayout title={`${guide.name} pricing notes`} description={description} path={`/pricing/${guide.slug}`}>
+  <article class="wrapper pricing-page">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/pricing">Pricing</a><span>/</span><span>{guide.name}</span>
+    </nav>
+    <header class="pricing-page__hero">
+      {tool && <ToolMark class="tool-mark--lg" name={tool.name} websiteUrl={tool.url} size={64} lazy={false} />}
+      <div>
+        <span class="eyebrow">{guide.vendor} · plan structure</span>
+        <h1 class="page-title">{guide.name} pricing notes</h1>
+        <p class="reviewed">
+          {guide.verified ? `Last reviewed ${reviewed}.` : `Unverified as of ${reviewed}.`}
+          {' '}No dollar amounts on this page. Confirm current prices on the vendor site.
+        </p>
+      </div>
+      <div class="pricing-page__art" aria-hidden="true"><WorkshopArt variant="meter" /></div>
+    </header>
+
+    <p class="lead">{guide.summary}</p>
+
+    {!guide.verified && <p class="unverified-callout"><span class="unverified-badge">Unverified</span> We have not independently checked the current dollar table. Use the vendor link.</p>}
+
+    <section>
+      <h2>Public plan families</h2>
+      <div class="plan-grid">
+        {guide.plans.map((plan) => (
+          <article class="shed-card plan-card">
+            <span class="eyebrow">{plan.audience}</span>
+            <h3>{plan.name}</h3>
+            <p>{plan.notes}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section>
+      <h2>API and usage meters</h2>
+      <p class="body">{guide.apiNotes}</p>
+    </section>
+
+    <section>
+      <h2>Limitations of these notes</h2>
+      <ul>{guide.caveats.map((item) => <li>{item}</li>)}</ul>
+    </section>
+
+    <div class="pricing-actions">
+      <a class="hero-button hero-button--primary" href={guide.pricingUrl} target="_blank" rel="noopener noreferrer">Vendor pricing page <span>→</span></a>
+      <a class="hero-button" href={`/pricing/calculator?tool=${guide.slug}`}>Estimate with your numbers</a>
+      <a class="hero-button" href={`/tools/${guide.toolSlug}`}>Tool page</a>
+    </div>
+  </article>
+</BaseLayout>
+<style>
+.pricing-page{padding-top:2.2rem;padding-bottom:4rem;max-width:58rem}
+.breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:1.4rem}
+.breadcrumbs a{color:#aaa69e;text-decoration:none}
+.pricing-page__hero{display:grid;grid-template-columns:auto 1fr minmax(8rem,14rem);gap:1rem;align-items:center}
+.reviewed{color:#9a948b;font-size:.85rem;padding:.65rem .8rem;border:1px dashed var(--color-border);border-radius:.5rem;background:#10110f}
+.lead{max-width:46rem;color:#d7d1c8;font-size:1.08rem;line-height:1.65}
+.unverified-callout{display:flex;align-items:center;gap:.55rem;color:#c4b49a}
+.plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.62rem}
+.plan-card{padding:.9rem}
+.plan-card h3{margin:.35rem 0;color:#f1eee7}
+.plan-card p,.body,li{color:#aaa69e;line-height:1.6}
+.pricing-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.6rem}
+@media(max-width:800px){.plan-grid,.pricing-page__hero{grid-template-columns:1fr}.pricing-page__art{display:none}}
+</style>

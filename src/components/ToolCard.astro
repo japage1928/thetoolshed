@@ -1,6 +1,7 @@
 ---
 import type { DirectoryTool } from '../lib/tool-schema';
 import { categorySlug } from '../lib/tool-directory';
+import ToolMark from './ToolMark.astro';
 
 interface Props {
   tool: Pick<
@@ -22,8 +23,6 @@ interface Props {
 }
 
 const { tool, taskSlugs = [] } = Astro.props;
-const domain = new URL(tool.website_url).hostname.replace(/^www\./, '');
-const iconUrl = tool.icon_url || `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 const verified = tool.verification_confidence !== 'unverified';
 const search = `${tool.name} ${tool.description} ${tool.category} ${tool.best_for} ${tool.tags.join(' ')} ${tool.company ?? ''}`.toLowerCase();
 ---
@@ -43,7 +42,10 @@ const search = `${tool.name} ${tool.description} ${tool.category} ${tool.best_fo
       {!tool.pricing_is_verified && <span class="tool-card__unverified">Unverified pricing</span>}
     </span>
   </div>
-  <h2 class="tool-name"><img src={iconUrl} alt="" width="28" height="28" loading="lazy" />{tool.name}</h2>
+  <h2 class="tool-name">
+    <ToolMark name={tool.name} websiteUrl={tool.website_url} iconUrl={tool.icon_url} size={32} />
+    {tool.name}
+  </h2>
   <p class="line-clamp-2">{tool.description}</p>
   <div class="tool-card__best"><strong>Best for:</strong> {tool.best_for}</div>
   <div class="tool-card__tags">{tool.tags.slice(0, 3).map((tag) => <span>{tag}</span>)}</div>
