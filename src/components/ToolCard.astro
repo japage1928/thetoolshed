@@ -1,0 +1,51 @@
+---
+import type { DirectoryTool } from '../lib/tool-schema';
+import { categorySlug } from '../lib/tool-directory';
+
+interface Props {
+  tool: Pick<
+    DirectoryTool,
+    | 'name'
+    | 'slug'
+    | 'description'
+    | 'category'
+    | 'best_for'
+    | 'tags'
+    | 'website_url'
+    | 'icon_url'
+    | 'is_affiliate'
+    | 'verification_confidence'
+    | 'pricing_is_verified'
+    | 'company'
+  >;
+  taskSlugs?: string[];
+}
+
+const { tool, taskSlugs = [] } = Astro.props;
+const domain = new URL(tool.website_url).hostname.replace(/^www\./, '');
+const iconUrl = tool.icon_url || `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+const verified = tool.verification_confidence !== 'unverified';
+const search = `${tool.name} ${tool.description} ${tool.category} ${tool.best_for} ${tool.tags.join(' ')} ${tool.company ?? ''}`.toLowerCase();
+---
+<article
+  class="tool-card"
+  data-kind="tool"
+  data-search={search}
+  data-category={tool.category}
+  data-category-slug={categorySlug(tool.category)}
+  data-tasks={taskSlugs.join(' ')}
+>
+  <div class="tool-card__topline">
+    <span class="tool-card__category">{tool.category}</span>
+    <span class="tool-card__marks">
+      {verified && <span class="reviewed-badge">Reviewed</span>}
+      {tool.is_affiliate && <span class="tool-card__badge">Partner</span>}
+      {!tool.pricing_is_verified && <span class="tool-card__unverified">Unverified pricing</span>}
+    </span>
+  </div>
+  <h2 class="tool-name"><img src={iconUrl} alt="" width="28" height="28" loading="lazy" />{tool.name}</h2>
+  <p class="line-clamp-2">{tool.description}</p>
+  <div class="tool-card__best"><strong>Best for:</strong> {tool.best_for}</div>
+  <div class="tool-card__tags">{tool.tags.slice(0, 3).map((tag) => <span>{tag}</span>)}</div>
+  <a class="tool-card__link" href={`/tools/${tool.slug}`}>{tool.name} <span aria-hidden="true">→</span></a>
+</article>
