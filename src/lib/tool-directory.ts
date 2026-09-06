@@ -3,6 +3,12 @@ import { getTools as getRemoteTools } from './supabase';
 import type { DbTool } from './supabase';
 import type { AITool, DirectoryTool } from './tool-schema';
 
+/**
+ * Live directory membership comes from Supabase `ai_tools` when that table
+ * returns rows. The static catalog in `ai-tools.ts` is a seed/overlay only:
+ * it fills verified workshop notes for known slugs, and is a local fallback
+ * when Supabase is empty (dev/build without credentials).
+ */
 const GENERIC_CLAIM =
   /established option|widely used(?: ai)? tool|popular choice|versatile(?: ai)? platform|strong option for|good starting point|reliable choice|great for most users|powerful ai (?:tool|platform)|leading (?:ai )?solution/i;
 
@@ -10,54 +16,52 @@ export function isGenericClaim(value: string): boolean {
   return GENERIC_CLAIM.test(value);
 }
 
-function cleanList(values: string[] | undefined, { allowUnverified }: { allowUnverified: boolean }): string[] {
+function cleanList(values: string[] | undefined): string[] {
   if (!values?.length) return [];
   return values
     .map((item) => item.trim())
     .filter(Boolean)
-    .filter((item) => allowUnverified || !isGenericClaim(item));
+    .filter((item) => !isGenericClaim(item));
 }
 
-function fromCatalog(tool: AITool, remote?: DbTool): DirectoryTool {
+function fromCatalogFallback(tool: AITool): DirectoryTool {
   const verified = (tool.verification_confidence ?? 'unverified') !== 'unverified';
-  const strengths = verified ? cleanList(tool.strengths, { allowUnverified: false }) : [];
-  const weaknesses = verified ? cleanList(tool.weaknesses, { allowUnverified: false }) : [];
-  const remoteUseCases = cleanList(remote?.use_cases, { allowUnverified: false });
-  const remoteFaq = (remote?.faq ?? []).filter((item) => item.question && item.answer && !isGenericClaim(item.answer));
-
   return {
     name: tool.name,
     slug: tool.slug,
-    description: remote?.description || tool.description,
-    category: remote?.category || tool.category,
-    best_for: remote?.best_for || tool.bestFor,
-    tags: remote?.tags?.length ? remote.tags : tool.tags,
+    description: tool.description,
+    category: tool.category,
+    best_for: tool.bestFor,
+    tags: tool.tags,
     website_url: tool.url,
-    affiliate_url: remote?.affiliate_url ?? (tool.affiliate ? tool.url : null),
-    icon_url: remote?.icon_url ?? null,
-    is_affiliate: Boolean(tool.affiliate || remote?.is_affiliate),
+    affiliate_url: tool.affiliate ? tool.url : null,
+    icon_url: null,
+    is_affiliate: Boolean(tool.affiliate),
     company: tool.company ?? null,
-    primary_use_cases: tool.primary_use_cases?.length ? tool.primary_use_cases : remoteUseCases,
+    primary_use_cases: tool.primary_use_cases ?? [tool.bestFor],
     free_tier: tool.free_tier ?? null,
     pricing_summary: verified && tool.pricing_summary ? tool.pricing_summary : null,
     pricing_url: tool.pricing_url ?? tool.url,
     pricing_is_verified: Boolean(verified && tool.pricing_summary),
     api_available: tool.api_available ?? null,
-    strengths,
-    weaknesses,
-    best_fit: verified ? cleanList(tool.best_fit, { allowUnverified: true }) : [],
-    poor_fit: verified ? cleanList(tool.poor_fit, { allowUnverified: true }) : [],
-    alternatives: tool.alternatives?.length ? tool.alternatives : (remote?.alternative_slugs ?? []),
-    limitations: verified ? cleanList(tool.limitations, { allowUnverified: true }) : [],
+    strengths: verified ? cleanList(tool.strengths) : [],
+    weaknesses: verified ? cleanList(tool.weaknesses) : [],
+    best_fit: verified ? cleanList(tool.best_fit) : [],
+    poor_fit: verified ? cleanList(tool.poor_fit) : [],
+    alternatives: tool.alternatives ?? [],
+    limitations: verified ? cleanList(tool.limitations) : [],
     last_verified_at: tool.last_verified_at ?? null,
     verification_confidence: tool.verification_confidence ?? 'unverified',
-    sources: tool.sources ?? [],
-    faq: remoteFaq,
+    sources: tool.sources ?? [{ label: `${tool.name} website`, url: tool.url }],
+    faq: [],
   };
 }
 
-function fromRemoteOnly(remote: DbTool): DirectoryTool {
-  const remoteUseCases = cleanList(remote.use_cases, { allowUnverified: false });
+function fromRemote(remote: DbTool, overlay?: AITool): DirectoryTool {
+  const verified = overlay ? (overlay.verification_confidence ?? 'unverified') !== 'unverified' : false;
+  const remotePricing = remote.pricing_summary?.trim() && !isGenericClaim(remote.pricing_summary) ? remote.pricing_summary.trim() : null;
+  const remoteUseCases = cleanList(remote.use_cases);
+
   return {
     name: remote.name,
     slug: remote.slug,
@@ -69,22 +73,22 @@ function fromRemoteOnly(remote: DbTool): DirectoryTool {
     affiliate_url: remote.affiliate_url,
     icon_url: remote.icon_url,
     is_affiliate: remote.is_affiliate,
-    company: null,
-    primary_use_cases: remoteUseCases,
-    free_tier: null,
-    pricing_summary: null,
-    pricing_url: remote.website_url,
-    pricing_is_verified: false,
-    api_available: null,
-    strengths: [],
-    weaknesses: [],
-    best_fit: [],
-    poor_fit: [],
-    alternatives: remote.alternative_slugs ?? [],
-    limitations: [],
-    last_verified_at: null,
-    verification_confidence: 'unverified',
-    sources: [{ label: `${remote.name} website`, url: remote.website_url }],
+    company: overlay?.company ?? null,
+    primary_use_cases: verified && overlay?.primary_use_cases?.length ? overlay.primary_use_cases : remoteUseCases,
+    free_tier: overlay?.free_tier ?? null,
+    pricing_summary: verified && overlay?.pricing_summary ? overlay.pricing_summary : remotePricing,
+    pricing_url: overlay?.pricing_url ?? remote.website_url,
+    pricing_is_verified: Boolean(verified && overlay?.pricing_summary),
+    api_available: overlay?.api_available ?? null,
+    strengths: verified ? cleanList(overlay?.strengths) : [],
+    weaknesses: verified ? cleanList(overlay?.weaknesses) : [],
+    best_fit: verified ? cleanList(overlay?.best_fit) : [],
+    poor_fit: verified ? cleanList(overlay?.poor_fit) : [],
+    alternatives: (verified && overlay?.alternatives?.length ? overlay.alternatives : remote.alternative_slugs) ?? [],
+    limitations: verified ? cleanList(overlay?.limitations) : [],
+    last_verified_at: verified ? overlay?.last_verified_at ?? null : null,
+    verification_confidence: overlay?.verification_confidence ?? 'unverified',
+    sources: overlay?.sources ?? [{ label: `${remote.name} website`, url: remote.website_url }],
     faq: (remote.faq ?? []).filter((item) => item.question && item.answer && !isGenericClaim(item.answer)),
   };
 }
@@ -97,16 +101,14 @@ export async function getDirectoryTools(): Promise<DirectoryTool[]> {
     remote = [];
   }
 
-  const remoteBySlug = new Map(remote.map((tool) => [tool.slug, tool]));
-  const merged = AI_TOOLS.map((tool) => fromCatalog(tool, remoteBySlug.get(tool.slug)));
-  const seen = new Set(merged.map((tool) => tool.slug));
-
-  for (const extra of remote) {
-    if (seen.has(extra.slug)) continue;
-    merged.push(fromRemoteOnly(extra));
+  if (remote.length > 0) {
+    const overlayBySlug = new Map(AI_TOOLS.map((tool) => [tool.slug, tool]));
+    return remote
+      .map((tool) => fromRemote(tool, overlayBySlug.get(tool.slug)))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  return merged.sort((a, b) => a.name.localeCompare(b.name));
+  return AI_TOOLS.map(fromCatalogFallback).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getDirectoryToolBySlug(slug: string): Promise<DirectoryTool | null> {

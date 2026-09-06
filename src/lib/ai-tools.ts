@@ -1,3 +1,9 @@
+/**
+ * Static seed / intelligence overlay. Live directory membership is Supabase
+ * `ai_tools` (see `tool-directory.ts`). This module is used to:
+ * - overlay verified workshop notes onto matching remote slugs
+ * - fall back locally when Supabase returns no rows
+ */
 import { TOOL_INTELLIGENCE } from '../data/tools/intelligence';
 import type { AITool } from './tool-schema';
 
