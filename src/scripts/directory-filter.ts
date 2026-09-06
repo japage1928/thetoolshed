@@ -1,10 +1,12 @@
-const root = document.querySelector<HTMLElement>('[data-directory]');
-if (root) {
-  const search = root.querySelector<HTMLInputElement>('#tool-search');
-  const cards = Array.from(root.querySelectorAll<HTMLElement>('.tool-card'));
-  const count = root.querySelector<HTMLElement>('#tool-count');
-  const empty = root.querySelector<HTMLElement>('#tools-empty');
-  const filters = Array.from(root.querySelectorAll<HTMLAnchorElement>('[data-category]'));
+export {};
+
+const directoryRoot = document.querySelector<HTMLElement>('[data-directory]');
+if (directoryRoot) {
+  const search = directoryRoot.querySelector<HTMLInputElement>('#tool-search');
+  const cards = Array.from(directoryRoot.querySelectorAll<HTMLElement>('.tool-card'));
+  const count = directoryRoot.querySelector<HTMLElement>('#tool-count');
+  const empty = directoryRoot.querySelector<HTMLElement>('#tools-empty');
+  const filters = Array.from(directoryRoot.querySelectorAll<HTMLAnchorElement>('[data-category]'));
 
   let category = 'All';
 

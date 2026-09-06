@@ -1,8 +1,10 @@
-const root = document.querySelector<HTMLElement>('[data-task-hub]');
-if (root) {
-  const filters = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-kind]'));
-  const cards = Array.from(root.querySelectorAll<HTMLElement>('.task-card'));
-  const status = root.querySelector<HTMLElement>('[data-hub-status]');
+export {};
+
+const hubRoot = document.querySelector<HTMLElement>('[data-task-hub]');
+if (hubRoot) {
+  const filters = Array.from(hubRoot.querySelectorAll<HTMLButtonElement>('[data-kind]'));
+  const cards = Array.from(hubRoot.querySelectorAll<HTMLElement>('.task-card'));
+  const status = hubRoot.querySelector<HTMLElement>('[data-hub-status]');
   let kind = 'All';
 
   const render = () => {
@@ -28,7 +30,7 @@ if (root) {
   });
 
   const hash = window.location.hash.replace(/^#/, '');
-  const target = hash ? root.querySelector<HTMLDetailsElement>(`#${CSS.escape(hash)}`) : null;
+  const target = hash ? hubRoot.querySelector<HTMLDetailsElement>(`#${CSS.escape(hash)}`) : null;
   if (target) {
     target.open = true;
     target.scrollIntoView({ block: 'start' });

@@ -1,7 +1,9 @@
-const root = document.querySelector<HTMLElement>('[data-compare-page]');
-if (root) {
-  const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pick-tab]'));
-  const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-pick-panel]'));
+export {};
+
+const comparePageRoot = document.querySelector<HTMLElement>('[data-compare-page]');
+if (comparePageRoot) {
+  const tabs = Array.from(comparePageRoot.querySelectorAll<HTMLButtonElement>('[data-pick-tab]'));
+  const panels = Array.from(comparePageRoot.querySelectorAll<HTMLElement>('[data-pick-panel]'));
 
   const activate = (slug: string) => {
     tabs.forEach((tab) => {
@@ -21,7 +23,7 @@ if (root) {
     activate(tabs[0]?.dataset.pickTab ?? '');
   }
 
-  const nav = root.querySelectorAll<HTMLAnchorElement>('[data-compare-jump]');
+  const nav = comparePageRoot.querySelectorAll<HTMLAnchorElement>('[data-compare-jump]');
   nav.forEach((link) => {
     link.addEventListener('click', () => {
       nav.forEach((item) => item.classList.toggle('is-active', item === link));

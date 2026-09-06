@@ -1,13 +1,13 @@
 import { COMPARISONS } from '../data/comparisons';
 import { findClosestCompares } from '../lib/workshop-match';
 
-const root = document.querySelector<HTMLElement>('[data-compare-picker]');
-if (root) {
-  const selectA = root.querySelector<HTMLSelectElement>('#compare-a');
-  const selectB = root.querySelector<HTMLSelectElement>('#compare-b');
-  const status = root.querySelector<HTMLElement>('[data-picker-status]');
-  const actions = root.querySelector<HTMLElement>('[data-picker-actions]');
-  const closest = root.querySelector<HTMLElement>('[data-picker-closest]');
+const pickerRoot = document.querySelector<HTMLElement>('[data-compare-picker]');
+if (pickerRoot) {
+  const selectA = pickerRoot.querySelector<HTMLSelectElement>('#compare-a');
+  const selectB = pickerRoot.querySelector<HTMLSelectElement>('#compare-b');
+  const status = pickerRoot.querySelector<HTMLElement>('[data-picker-status]');
+  const actions = pickerRoot.querySelector<HTMLElement>('[data-picker-actions]');
+  const closest = pickerRoot.querySelector<HTMLElement>('[data-picker-closest]');
 
   const toolName = (slug: string) => {
     const option = selectA?.querySelector(`option[value="${slug}"]`);

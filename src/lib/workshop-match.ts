@@ -69,7 +69,9 @@ export function tasksForTool(slug: string, categorySlugValue: string, tasks: Tas
 
 export function findExactCompare(a: string, b: string, comparisons: Comparison[]): Comparison | undefined {
   if (!a || !b || a === b) return undefined;
-  return comparisons.find((item) => item.toolSlugs.includes(a) && item.toolSlugs.includes(b));
+  return comparisons
+    .filter((item) => item.toolSlugs.includes(a) && item.toolSlugs.includes(b))
+    .sort((left, right) => left.toolSlugs.length - right.toolSlugs.length || left.title.localeCompare(right.title))[0];
 }
 
 export function findClosestCompares(a: string, b: string, comparisons: Comparison[], limit = 2): ComparePickResult {

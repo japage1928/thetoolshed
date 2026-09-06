@@ -1,12 +1,14 @@
-const root = document.querySelector<HTMLElement>('[data-task-finder]');
-if (!root) {
+export {};
+
+const finderRoot = document.querySelector<HTMLElement>('[data-task-finder]');
+if (!finderRoot) {
   // Not on the homepage finder.
 } else {
-  const chips = Array.from(root.querySelectorAll<HTMLAnchorElement>('[data-task]'));
-  const tiles = Array.from(root.querySelectorAll<HTMLElement>('[data-tasks]'));
-  const stage = root.querySelector<HTMLElement>('[data-finder-stage]');
-  const status = root.querySelector<HTMLElement>('[data-finder-status]');
-  const more = root.querySelector<HTMLAnchorElement>('[data-finder-more]');
+  const chips = Array.from(finderRoot.querySelectorAll<HTMLAnchorElement>('[data-task]'));
+  const tiles = Array.from(finderRoot.querySelectorAll<HTMLElement>('[data-tasks]'));
+  const stage = finderRoot.querySelector<HTMLElement>('[data-finder-stage]');
+  const status = finderRoot.querySelector<HTMLElement>('[data-finder-status]');
+  const more = finderRoot.querySelector<HTMLAnchorElement>('[data-finder-more]');
   const stageLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-stage]'));
 
   const setStage = (name: string) => {
