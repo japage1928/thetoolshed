@@ -107,3 +107,45 @@ export function directoryCardMatches(query: string, category: string, searchBlob
   const queryOk = !normalizedQuery || searchBlob.includes(normalizedQuery);
   return categoryOk && queryOk;
 }
+
+type FinderTool = {
+  slug: string;
+  name: string;
+  category: string;
+};
+
+/**
+ * Homepage finder membership: every task keeps its linked tools and
+ * category matches. Do not apply a global alphabetical cap — that drops
+ * later-sorting jobs (automation, research) from the live results.
+ */
+export function selectFinderTools<T extends FinderTool>(
+  tools: T[],
+  tasks: TaskChip[],
+  toCategorySlug: (category: string) => string,
+): T[] {
+  const bySlug = new Map(tools.map((tool) => [tool.slug, tool]));
+  const byCategory = new Map<string, T[]>();
+  for (const tool of tools) {
+    const key = toCategorySlug(tool.category);
+    const list = byCategory.get(key) ?? [];
+    list.push(tool);
+    byCategory.set(key, list);
+  }
+
+  const selected = new Map<string, T>();
+  for (const task of tasks) {
+    const refs = taskRefs(task);
+    for (const slug of refs.toolSlugs) {
+      const tool = bySlug.get(slug);
+      if (tool) selected.set(tool.slug, tool);
+    }
+    for (const category of refs.categorySlugs) {
+      for (const tool of byCategory.get(category) ?? []) {
+        selected.set(tool.slug, tool);
+      }
+    }
+  }
+
+  return [...selected.values()].sort((left, right) => left.name.localeCompare(right.name));
+}

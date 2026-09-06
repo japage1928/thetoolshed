@@ -1,13 +1,11 @@
 ---
-export const prerender = true;
-
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { COMPARISONS } from '../../data/comparisons';
-import { AI_TOOLS, getCatalogCategories } from '../../lib/ai-tools';
+import { getDirectoryCategories, getDirectoryTools } from '../../lib/tool-directory';
 
 const description = 'Compare AI tools by the job: writing assistants, coding/analysis, and research. No invented benchmark scores — check vendor pricing yourself.';
-const categories = getCatalogCategories();
-const pickerTools = [...AI_TOOLS].sort((a, b) => a.name.localeCompare(b.name));
+const pickerTools = await getDirectoryTools();
+const categories = await getDirectoryCategories();
 ---
 <BaseLayout title="Compare AI tools" description={description} path="/compare">
   <div class="wrapper compare-index">
