@@ -1,0 +1,63 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolMark from '../../components/ToolMark.astro';
+import WorkshopArt from '../../components/WorkshopArt.astro';
+import { PRICING_GUIDES } from '../../data/pricing';
+import { AI_TOOLS } from '../../lib/ai-tools';
+import { formatVerifiedDate } from '../../lib/tool-directory';
+
+const description = 'Public plan shapes for flagship AI tools, plus a calculator you fill from vendor pages. No invented prices.';
+const toolsBySlug = new Map(AI_TOOLS.map((tool) => [tool.slug, tool]));
+---
+<BaseLayout title="AI tool pricing notes" description={description} path="/pricing">
+  <div class="wrapper pricing-index">
+    <header class="pricing-hero">
+      <span class="eyebrow">SCALE · COST IN PLAIN VIEW</span>
+      <h1 class="page-title">Pricing notes, not a price list</h1>
+      <p>These pages describe the public plan families we have seen named — free, paid consumer, team, API. They do not quote dollar amounts. You copy current rates from the vendor, then run the calculator.</p>
+      <div class="pricing-hero__row">
+        <a class="hero-button hero-button--primary" href="/pricing/calculator">Open the cost calculator</a>
+        <a class="hero-button" href="/how-to/stop-wasting-money-on-ai-apis">Read the freeze rule</a>
+      </div>
+      <div class="pricing-hero__art"><WorkshopArt variant="meter" /></div>
+    </header>
+
+    <section class="dense-grid dense-grid--3" aria-label="Flagship pricing notes" data-reveal-stagger>
+      {PRICING_GUIDES.map((guide) => {
+        const tool = toolsBySlug.get(guide.toolSlug);
+        const reviewed = formatVerifiedDate(guide.lastReviewed);
+        return (
+          <article class="compare-card">
+            {tool && <ToolMark name={tool.name} websiteUrl={tool.url} size={32} />}
+            <span class="eyebrow">{guide.vendor}</span>
+            <h2><a href={`/pricing/${guide.slug}`}>{guide.name}</a></h2>
+            <p class="line-clamp-2">{guide.summary}</p>
+            <div class="tool-card__marks">
+              {guide.verified
+                ? <span class="reviewed-badge">Reviewed {reviewed}</span>
+                : <span class="unverified-badge">Unverified</span>}
+            </div>
+            <a class="compare-card__cta" href={`/pricing/${guide.slug}`}>Plan structure →</a>
+          </article>
+        );
+      })}
+    </section>
+
+    <aside class="pricing-note">
+      <p>Need seat × month or token math? <a href="/pricing/calculator">Use the calculator</a> with numbers from the vendor page. Still choosing a tool? <a href="/compare">Compare by the job</a>.</p>
+    </aside>
+  </div>
+</BaseLayout>
+<style>
+.pricing-index{padding-top:2.2rem;padding-bottom:4rem}
+.pricing-hero{max-width:50rem;margin-bottom:1.4rem}
+.pricing-hero p{color:var(--color-text-muted);font-size:1.02rem;line-height:1.6}
+.pricing-hero__row{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1rem}
+.pricing-hero__art{max-width:20rem;margin-top:1rem}
+.pricing-note{margin-top:1.6rem;color:#9a948b}
+.pricing-note a{color:#e3dfd7}
+.compare-card h2{margin:.4rem 0}
+.compare-card h2 a{color:#f1eee7;text-decoration:none}
+</style>

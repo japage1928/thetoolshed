@@ -105,6 +105,7 @@ export const TASKS: TaskChip[] = [
     href: '/how-to/stop-wasting-money-on-ai-apis',
     links: [
       { label: 'How to stop wasting API money', href: '/how-to/stop-wasting-money-on-ai-apis' },
+      { label: 'Cost calculator', href: '/pricing/calculator' },
       { label: 'OpenRouter', href: '/tools/openrouter' },
       { label: 'Groq', href: '/tools/groq' },
     ],

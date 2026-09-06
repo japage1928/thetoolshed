@@ -2,8 +2,11 @@
 export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolMark from '../../components/ToolMark.astro';
 import { COMPARISONS, getComparison } from '../../data/comparisons';
+import { AI_TOOLS } from '../../lib/ai-tools';
 import { formatVerifiedDate } from '../../lib/tool-directory';
+import { hasPricingGuide } from '../../data/pricing';
 
 export function getStaticPaths() {
   return COMPARISONS.map((item) => ({ params: { slug: item.slug } }));
@@ -26,6 +29,12 @@ const jsonLd = {
   <article class="wrapper compare-page" data-compare-page>
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/compare">Compare</a><span>/</span><span>{comparison.title}</span></nav>
     <header>
+      <div class="compare-hero-marks">
+        {comparison.toolSlugs.map((slug) => {
+          const tool = AI_TOOLS.find((entry) => entry.slug === slug);
+          return tool ? <ToolMark name={tool.name} websiteUrl={tool.url} size={40} lazy={false} /> : null;
+        })}
+      </div>
       <span class="eyebrow">{comparison.eyebrow}</span>
       <h1 class="page-title">{comparison.title}</h1>
       <p class="lead">{comparison.job}</p>
@@ -66,7 +75,12 @@ const jsonLd = {
       <div class="picks">
         {comparison.picks.map((pick) => (
           <article data-pick-panel={pick.toolSlug}>
-            <h3><a href={`/tools/${pick.toolSlug}`}>{pick.toolName}</a></h3>
+            <h3>
+              {AI_TOOLS.filter((entry) => entry.slug === pick.toolSlug).map((tool) => (
+                <ToolMark name={tool.name} websiteUrl={tool.url} size={24} />
+              ))}
+              <a href={`/tools/${pick.toolSlug}`}>{pick.toolName}</a>
+            </h3>
             <p>{pick.pick}</p>
             <a href={`/tools/${pick.toolSlug}`}>Open the {pick.toolName} tool page →</a>
           </article>
@@ -77,6 +91,13 @@ const jsonLd = {
     <section id="cost">
       <h2>Cost caveats</h2>
       <p class="body">{comparison.cost}</p>
+      <p class="body">
+        {comparison.toolSlugs.filter((slug) => hasPricingGuide(slug)).map((slug) => {
+          const tool = AI_TOOLS.find((entry) => entry.slug === slug);
+          return tool ? <a href={`/pricing/${slug}`}>{tool.name} pricing notes</a> : null;
+        })}
+        <a href="/pricing/calculator">Cost calculator</a>
+      </p>
     </section>
 
     <section>
@@ -107,6 +128,9 @@ const jsonLd = {
 .compare-page{padding-top:2.2rem;padding-bottom:4rem;max-width:58rem}
 .breadcrumbs{display:flex;gap:.55rem;color:#77736d;font-size:.78rem;margin-bottom:1.4rem}
 .breadcrumbs a{color:#aaa69e;text-decoration:none}
+.compare-hero-marks{display:flex;gap:.45rem;margin-bottom:.7rem}
+.picks h3{display:flex;align-items:center;gap:.45rem}
+#cost .body a{display:inline-block;margin:.35rem .7rem 0 0}
 .lead{max-width:46rem;color:#d7d1c8;font-size:1.1rem;line-height:1.6}
 .reviewed{color:#9a948b;font-size:.85rem;padding:.65rem .8rem;border:1px dashed var(--color-border);border-radius:.5rem;background:#10110f}
 .compare-sticky{position:sticky;top:.55rem;z-index:4;display:flex;flex-wrap:wrap;gap:.4rem;padding:.45rem;margin:1.1rem 0;border:1px solid var(--color-border);border-radius:.55rem;background:rgba(13,13,12,.88);backdrop-filter:blur(12px)}

@@ -62,6 +62,10 @@ const shouldNoindex = noindex || privateRoute;
     <Footer />
     <CookieConsent />
     <script>
+      import '../scripts/reveal.ts';
+      import '../scripts/tool-marks.ts';
+    </script>
+    <script>
       const track = (name: string, params: Record<string, unknown> = {}) => {
         const gtag = (window as any).gtag;
         if (typeof gtag === 'function') gtag('event', name, params);

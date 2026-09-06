@@ -2,6 +2,7 @@
 export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import WorkshopArt from '../../components/WorkshopArt.astro';
 import { TASKS, TASK_KINDS } from '../../data/tasks';
 import { taskRefs } from '../../lib/workshop-match';
 
@@ -13,6 +14,7 @@ const description = 'Start with the job: write content, research a topic, build 
       <span class="eyebrow">DISCOVER · AI TOOLS FOR REAL WORK</span>
       <h1 class="page-title">Start with the job</h1>
       <p>Walk in with a task. These cards point at tools and comparisons — not a product pitch. Confirm cost on the vendor site before you subscribe.</p>
+      <div class="tasks-hero__art"><WorkshopArt variant="discover" /></div>
     </header>
     <div class="task-filters" role="group" aria-label="Filter jobs">
       <button type="button" class="shed-chip is-active" data-kind="All" aria-pressed="true">All</button>
@@ -25,6 +27,7 @@ const description = 'Start with the job: write content, research a topic, build 
         const compares = task.links.filter((link) => link.href.startsWith('/compare'));
         const tools = task.links.filter((link) => link.href.startsWith('/tools/') && !link.href.startsWith('/tools/category/'));
         const howTo = task.links.filter((link) => link.href.startsWith('/how-to'));
+        const pricing = task.links.filter((link) => link.href.startsWith('/pricing'));
         return (
           <details class="task-card" id={task.slug} data-kind={task.kind}>
             <summary>
@@ -38,6 +41,7 @@ const description = 'Start with the job: write content, research a topic, build 
                 {compares.map((link) => <a class="shed-chip" href={link.href}>Compare: {link.label}</a>)}
                 {tools.map((link) => <a class="shed-chip" href={link.href}>Tool: {link.label}</a>)}
                 {howTo.map((link) => <a class="shed-chip" href={link.href}>How-to: {link.label}</a>)}
+                {pricing.map((link) => <a class="shed-chip" href={link.href}>Cost: {link.label}</a>)}
                 {refs.categorySlugs.map((slug) => <a class="shed-chip" href={`/tools/category/${slug}`}>Directory</a>)}
               </div>
               <a class="task-card__cta" href={task.href}>Open the recommended starting point →</a>
@@ -51,6 +55,7 @@ const description = 'Start with the job: write content, research a topic, build 
 <style>
 .tasks-page{padding-top:2.2rem;padding-bottom:4rem}
 .tasks-hero{max-width:50rem;margin-bottom:1.1rem}
+.tasks-hero__art{max-width:18rem;margin-top:.9rem}
 .tasks-hero p{color:var(--color-text-muted);font-size:1.02rem;line-height:1.6}
 .task-filters{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.55rem}
 .hub-status{margin:0 0 .75rem;color:#8f8b84;font-size:.8rem}

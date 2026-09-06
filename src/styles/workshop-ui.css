@@ -95,11 +95,21 @@
 .shed-chip:hover,
 .tool-filter:hover,
 .category-links a:hover,
-.task-chip:hover {
+.task-chip:hover,
+.finder-chip:hover {
   transform: translateY(-2px) rotate(-1.2deg);
   border-color: var(--workshop-wood);
   color: #fff;
   background: #1a1610;
+}
+
+.shed-chip:active,
+.tool-filter:active,
+.category-links a:active,
+.task-chip:active,
+.finder-chip:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.35);
 }
 
 .shed-chip:focus-visible,
@@ -291,6 +301,115 @@
   box-sizing: border-box;
 }
 
+.tool-mark {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--mark-size, 28px);
+  height: var(--mark-size, 28px);
+  flex: 0 0 var(--mark-size, 28px);
+  border-radius: 0.42rem;
+  background: #1a1713;
+  border: 1px solid #3a342c;
+  overflow: hidden;
+}
+
+.tool-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.tool-mark__fallback {
+  display: none;
+  font-size: calc(var(--mark-size, 28px) * 0.34);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #f1eee7;
+}
+
+.tool-mark.is-fallback .tool-mark__fallback,
+.tool-mark:not(:has(img)) .tool-mark__fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #2a2118, #12110e);
+}
+
+.tool-mark--lg {
+  border-radius: 0.85rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.workshop-art {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0.7rem;
+}
+
+.visual-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 1.1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(23, 140, 255, 0.08), transparent 16rem),
+    #10110f;
+}
+
+.visual-band__copy h2 {
+  margin: 0.25rem 0 0.45rem;
+}
+
+.visual-band__copy p {
+  margin: 0 0 0.9rem;
+  color: #aaa69e;
+  line-height: 1.55;
+}
+
+.mark-mosaic {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.mark-mosaic__item {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid #2d2822;
+  border-radius: 0.5rem;
+  background: #0c0d0c;
+}
+
+.path-card__art {
+  width: 100%;
+  margin-bottom: 0.2rem;
+}
+
+.js-reveal [data-reveal],
+.js-reveal [data-reveal-stagger] > * {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.45s ease var(--reveal-delay, 0ms),
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) var(--reveal-delay, 0ms);
+}
+
+.js-reveal [data-reveal].is-visible,
+.js-reveal [data-reveal-stagger] > *.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
 .tool-card p,
 .compare-card p,
 .task-card p,
@@ -434,6 +553,11 @@
   .dense-grid--3 { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 800px) {
+  .visual-band { grid-template-columns: 1fr; }
+  .mark-mosaic { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .shed-card,
   .shed-chip,
@@ -449,9 +573,13 @@
   .tool-filter,
   .category-links a,
   .task-chip,
-  .site-header__mark {
+  .finder-chip,
+  .site-header__mark,
+  .js-reveal [data-reveal],
+  .js-reveal [data-reveal-stagger] > * {
     transition: none !important;
     transform: none !important;
     animation: none !important;
+    opacity: 1 !important;
   }
 }

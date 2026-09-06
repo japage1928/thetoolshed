@@ -191,10 +191,12 @@ a { color: var(--shed-blue); }
   background: linear-gradient(#9ea8b0 0 12%, #2b3035 12% 100%);
   box-shadow: 0 0 0 1px #101214;
   transform: rotate(2deg);
+  animation: shed-tool-float 4.8s ease-in-out infinite;
 }
 
-.shed-hero__tools span:nth-child(2n) { height: 5.4rem; transform: rotate(-3deg); }
-.shed-hero__tools span:nth-child(3n) { height: 7.2rem; }
+.shed-hero__tools span:nth-child(2n) { height: 5.4rem; transform: rotate(-3deg); animation-duration: 5.4s; }
+.shed-hero__tools span:nth-child(3n) { height: 7.2rem; animation-delay: 0.7s; }
+.shed-hero__tools span:nth-child(4n) { animation-delay: 1.1s; }
 
 .shed-hero__circuits {
   position: absolute;
@@ -207,6 +209,7 @@ a { color: var(--shed-blue); }
     linear-gradient(90deg, transparent 10%, var(--shed-blue) 10% 10.35%, transparent 10.35% 30%, var(--shed-blue) 30% 30.35%, transparent 30.35% 100%),
     linear-gradient(0deg, transparent 22%, var(--shed-blue) 22% 22.4%, transparent 22.4% 52%, var(--shed-blue) 52% 52.4%, transparent 52.4% 100%);
   filter: drop-shadow(0 0 10px var(--shed-blue));
+  animation: shed-circuit-pulse 6s ease-in-out infinite;
 }
 
 .shed-hero__laptop {
@@ -216,6 +219,7 @@ a { color: var(--shed-blue); }
   width: min(30vw, 420px);
   aspect-ratio: 1.5;
   transform: perspective(700px) rotateX(8deg) rotateY(-7deg);
+  animation: shed-laptop-float 7s ease-in-out infinite;
   background: #0b0e11;
   border: 2px solid #4a555f;
   border-radius: 0.55rem;
@@ -256,6 +260,7 @@ a { color: var(--shed-blue); }
   border-radius: 50%;
   background: radial-gradient(circle, #fff8d9 0 10%, #d8954d 12% 20%, transparent 22%), #1a1a18;
   box-shadow: 0 0 45px rgba(255,180,80,0.28);
+  animation: shed-lamp-glow 5s ease-in-out infinite;
 }
 
 .shed-hero__copy {
@@ -349,6 +354,35 @@ a { color: var(--shed-blue); }
 .section-page { padding-top: 4rem; padding-bottom: 5rem; }
 .empty-state-panel { min-height: 24rem; border: 1px solid #302a23; background: #0d0d0c; border-radius: 0.6rem; margin-top: 2rem; }
 .empty-state-panel h2, .empty-state-panel p { display: none; }
+
+@keyframes shed-tool-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -9px; }
+}
+
+@keyframes shed-laptop-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -7px; }
+}
+
+@keyframes shed-lamp-glow {
+  0%, 100% { box-shadow: 0 0 40px rgba(255,180,80,0.24); }
+  50% { box-shadow: 0 0 68px rgba(255,180,80,0.42); }
+}
+
+@keyframes shed-circuit-pulse {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 0.48; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shed-hero__tools span,
+  .shed-hero__laptop,
+  .shed-hero__lamp,
+  .shed-hero__circuits {
+    animation: none !important;
+  }
+}
 
 @media (max-width: 760px) {
   .site-header__inner { align-items: flex-start; gap: 1rem; }

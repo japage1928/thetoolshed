@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolMark from '../../components/ToolMark.astro';
+import WorkshopArt from '../../components/WorkshopArt.astro';
 import { categorySlug, formatVerifiedDate, getDirectoryToolBySlug, getDirectoryTools, toolUrl } from '../../lib/tool-directory';
+import { getPricingGuide } from '../../data/pricing';
 
 const tool = await getDirectoryToolBySlug(Astro.params.slug ?? '');
 if (!tool) return Astro.redirect('/tools', 302);
@@ -9,8 +12,7 @@ const allTools = await getDirectoryTools();
 const alternativeSet = new Set(tool.alternatives);
 const alternatives = allTools.filter((item) => alternativeSet.has(item.slug)).slice(0, 4);
 const related = allTools.filter((item) => item.slug !== tool.slug && (item.category === tool.category || item.tags.some((tag) => tool.tags.includes(tag)))).slice(0, 4);
-const domain = new URL(tool.website_url).hostname.replace(/^www\./, '');
-const iconUrl = tool.icon_url || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+const pricingGuide = getPricingGuide(tool.slug);
 const description = `${tool.name}: ${tool.description}`;
 const verified = tool.verification_confidence !== 'unverified';
 const verifiedOn = formatVerifiedDate(tool.last_verified_at);
@@ -35,12 +37,13 @@ const jsonLd = {
   <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/tools">AI Tools</a><span>/</span><a href={`/tools/category/${categorySlug(tool.category)}`}>{tool.category}</a><span>/</span><span>{tool.name}</span></nav>
   <article>
     <header class="tool-hero">
-      <img src={iconUrl} alt={`${tool.name} icon`} width="72" height="72"/>
+      <ToolMark class="tool-mark--lg" name={tool.name} websiteUrl={tool.website_url} iconUrl={tool.icon_url} size={72} lazy={false} />
       <div>
         <span class="eyebrow">{tool.category}</span>
         <h1 class="page-title">{tool.name}</h1>
         {tool.company && <p class="tool-company">{tool.company}</p>}
       </div>
+      <div class="tool-hero__art" aria-hidden="true"><WorkshopArt variant="detail" title="Workshop bench detail" /></div>
     </header>
     <p class="lead">{tool.description}</p>
     <p class="verify-note">
@@ -74,7 +77,13 @@ const jsonLd = {
         {!tool.pricing_is_verified && <span class="unverified-badge">Unverified</span>}
       </div>
       <p class="body-copy">{pricing}</p>
-      {tool.pricing_url && <p class="body-copy"><a href={tool.pricing_url} target="_blank" rel="noopener noreferrer">Check current pricing on the vendor site →</a></p>}
+      <p class="body-copy">
+        {pricingGuide && <a href={`/pricing/${pricingGuide.slug}`}>Read the {tool.name} plan-structure notes →</a>}
+        {pricingGuide && ' '}
+        {tool.pricing_url && <a href={tool.pricing_url} target="_blank" rel="noopener noreferrer">Check current pricing on the vendor site →</a>}
+        {' '}
+        <a href="/pricing/calculator">Open the cost calculator →</a>
+      </p>
     </section>
 
     {hasStrengths ? (
@@ -126,7 +135,7 @@ const jsonLd = {
     {alternatives.length > 0 && (
       <section>
         <h2>Alternatives</h2>
-        <div class="link-grid">{alternatives.map((item) => <a href={`/tools/${item.slug}`}><strong>{item.name}</strong><span>{item.description}</span></a>)}</div>
+        <div class="link-grid">{alternatives.map((item) => <a href={`/tools/${item.slug}`}><strong><ToolMark name={item.name} websiteUrl={item.website_url} iconUrl={item.icon_url} size={24} />{item.name}</strong><span>{item.description}</span></a>)}</div>
       </section>
     )}
 
@@ -147,7 +156,7 @@ const jsonLd = {
     {related.length > 0 && (
       <section>
         <div class="section-row"><h2>Related tools</h2><a href="/tools">Browse all →</a></div>
-        <div class="link-grid">{related.map((item) => <a href={`/tools/${item.slug}`}><strong>{item.name}</strong><span>{item.category} · {item.best_for}</span></a>)}</div>
+        <div class="link-grid">{related.map((item) => <a href={`/tools/${item.slug}`}><strong><ToolMark name={item.name} websiteUrl={item.website_url} iconUrl={item.icon_url} size={24} />{item.name}</strong><span>{item.category} · {item.best_for}</span></a>)}</div>
       </section>
     )}
 
@@ -164,8 +173,9 @@ const jsonLd = {
 .tool-detail{padding-top:3rem;padding-bottom:5rem;max-width:58rem}
 .breadcrumbs{display:flex;gap:.55rem;flex-wrap:wrap;color:#77736d;font-size:.78rem;margin-bottom:2.5rem}
 .breadcrumbs a{color:#aaa69e;text-decoration:none}
-.tool-hero{display:flex;align-items:center;gap:1rem}
-.tool-hero img{width:72px;height:72px;border-radius:16px;background:#fff;padding:7px;box-sizing:border-box;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.tool-hero{display:grid;grid-template-columns:auto 1fr minmax(8rem,14rem);align-items:center;gap:1rem}
+.tool-hero__art{opacity:.85}
+.link-grid strong{display:flex;align-items:center;gap:.45rem}
 .tool-hero .page-title{margin:.15rem 0 0}
 .tool-company{margin:.2rem 0 0;color:#8f8b84;font-size:.9rem}
 .lead{max-width:48rem;color:#aaa69e;font-size:1.15rem;line-height:1.75;margin:1.5rem 0 .8rem}
@@ -192,7 +202,7 @@ const jsonLd = {
 .unverified-badge{flex:0 0 auto;border:1px solid rgba(200,139,75,.4);color:#d9b27b;border-radius:999px;padding:.2rem .55rem;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
 .tool-actions{display:flex;gap:.7rem;flex-wrap:wrap}
 .disclosure{color:#77736d;font-size:.72rem;line-height:1.6;margin-top:1.5rem}
-@media(max-width:640px){.tool-meta,.split-grid,.link-grid{grid-template-columns:1fr}.tool-hero img{width:58px;height:58px}.tool-actions .hero-button{width:100%;justify-content:center}}
+@media(max-width:640px){.tool-meta,.split-grid,.link-grid{grid-template-columns:1fr}.tool-hero{grid-template-columns:auto 1fr}.tool-hero__art{display:none}.tool-actions .hero-button{width:100%;justify-content:center}}
 </style>
 <script>
 const visit=document.querySelector<HTMLElement>('#visit-tool');visit?.addEventListener('click',()=>{const gtag=(window as any).gtag;if(typeof gtag==='function'){const params={tool_name:visit.dataset.toolName??'',tool_slug:visit.dataset.toolSlug??'',tool_category:visit.dataset.toolCategory??'',affiliate:visit.dataset.affiliate==='true',source:'tool_detail'};gtag('event','tool_click',params);if(params.affiliate)gtag('event','affiliate_click',params)}});

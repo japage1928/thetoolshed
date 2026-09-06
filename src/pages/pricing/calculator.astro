@@ -1,0 +1,127 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WorkshopArt from '../../components/WorkshopArt.astro';
+import { PRICING_GUIDES } from '../../data/pricing';
+import { USAGE_PRESETS } from '../../lib/cost-calculator';
+import { AI_TOOLS } from '../../lib/ai-tools';
+
+const description = 'Illustrative AI cost calculator. You enter seat prices and token rates from the vendor. We only do the math.';
+const guides = PRICING_GUIDES;
+---
+<BaseLayout title="AI cost calculator" description={description} path="/pricing/calculator">
+  <div class="wrapper calculator-page" data-cost-calculator>
+    <header class="calculator-hero">
+      <span class="eyebrow">SCALE · ILLUSTRATIVE MATH</span>
+      <h1 class="page-title">Cost calculator v1</h1>
+      <p>This is not a vendor quote. Enter the monthly seat price and/or API rates you can see on the official pricing page. The shed only multiplies what you type.</p>
+      <div class="calculator-hero__art"><WorkshopArt variant="meter" /></div>
+    </header>
+
+    <form class="calculator-form">
+      <div class="calculator-toolbar">
+        <label>
+          <span>Starting tool</span>
+          <select name="tool">
+            <option value="">Custom / several tools</option>
+            {guides.map((guide) => {
+              const catalog = AI_TOOLS.find((item) => item.slug === guide.toolSlug);
+              return (
+                <option
+                  value={guide.slug}
+                  data-pricing-url={guide.pricingUrl}
+                >{catalog?.name ?? guide.name}</option>
+              );
+            })}
+          </select>
+        </label>
+        <a class="shed-btn" data-vendor-link href="/pricing" hidden>Vendor pricing</a>
+      </div>
+
+      <fieldset>
+        <legend>Usage shape (not a price)</legend>
+        <div class="preset-row">
+          {USAGE_PRESETS.map((preset) => (
+            <button type="button" class="shed-chip" data-preset={preset.id}>{preset.label}</button>
+          ))}
+        </div>
+        <p class="field-note">Presets fill seats and token volume only. Dollar fields stay yours.</p>
+      </fieldset>
+
+      <div class="calc-grid">
+        <label>
+          <span>Seats</span>
+          <input name="seats" type="number" min="0" step="1" value="1" inputmode="decimal" />
+        </label>
+        <label>
+          <span>Monthly $ per seat (from vendor)</span>
+          <input name="seatMonthly" type="number" min="0" step="0.01" value="" placeholder="Paste from vendor page" inputmode="decimal" />
+        </label>
+        <label>
+          <span>Input tokens (millions / month)</span>
+          <input name="inputTokensM" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+        </label>
+        <label>
+          <span>$ per 1M input tokens</span>
+          <input name="inputRatePerM" type="number" min="0" step="0.01" value="" placeholder="From API price table" inputmode="decimal" />
+        </label>
+        <label>
+          <span>Output tokens (millions / month)</span>
+          <input name="outputTokensM" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
+        </label>
+        <label>
+          <span>$ per 1M output tokens</span>
+          <input name="outputRatePerM" type="number" min="0" step="0.01" value="" placeholder="From API price table" inputmode="decimal" />
+        </label>
+      </div>
+    </form>
+
+    <section class="calc-out" aria-live="polite">
+      <div>
+        <span class="eyebrow">Subscription assumption</span>
+        <strong data-out-subscription>$0.00</strong>
+      </div>
+      <div>
+        <span class="eyebrow">API assumption</span>
+        <strong data-out-api>$0.00</strong>
+      </div>
+      <div class="calc-out__total">
+        <span class="eyebrow">Illustrative monthly total</span>
+        <strong data-out-total>$0.00</strong>
+      </div>
+    </section>
+    <p class="calc-hint" data-out-hint>Add a seat price or API rates from the vendor pricing page. Until then this is just the usage shape, not a cost.</p>
+
+    <aside class="calc-disclaimer">
+      <p><strong>Illustrative — verify on the vendor site.</strong> We do not ship official prices. Taxes, annual discounts, overage, reserved capacity, and regional SKUs are out of scope for v1. If a number did not come from a page you opened today, do not budget from it.</p>
+      <p><a href="/pricing">Flagship plan-structure notes</a> · <a href="/how-to/stop-wasting-money-on-ai-apis">Stop wasting money on AI APIs</a></p>
+    </aside>
+  </div>
+</BaseLayout>
+<style>
+.calculator-page{padding-top:2.2rem;padding-bottom:4rem;max-width:58rem}
+.calculator-hero{max-width:48rem;margin-bottom:1.2rem}
+.calculator-hero p{color:var(--color-text-muted);line-height:1.6}
+.calculator-hero__art{max-width:18rem;margin-top:.9rem}
+.calculator-form{padding:1rem;border:1px solid var(--color-border);border-radius:.7rem;background:#10110f}
+.calculator-toolbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:end;margin-bottom:1rem}
+.calculator-toolbar label,.calc-grid label{display:grid;gap:.3rem;color:#9a948b;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.calculator-toolbar select,.calc-grid input{width:100%;border:1px solid #3a342c;background:#080909;color:var(--color-text);border-radius:.4rem;padding:.65rem .7rem;font:inherit}
+.calculator-toolbar select{min-width:16rem}
+fieldset{border:0;padding:0;margin:0 0 1rem}
+legend{color:#c7c2ba;font-weight:700;margin-bottom:.45rem}
+.preset-row{display:flex;flex-wrap:wrap;gap:.4rem}
+.field-note,.calc-hint{color:#8f8b84;font-size:.82rem}
+.calc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.calc-out{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.62rem;margin:1rem 0 .6rem}
+.calc-out div{padding:.85rem;border:1px solid var(--color-border);border-radius:.55rem;background:#0f100f}
+.calc-out strong{display:block;margin-top:.25rem;font-size:1.35rem;color:#f1eee7}
+.calc-out__total{border-color:#b9854d;background:rgba(154,93,47,.1)}
+.calc-disclaimer{margin-top:1.4rem;padding:1rem;border:1px dashed var(--color-border);border-radius:.55rem;color:#aaa69e;line-height:1.6}
+.calc-disclaimer a{color:#e3dfd7}
+@media(max-width:700px){.calc-grid,.calc-out{grid-template-columns:1fr}}
+</style>
+<script>
+  import '../../scripts/cost-calculator.ts';
+</script>
